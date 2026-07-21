@@ -2,12 +2,12 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../core/widgets/app_dialog.dart';
 import '../../../authentication/domain/entities/employee_entity.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../../authentication/domain/usecases/logout_usecase.dart';
 import '../../domain/entities/drawer_menu_item_entity.dart';
 import '../../domain/usecases/get_drawer_menu_usecase.dart';
+import '../widgets/logout_dialog.dart';
 
 /// Owns the home shell's state: the signed-in employee (for [ProfileCard]),
 /// the drawer menu tree, and the logout flow. Screen-specific state (bag
@@ -71,10 +71,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> logout() async {
-    final bool confirmed = await AppDialog.confirm(
-      title: AppStrings.logoutConfirmTitle,
-      message: AppStrings.logoutConfirmMessage,
-    );
+    final bool confirmed = await LogoutDialog.show();
     if (!confirmed) return;
 
     isLoggingOut.value = true;

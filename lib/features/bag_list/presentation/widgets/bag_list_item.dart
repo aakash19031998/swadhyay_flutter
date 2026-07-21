@@ -29,11 +29,12 @@ class BagListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
+      padding: const EdgeInsets.all(AppDimensions.spacingLg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _BagThumbnail(bag: bag),
-          const SizedBox(width: AppDimensions.spacingMd),
+          const SizedBox(width: AppDimensions.spacingLg),
           Expanded(child: _BagDetails(bag: bag, timer: _timer)),
           const SizedBox(width: AppDimensions.spacingSm),
           _StatusActions(timer: _timer, bag: bag, onDone: onDone),
@@ -51,7 +52,7 @@ class _BagThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: AppDimensions.bagThumbnailSize,
+      width: AppDimensions.bagListItemImageSize,
       child: Column(
         children: [
           GestureDetector(
@@ -64,8 +65,8 @@ class _BagThumbnail extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               child: SizedBox(
-                width: AppDimensions.bagThumbnailSize,
-                height: AppDimensions.bagThumbnailSize,
+                width: AppDimensions.bagListItemImageSize,
+                height: AppDimensions.bagListItemImageSize,
                 child: bag.imageUrl == null
                     ? const ColoredBox(
                         color: AppColors.surfaceVariant,
@@ -85,7 +86,7 @@ class _BagThumbnail extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppDimensions.spacingXxs),
+          const SizedBox(height: AppDimensions.spacingXs),
           GestureDetector(
             onTap: () => Get.toNamed(AppRoutes.bagDetail, arguments: bag),
             child: Text(
@@ -93,7 +94,7 @@ class _BagThumbnail extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: AppColors.primary,
                     decoration: TextDecoration.underline,
                     fontWeight: FontWeight.w700,

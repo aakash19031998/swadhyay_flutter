@@ -1,43 +1,72 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/widgets/app_pin_field.dart';
 import '../../../authentication/domain/usecases/change_password_usecase.dart';
 
-/// Change-password form state. The actual authentication rule (what makes
-/// a password valid, whether the current password matches) lives in
-/// [ChangePasswordUseCase]/`AuthRepository` — this controller only wires
-/// form fields to that use case.
+/// Change-password form state. Every field is a 4-digit PIN — same input
+/// as the login screen — not a free-text password. The actual
+/// authentication rule (whether the current PIN matches) lives in
+/// [ChangePasswordUseCase]/`AuthRepository`; this controller only wires the
+/// three PIN fields to that use case.
 class ChangePasswordController extends GetxController {
   ChangePasswordController(this._changePasswordUseCase);
 
   final ChangePasswordUseCase _changePasswordUseCase;
 
-  final formKey = GlobalKey<FormState>();
-  final currentPasswordController = TextEditingController();
-  final newPasswordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  final currentPasswordFieldController = AppPinFieldController();
+  final newPasswordFieldController = AppPinFieldController();
+  final confirmPasswordFieldController = AppPinFieldController();
 
-  final RxBool isCurrentPasswordVisible = false.obs;
-  final RxBool isNewPasswordVisible = false.obs;
-  final RxBool isConfirmPasswordVisible = false.obs;
+  final RxnString currentPasswordError = RxnString();
+  final RxnString newPasswordError = RxnString();
+  final RxnString confirmPasswordError = RxnString();
   final RxBool isLoading = false.obs;
 
-  String? validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) return AppStrings.passwordsDoNotMatch;
-    if (value != newPasswordController.text) return AppStrings.passwordsDoNotMatch;
-    return null;
+  String _currentPassword = '';
+  String _newPassword = '';
+  String _confirmPassword = '';
+
+  void onCurrentPasswordChanged(String value) {
+    _currentPassword = value;
+    if (currentPasswordError.value != null) currentPasswordError.value = null;
+  }
+
+  void onNewPasswordChanged(String value) {
+    _newPassword = value;
+    if (newPasswordError.value != null) newPasswordError.value = null;
+  }
+
+  void onConfirmPasswordChanged(String value) {
+    _confirmPassword = value;
+    if (confirmPasswordError.value != null) confirmPasswordError.value = null;
   }
 
   Future<void> submit() async {
-    if (!(formKey.currentState?.validate() ?? false)) return;
+    bool isValid = true;
+
+    if (_currentPassword.length != AppDimensions.pinLength) {
+      currentPasswordError.value = AppStrings.pinRequired;
+      isValid = false;
+    }
+    if (_newPassword.length != AppDimensions.pinLength) {
+      newPasswordError.value = AppStrings.pinRequired;
+      isValid = false;
+    }
+    if (_confirmPassword.length != AppDimensions.pinLength) {
+      confirmPasswordError.value = AppStrings.pinRequired;
+      isValid = false;
+    } else if (_confirmPassword != _newPassword) {
+      confirmPasswordError.value = AppStrings.passwordsDoNotMatch;
+      isValid = false;
+    }
+
+    if (!isValid) return;
 
     isLoading.value = true;
     final result = await _changePasswordUseCase(
-      ChangePasswordParams(
-        currentPassword: currentPasswordController.text,
-        newPassword: newPasswordController.text,
-      ),
+      ChangePasswordParams(currentPassword: _currentPassword, newPassword: _newPassword),
     );
     isLoading.value = false;
 
@@ -45,19 +74,11 @@ class ChangePasswordController extends GetxController {
       (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
       (_) {
         Get.snackbar(AppStrings.changePassword, AppStrings.passwordUpdated);
-        currentPasswordController.clear();
-        newPasswordController.clear();
-        confirmPasswordController.clear();
+        currentPasswordFieldController.clear();
+        newPasswordFieldController.clear();
+        confirmPasswordFieldController.clear();
         Get.back<void>();
       },
     );
-  }
-
-  @override
-  void onClose() {
-    currentPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
-    super.onClose();
   }
 }

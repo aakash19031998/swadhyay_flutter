@@ -44,8 +44,11 @@ class AppDimensions {
   static const double avatarMd = 56;
   static const double avatarLg = 88;
 
-  // Bag list.
+  // Bag list. bagThumbnailSize is the media-viewer filmstrip thumbnail
+  // (stays small); bagListItemImageSize is the larger image on the list
+  // row itself — kept separate so enlarging one never affects the other.
   static const double bagThumbnailSize = 76;
+  static const double bagListItemImageSize = 100;
 
   // Bag detail.
   static const double bagDetailSidebarWidth = 190;
@@ -81,6 +84,9 @@ class AppDimensions {
 
   // AppBar.
   static const double appBarHeight = 64;
+
+  // Dialogs.
+  static const double dialogMaxWidth = 320;
 
   // Buttons.
   static const double buttonHeight = 52;
