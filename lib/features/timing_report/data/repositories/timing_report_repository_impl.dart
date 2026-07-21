@@ -1,0 +1,26 @@
+import 'package:dartz/dartz.dart';
+
+import '../../../../core/error/exceptions.dart';
+import '../../../../core/error/failures.dart';
+import '../../domain/entities/timing_report_entity.dart';
+import '../../domain/repositories/timing_report_repository.dart';
+import '../datasources/timing_report_data_source.dart';
+
+class TimingReportRepositoryImpl implements TimingReportRepository {
+  TimingReportRepositoryImpl(this._dataSource);
+
+  final TimingReportDataSource _dataSource;
+
+  @override
+  Future<Either<Failure, List<TimingReportEntity>>> getReport({
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final entries = await _dataSource.getReport(year: year, month: month);
+      return Right(entries);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    }
+  }
+}

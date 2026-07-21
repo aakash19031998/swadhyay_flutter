@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"initialValue\\\\|this.value\" \"/c/src/flutter/packages/flutter/lib/src/material/dropdown.dart\" | head -30)",
+      "Read(//c/src/flutter/packages/flutter/lib/src/material/**)",
+      "Bash(flutter analyze *)",
+      "Bash(dart run *)",
+      "Bash(\"/c/src/flutter/bin/dart\" --version)",
+      "Bash(flutter emulators *)",
+      "Bash(dart format *)",
+      "Skill(dataviz)",
+      "Skill(dataviz:*)",
+      "Bash(node scripts/validate_palette.js \"#1E8E5A,#FBC02D\" --mode light)",
+      "PowerShell(node --version 2>&1)"
+    ]
+  }
+}
