@@ -49,7 +49,8 @@ class AppStrings {
   static const String folloperReport = 'Folloper Report';
   static const String logout = 'Logout';
   static const String logoutConfirmTitle = 'Logout';
-  static const String logoutConfirmMessage = 'Are you sure you want to logout?';
+  static const String logoutConfirmMessage =
+      'Are you sure you want to log out? Your progress has been saved. We look forward to seeing you again.';
 
   // Bag list.
   static const String filling = 'Filling';

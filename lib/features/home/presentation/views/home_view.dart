@@ -12,7 +12,7 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      appBar: CommonAppBar(),
+      appBar: CommonAppBar(showNotification: false),
       drawer: AppDrawer(),
       body: DashboardBody(),
     );
