@@ -44,7 +44,24 @@ class BagCompletionController extends GetxController {
 
   void addEntry() {
     if (!canAdd) return;
-    recordedSettings.add(SettingEntry(setting: work.value!, pieces: int.parse(piece.value.trim())));
+
+    final String selectedWork = work.value!;
+    final int addedPieces = int.parse(piece.value.trim());
+
+    // Same setting recorded again adds to its running piece count instead
+    // of creating a duplicate row — only a setting not yet recorded gets a
+    // new entry.
+    final int existingIndex = recordedSettings.indexWhere((entry) => entry.setting == selectedWork);
+    if (existingIndex == -1) {
+      recordedSettings.add(SettingEntry(setting: selectedWork, pieces: addedPieces));
+    } else {
+      final SettingEntry existing = recordedSettings[existingIndex];
+      recordedSettings[existingIndex] = SettingEntry(
+        setting: existing.setting,
+        pieces: existing.pieces + addedPieces,
+      );
+    }
+
     work.value = null;
     piece.value = '';
   }

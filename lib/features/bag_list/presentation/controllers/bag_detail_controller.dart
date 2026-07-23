@@ -26,6 +26,10 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
     Get.toNamed(AppRoutes.bagCompletion, arguments: bag);
   }
 
+  /// Exposed so the view can show a live running clock in the top bar —
+  /// null if this bag's timer was never started from the list screen.
+  BagTimerController? get timer => _timer;
+
   BagTimerController? get _timer =>
       Get.isRegistered<BagTimerController>(tag: bag.id) ? Get.find<BagTimerController>(tag: bag.id) : null;
 
