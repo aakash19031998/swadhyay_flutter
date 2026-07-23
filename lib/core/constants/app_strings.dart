@@ -53,10 +53,11 @@ class AppStrings {
       'Are you sure you want to log out? Your progress has been saved. We look forward to seeing you again.';
 
   // Bag list.
-  static const String filling = 'Filling';
   static const String bagQty = 'Bag Qty';
   static const String designPoints = 'Design Points';
   static const String totalPoints = 'Total Points';
+  static const String totalBags = 'Bags';
+  static const String totalImages = 'Images';
   static const String start = 'Start';
   static const String pause = 'Pause';
   static const String resume = 'Resume';
@@ -66,9 +67,9 @@ class AppStrings {
   // Bag detail.
   static const String backPause = 'Back / Pause';
   static const String metal = 'Metal';
-  static const String designGrossWt = 'Design Gross Wt: grm';
+  static const String designGrossWt = 'Design Gross Wt';
   static const String extra = 'Extra';
-  static const String diamondWax = 'Diamond(Wax:)';
+  static const String diamondWax = 'Diamond (Wax)';
   static const String extra2 = 'Extra2';
   static const String designInstr = 'Design Instr.';
   static const String custInstr = 'Cust Instr.';
@@ -81,13 +82,27 @@ class AppStrings {
   static const String delDate = 'Del Date';
   static const String size = 'Size';
   static const String customer = 'Customer';
+  static const String part = 'Part';
   static const String poNo = 'PoNo';
   static const String noDataAvailable = 'No data available';
   static const String manufacturingInstructions = 'Manufacturing Instructions';
+  static const String srNo = 'Sr No';
+  static const String shape = 'Shape';
+  static const String sizeMm = 'Size (MM)';
+  static const String pcs = 'Pcs';
+  static const String weightCt = 'Wt (ct)';
+  static const String color = 'Color';
+  static const String clarity = 'Clarity';
+  static const String materialCode = 'Material Code';
+  static const String rmDescription = 'Description';
+  static const String allocatedQty = 'Allocated Qty';
+  static const String issuedQty = 'Issued Qty';
+  static const String status = 'Status';
   static const String bagSummary = 'Bag Summary';
 
   // Bag completion.
   static const String firstReceived = 'First Received';
+  static const String addNewWorkEntry = 'Add New Work Entry';
   static const String bagNoShort = 'Bag No.';
   static const String designNoLabel = 'Design No.';
   static const String orderNo = 'OrderNo';
@@ -109,12 +124,11 @@ class AppStrings {
   static const String empCodeLabel = 'Emp. Code';
   static const String department = 'Department';
   static const String inTimeLabel = 'In Time';
-  static const String contactNumber = 'Contact Number';
-  static const String alternateContactNumber = 'Alternate Contact Number';
-  static const String address = 'Address';
   static const String workEfficiency = 'Work Efficiency';
-  static const String contactDetails = 'Contact Details';
-  static const String personalDetails = 'Personal Details';
+  static const String performanceMetric = 'Performance Metric';
+  static const String performanceExcellent = 'Excellent';
+  static const String performanceGood = 'Good';
+  static const String performanceNeedsImprovement = 'Needs Improvement';
 
   // Artist production report.
   static const String artistProductionReportTitle = 'Artist Production Report';
@@ -122,6 +136,7 @@ class AppStrings {
   static const String toDate = 'To Date';
   static const String show = 'Show';
   static const String prediction = 'Prediction';
+  static const String totalPrediction = 'Total Prediction';
   static const String actualPcsStone = 'Actual Pcs/Stone';
   static const String workTypeSummary = 'Work Type Summary';
   static const String productionDetail = 'Production Detail';

@@ -44,11 +44,12 @@ class AppDimensions {
   static const double avatarMd = 56;
   static const double avatarLg = 88;
 
-  // Bag list. bagThumbnailSize is the media-viewer filmstrip thumbnail
-  // (stays small); bagListItemImageSize is the larger image on the list
-  // row itself — kept separate so enlarging one never affects the other.
+  // Bag list. bagThumbnailSize is the media-viewer filmstrip thumbnail;
+  // bagCardImageHeight sizes the grid card's photo — the card's overall
+  // height is intrinsic/content-driven (see ReportListScaffold's masonry
+  // mode), not a fixed constant.
   static const double bagThumbnailSize = 76;
-  static const double bagListItemImageSize = 100;
+  static const double bagCardImageHeight = 170;
 
   // Bag detail.
   static const double bagDetailSidebarWidth = 190;
@@ -56,8 +57,8 @@ class AppDimensions {
   static const double bagDetailSegmentedTabBarHeight = 40;
 
   // Profile.
-  static const double profileHeroAvatarSize = 180;
-  static const double profileBannerHeight = 130;
+  static const double profileHeroAvatarSize = 130;
+  static const double profileGaugeSize = 110;
 
   // Timing report chart. Plot height is computed at runtime from the
   // available screen space (full-screen chart) rather than fixed, clamped

@@ -4,15 +4,20 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/section_card.dart';
+import '../../domain/entities/bag_entity.dart';
+import '../../domain/entities/bag_rm_summary_entity.dart';
+import '../../domain/entities/diamond_detail_entity.dart';
 import '../controllers/bag_detail_controller.dart';
+import '../controllers/bag_timer_controller.dart';
 
-/// Bag detail screen: manufacturing instruction grid, a Diamond
-/// Details / BagRmSummary tab pair (static placeholder tables for now — a
-/// real dynamic table lands later), a jewelry preview, and a right-hand
-/// summary sidebar. Laid out primarily for tablet width; narrow screens
-/// stack the sidebar below the main content instead of beside it.
+/// Bag detail screen: a live productivity clock in the top bar, a
+/// manufacturing-instructions spec grid, a Diamond Details / Bag RM Summary
+/// tab pair, a jewelry preview, and a right-hand summary sidebar. Laid out
+/// primarily for tablet width; narrow screens stack the sidebar below the
+/// main content instead of beside it.
 class BagDetailView extends GetView<BagDetailController> {
   const BagDetailView({super.key});
 
@@ -79,40 +84,100 @@ class _TopBar extends StatelessWidget {
           horizontal: AppDimensions.spacingMd,
           vertical: AppDimensions.spacingSm,
         ),
-        child: Stack(
-          alignment: Alignment.center,
+        // Three-section layout — equal-flex Expanded on both sides of the
+        // timer — keeps the timer pill dead-center in the toolbar no
+        // matter how the leading (back button + bag no.) and trailing
+        // (Done button) content widths differ from each other.
+        child: Row(
           children: [
-            Center(
-              child: Text(
-                controller.bag.bagNo,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _TopBarButton(
+                    icon: Icons.arrow_back_rounded,
+                    label: AppStrings.backPause,
+                    onTap: controller.pauseAndGoBack,
+                    filled: false,
+                  ),
+                  const SizedBox(width: AppDimensions.spacingSm),
+                  Text(
+                    controller.bag.bagNo,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.onPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
               ),
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: _TopBarButton(
-                icon: Icons.arrow_back_rounded,
-                label: AppStrings.backPause,
-                onTap: controller.pauseAndGoBack,
-                filled: false,
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: _TopBarButton(
-                icon: Icons.check_rounded,
-                label: AppStrings.done,
-                onTap: controller.onDone,
-                filled: true,
+            _LiveTimerPill(controller: controller),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _TopBarButton(
+                  icon: Icons.check_rounded,
+                  label: AppStrings.done,
+                  onTap: controller.onDone,
+                  filled: true,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+/// Reads [BagTimerController] reactively so the top bar shows the same
+/// running clock as [BagListItem] — a fresh "00:00:00, not running" state
+/// if this bag's timer was never started.
+class _LiveTimerPill extends StatelessWidget {
+  const _LiveTimerPill({required this.controller});
+
+  final BagDetailController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final BagTimerController? timer = controller.timer;
+      final bool isRunning = timer?.status.value == BagWorkStatus.running;
+      final Duration elapsed = timer?.elapsed.value ?? Duration.zero;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacingMd,
+          vertical: AppDimensions.spacingXs,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.successContainer,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isRunning ? AppColors.success : AppColors.textHint,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppDimensions.spacingXs),
+            Text(
+              DateTimeHelper.formatStopwatch(elapsed),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -172,14 +237,15 @@ class _MainContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final BagEntity bag = controller.bag;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionCard(
+        SectionCard(
           title: AppStrings.manufacturingInstructions,
           icon: Icons.build_outlined,
-          padding: EdgeInsets.zero,
-          child: _InfoGrid(),
+          child: _ManufacturingSpecs(bag: bag),
         ),
         const SizedBox(height: AppDimensions.spacingMd),
         SectionCard(
@@ -193,13 +259,9 @@ class _MainContent extends StatelessWidget {
                   height: AppDimensions.bagDetailTabViewHeight,
                   child: TabBarView(
                     controller: controller.tabController,
-                    children: const [
-                      _PlaceholderTableTab(
-                        columns: ['Sr No', 'Shape', 'Size (MM)', 'Pcs', 'Wt (ct)', 'Color', 'Clarity', 'Setting'],
-                      ),
-                      _PlaceholderTableTab(
-                        columns: ['Sr No', 'Material', 'Gross Wt', 'Stone Wt', 'Net Metal Wt', 'Qty'],
-                      ),
+                    children: [
+                      _DiamondDetailsTable(details: bag.diamondDetails),
+                      _RmSummaryTable(items: bag.rmSummary),
                     ],
                   ),
                 ),
@@ -208,6 +270,160 @@ class _MainContent extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Metal / Design Gross Wt / Extra / Diamond (Wax) / Extra2 as a wrapped
+/// row of spec chips, then the six longer instruction fields as a
+/// responsive 2-column (tablet) / 1-column (phone) grid — replacing the
+/// old label-only bordered table with real values.
+class _ManufacturingSpecs extends StatelessWidget {
+  const _ManufacturingSpecs({required this.bag});
+
+  final BagEntity bag;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> instructionTiles = [
+      _InstructionTile(label: AppStrings.designInstr, value: bag.designInstr),
+      _InstructionTile(label: AppStrings.custInstr, value: bag.custInstr),
+      _InstructionTile(label: AppStrings.stampInstr, value: bag.stampInstr),
+      _InstructionTile(label: AppStrings.rhodInstr, value: bag.rhodInstr),
+      _InstructionTile(label: AppStrings.diamInstr, value: bag.diamInstr),
+      _InstructionTile(label: AppStrings.sizeInstr, value: bag.sizeInstr),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: AppDimensions.spacingSm,
+          runSpacing: AppDimensions.spacingSm,
+          children: [
+            _SpecBox(label: AppStrings.metal, value: bag.metal),
+            _SpecBox(
+              label: AppStrings.designGrossWt,
+              value: bag.designGrossWt == null ? null : '${bag.designGrossWt!.toStringAsFixed(2)} grm',
+            ),
+            _SpecBox(label: AppStrings.diamondWax, value: bag.diamondWax),
+            _SpecBox(label: AppStrings.extra, value: bag.extra),
+            _SpecBox(label: AppStrings.extra2, value: bag.extra2),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.spacingMd),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
+
+            if (!isTablet) {
+              return Column(
+                children: [
+                  for (final tile in instructionTiles) ...[
+                    tile,
+                    if (tile != instructionTiles.last) const SizedBox(height: AppDimensions.spacingSm),
+                  ],
+                ],
+              );
+            }
+
+            return Column(
+              children: [
+                for (int i = 0; i < instructionTiles.length; i += 2) ...[
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: instructionTiles[i]),
+                        const SizedBox(width: AppDimensions.spacingSm),
+                        Expanded(child: instructionTiles[i + 1]),
+                      ],
+                    ),
+                  ),
+                  if (i + 2 < instructionTiles.length) const SizedBox(height: AppDimensions.spacingSm),
+                ],
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _SpecBox extends StatelessWidget {
+  const _SpecBox({required this.label, required this.value});
+
+  final String label;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacingMd,
+        vertical: AppDimensions.spacingSm,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary, letterSpacing: 0.4),
+          ),
+          const SizedBox(height: AppDimensions.spacingXxs),
+          Text(
+            value ?? '—',
+            style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InstructionTile extends StatelessWidget {
+  const _InstructionTile({required this.label, required this.value});
+
+  final String label;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacingMd,
+        vertical: AppDimensions.spacingSm,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Text(label, style: textTheme.labelMedium?.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(width: AppDimensions.spacingXs),
+          Expanded(
+            child: Text(
+              value ?? '—',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -247,87 +463,88 @@ class _SegmentedTabBar extends StatelessWidget {
   }
 }
 
-class _InfoGrid extends StatelessWidget {
-  const _InfoGrid();
+class _DiamondDetailsTable extends StatelessWidget {
+  const _DiamondDetailsTable({required this.details});
+
+  final List<DiamondDetailEntity> details;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _GridRow(cells: const [
-          _GridCellData(AppStrings.metal, 1),
-          _GridCellData(AppStrings.designGrossWt, 1),
-          _GridCellData(AppStrings.extra, 1),
-        ]),
-        _GridRow(cells: const [
-          _GridCellData(AppStrings.diamondWax, 2),
-          _GridCellData(AppStrings.extra2, 1),
-        ]),
-        const _GridRow(cells: [_GridCellData(AppStrings.designInstr, 3)]),
-        const _GridRow(cells: [_GridCellData(AppStrings.custInstr, 3)]),
-        const _GridRow(cells: [_GridCellData(AppStrings.stampInstr, 3)]),
-        const _GridRow(cells: [_GridCellData(AppStrings.rhodInstr, 3)]),
-        const _GridRow(cells: [_GridCellData(AppStrings.diamInstr, 3)]),
-        _GridRow(cells: const [_GridCellData(AppStrings.sizeInstr, 3)], isLast: true),
-      ],
-    );
-  }
-}
-
-class _GridCellData {
-  const _GridCellData(this.label, this.flex);
-
-  final String label;
-  final int flex;
-}
-
-class _GridRow extends StatelessWidget {
-  const _GridRow({required this.cells, this.isLast = false});
-
-  final List<_GridCellData> cells;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: isLast ? BorderSide.none : const BorderSide(color: AppColors.divider)),
-      ),
-      child: Row(
-        children: [
-          for (int i = 0; i < cells.length; i++)
-            Expanded(
-              flex: cells[i].flex,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingMd,
-                  vertical: AppDimensions.spacingSm,
-                ),
-                decoration: BoxDecoration(
-                  border: Border(
-                    right: i == cells.length - 1
-                        ? BorderSide.none
-                        : const BorderSide(color: AppColors.divider),
-                  ),
-                ),
-                child: Text(
-                  '${cells[i].label} :',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-                ),
-              ),
-            ),
+    return _DataTableTab(
+      isEmpty: details.isEmpty,
+      table: DataTable(
+        headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant),
+        columns: const [
+          DataColumn(label: Text(AppStrings.srNo)),
+          DataColumn(label: Text(AppStrings.shape)),
+          DataColumn(label: Text(AppStrings.sizeMm)),
+          DataColumn(label: Text(AppStrings.pcs)),
+          DataColumn(label: Text(AppStrings.weightCt)),
+          DataColumn(label: Text(AppStrings.color)),
+          DataColumn(label: Text(AppStrings.clarity)),
+          DataColumn(label: Text(AppStrings.setting)),
+        ],
+        rows: [
+          for (final d in details)
+            DataRow(cells: [
+              DataCell(Text('${d.srNo}')),
+              DataCell(Text(d.shape)),
+              DataCell(Text(d.sizeMm.toStringAsFixed(2))),
+              DataCell(Text('${d.pcs}')),
+              DataCell(Text(d.weightCt.toStringAsFixed(2))),
+              DataCell(Text(d.color)),
+              DataCell(Text(d.clarity)),
+              DataCell(Text(d.setting)),
+            ]),
         ],
       ),
     );
   }
 }
 
-/// Static stand-in for the dynamic table that will replace it once the
-/// backend contract for this tab is defined.
-class _PlaceholderTableTab extends StatelessWidget {
-  const _PlaceholderTableTab({required this.columns});
+class _RmSummaryTable extends StatelessWidget {
+  const _RmSummaryTable({required this.items});
 
-  final List<String> columns;
+  final List<BagRmSummaryEntity> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DataTableTab(
+      isEmpty: items.isEmpty,
+      table: DataTable(
+        headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant),
+        columns: const [
+          DataColumn(label: Text(AppStrings.materialCode)),
+          DataColumn(label: Text(AppStrings.rmDescription)),
+          DataColumn(label: Text(AppStrings.allocatedQty)),
+          DataColumn(label: Text(AppStrings.issuedQty)),
+          DataColumn(label: Text(AppStrings.status)),
+        ],
+        rows: [
+          for (final r in items)
+            DataRow(cells: [
+              DataCell(Text(r.materialCode)),
+              DataCell(Text(r.description)),
+              DataCell(Text(r.allocatedQty)),
+              DataCell(Text(r.issuedQty)),
+              DataCell(
+                Text(
+                  r.status,
+                  style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ]),
+        ],
+      ),
+    );
+  }
+}
+
+class _DataTableTab extends StatelessWidget {
+  const _DataTableTab({required this.table, required this.isEmpty});
+
+  final DataTable table;
+  final bool isEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -338,17 +555,15 @@ class _PlaceholderTableTab extends StatelessWidget {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant),
-              columns: [for (final c in columns) DataColumn(label: Text(c))],
-              rows: const [],
+            child: table,
+          ),
+          if (isEmpty) ...[
+            const SizedBox(height: AppDimensions.spacingSm),
+            Text(
+              AppStrings.noDataAvailable,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
             ),
-          ),
-          const SizedBox(height: AppDimensions.spacingSm),
-          Text(
-            AppStrings.noDataAvailable,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
-          ),
+          ],
         ],
       ),
     );
@@ -362,11 +577,13 @@ class _Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final BagEntity bag = controller.bag;
+
     return Column(
       children: [
         SectionCard(
           padding: const EdgeInsets.all(AppDimensions.spacingSm),
-          child: _JewelryPreview(imageUrl: controller.bag.imageUrl),
+          child: _JewelryPreview(imageUrl: bag.imageUrl),
         ),
         const SizedBox(height: AppDimensions.spacingMd),
         SectionCard(
@@ -375,20 +592,28 @@ class _Sidebar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXs),
           child: Column(
             children: [
-              const _SidebarField(icon: Icons.event_outlined, label: AppStrings.delDate, value: ''),
-              const _SidebarField(icon: Icons.tag, label: '/ part', value: ''),
+              _SidebarField(
+                icon: Icons.event_outlined,
+                label: AppStrings.delDate,
+                value: bag.delDate == null ? '' : DateTimeHelper.formatDate(bag.delDate!),
+              ),
+              _SidebarField(icon: Icons.tag, label: AppStrings.part, value: bag.part ?? ''),
               _SidebarField(
                 icon: Icons.inventory_2_outlined,
                 label: AppStrings.bagQty,
-                value: '${controller.bag.bagQty}',
+                value: '${bag.bagQty}',
               ),
-              const _SidebarField(icon: Icons.numbers_outlined, label: '(qty)', value: ''),
-              const _SidebarField(icon: Icons.straighten_outlined, label: AppStrings.size, value: ''),
-              const _SidebarField(icon: Icons.person_outline, label: AppStrings.customer, value: ''),
-              const _SidebarField(
+              _SidebarField(
+                icon: Icons.numbers_outlined,
+                label: AppStrings.pieces,
+                value: bag.pieceQty == null ? '' : '${bag.pieceQty}',
+              ),
+              _SidebarField(icon: Icons.straighten_outlined, label: AppStrings.size, value: bag.size ?? ''),
+              _SidebarField(icon: Icons.person_outline, label: AppStrings.customer, value: bag.customer ?? ''),
+              _SidebarField(
                 icon: Icons.receipt_long_outlined,
                 label: AppStrings.poNo,
-                value: '',
+                value: bag.poNo ?? '',
                 isLast: true,
               ),
             ],

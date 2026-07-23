@@ -11,7 +11,24 @@
       "Skill(dataviz)",
       "Skill(dataviz:*)",
       "Bash(node scripts/validate_palette.js \"#1E8E5A,#FBC02D\" --mode light)",
-      "PowerShell(node --version 2>&1)"
+      "PowerShell(node --version 2>&1)",
+      "Bash(flutter build *)",
+      "Bash(command -v ffmpeg)",
+      "Bash(command -v magick)",
+      "Bash(command -v convert)",
+      "Bash(command -v python)",
+      "Bash(command -v python3)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL OK'\\)\")",
+      "Bash(rm -f build/splash_frame_0.png)",
+      "Bash(flutter test *)",
+      "Bash(rm -f test/extract_splash_frame_test.dart)",
+      "Bash(rm -f build/splash_frame_*.png splash_check*.png)",
+      "Bash(rmdir test *)",
+      "Bash(rm -f mid_launch.png mid_launch2.png)",
+      "Bash(rm -f test/gen_native_splash_test.dart test/check_pixel_test.dart)",
+      "Bash(rm -f android/app/src/main/res/drawable/splash_gradient_background.xml)",
+      "Bash(rm -f android/app/src/main/res/drawable/splash_circle_logo.png)",
+      "Bash(rm -f blank_check.png)"
     ]
   }
 }

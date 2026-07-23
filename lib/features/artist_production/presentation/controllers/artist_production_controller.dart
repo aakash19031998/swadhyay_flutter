@@ -39,6 +39,14 @@ class ArtistProductionController extends GetxController {
     show();
   }
 
+  // KPI totals shown above the tables — plain sums over the currently
+  // loaded [items], not a separate fetch.
+  double get totalPrediction => items.fold<double>(0, (sum, e) => sum + e.prediction);
+
+  int get totalActualQty => items.fold<int>(0, (sum, e) => sum + e.actualQty);
+
+  double get totalPoints => items.fold<double>(0, (sum, e) => sum + e.totalPoints);
+
   List<WorkTypeSummary> get summary {
     final Map<String, WorkTypeSummary> grouped = {};
     for (final entry in items) {

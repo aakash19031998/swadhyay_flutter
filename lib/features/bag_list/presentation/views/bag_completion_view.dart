@@ -5,9 +5,9 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_dropdown.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/section_card.dart';
 import '../controllers/bag_completion_controller.dart';
 
 /// The "Done" completion form opened from both the bag list and the bag
@@ -24,12 +24,13 @@ class BagCompletionView extends GetView<BagCompletionController> {
         child: Column(
           children: [
             _TopBar(controller: controller),
-            _BagInfoStrip(controller: controller),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(AppDimensions.spacingMd),
                 child: Column(
                   children: [
+                    _MetaPillsRow(controller: controller),
+                    const SizedBox(height: AppDimensions.spacingMd),
                     _WorkFormCard(controller: controller),
                     const SizedBox(height: AppDimensions.spacingMd),
                     const _PendingSettingsCard(),
@@ -90,34 +91,55 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _BagInfoStrip extends StatelessWidget {
-  const _BagInfoStrip({required this.controller});
+/// Bag No. / Design No. / OrderNo as individual accent-striped cards
+/// instead of a flat info strip — laid out side by side on tablet width,
+/// stacked on phone width.
+class _MetaPillsRow extends StatelessWidget {
+  const _MetaPillsRow({required this.controller});
 
   final BagCompletionController controller;
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppColors.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacingMd,
-          vertical: AppDimensions.spacingSm,
-        ),
-        child: Row(
-          children: [
-            Expanded(child: _InfoField(label: AppStrings.bagNoShort, value: controller.bag.bagNo)),
-            Expanded(child: _InfoField(label: AppStrings.designNoLabel, value: controller.bag.designNo)),
-            Expanded(child: _InfoField(label: AppStrings.orderNo, value: controller.bag.locationCode)),
-          ],
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
+
+        final List<Widget> pills = [
+          _MetaPill(label: AppStrings.bagNoShort, value: controller.bag.bagNo),
+          _MetaPill(label: AppStrings.designNoLabel, value: controller.bag.designNo),
+          _MetaPill(label: AppStrings.orderNo, value: controller.bag.locationCode),
+        ];
+
+        if (!isTablet) {
+          return Column(
+            children: [
+              for (final pill in pills) ...[
+                pill,
+                if (pill != pills.last) const SizedBox(height: AppDimensions.spacingSm),
+              ],
+            ],
+          );
+        }
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (int i = 0; i < pills.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppDimensions.spacingSm),
+                Expanded(child: pills[i]),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class _InfoField extends StatelessWidget {
-  const _InfoField({required this.label, required this.value});
+class _MetaPill extends StatelessWidget {
+  const _MetaPill({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -126,17 +148,58 @@ class _InfoField extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: textTheme.labelSmall?.copyWith(color: AppColors.primary)),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodyMedium?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w700),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textPrimary.withValues(alpha: 0.03),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-      ],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(width: 4, child: ColoredBox(color: AppColors.primary)),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.spacingMd,
+                    vertical: AppDimensions.spacingSm,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label.toUpperCase(),
+                        style: textTheme.labelSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.spacingXxs),
+                      Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -148,89 +211,151 @@ class _WorkFormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      child: Obx(
-        () => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: AppDropdown<String>(
-                    label: AppStrings.workType,
-                    items: BagCompletionController.workTypeOptions,
-                    itemLabel: (item) => item,
-                    value: controller.workType.value,
-                    onChanged: controller.onWorkTypeChanged,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.spacingMd),
-                Expanded(
-                  child: AppDropdown<String>(
-                    label: AppStrings.work,
-                    items: BagCompletionController.workOptions,
-                    itemLabel: (item) => item,
-                    value: controller.work.value,
-                    onChanged: controller.onWorkChanged,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.spacingMd),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: AppTextField(
-                    label: AppStrings.pieceStone,
-                    keyboardType: TextInputType.number,
-                    onChanged: controller.onPieceChanged,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.spacingMd),
-                AppButton(
+    return SectionCard(
+      title: AppStrings.addNewWorkEntry,
+      icon: Icons.edit_note_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Obx nests *inside* LayoutBuilder deliberately: LayoutBuilder's
+          // `builder` only runs at layout time, after the surrounding
+          // build() has already finished — an Obx wrapped around the
+          // LayoutBuilder instead would never see the `.value` reads
+          // happening inside it, and GetX throws "improper use of GetX"
+          // the moment those values change with nothing subscribed.
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isWide = constraints.maxWidth >= AppDimensions.breakpointPhone;
+
+              return Obx(() {
+                final Widget workTypeField = AppDropdown<String>(
+                  label: AppStrings.workType,
+                  items: BagCompletionController.workTypeOptions,
+                  itemLabel: (item) => item,
+                  value: controller.workType.value,
+                  onChanged: controller.onWorkTypeChanged,
+                );
+                final Widget workField = AppDropdown<String>(
+                  label: AppStrings.work,
+                  items: BagCompletionController.workOptions,
+                  itemLabel: (item) => item,
+                  value: controller.work.value,
+                  onChanged: controller.onWorkChanged,
+                );
+
+                if (!isWide) {
+                  return Column(
+                    children: [
+                      workTypeField,
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      workField,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: workTypeField),
+                    const SizedBox(width: AppDimensions.spacingMd),
+                    Expanded(child: workField),
+                  ],
+                );
+              });
+            },
+          ),
+          const SizedBox(height: AppDimensions.spacingMd),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isWide = constraints.maxWidth >= AppDimensions.breakpointPhone;
+
+              return Obx(() {
+                final Widget pieceField = AppTextField(
+                  label: AppStrings.pieceStone,
+                  keyboardType: TextInputType.number,
+                  onChanged: controller.onPieceChanged,
+                );
+                final Widget addButton = AppButton(
                   label: AppStrings.add,
                   icon: Icons.add_rounded,
-                  fullWidth: false,
+                  fullWidth: !isWide,
                   onPressed: controller.canAdd ? controller.addEntry : null,
-                ),
-              ],
-            ),
-          ],
-        ),
+                );
+
+                if (!isWide) {
+                  return Column(
+                    children: [
+                      pieceField,
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      addButton,
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: pieceField),
+                    const SizedBox(width: AppDimensions.spacingMd),
+                    SizedBox(width: 140, child: addButton),
+                  ],
+                );
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-class _TableHeaderRow extends StatelessWidget {
-  const _TableHeaderRow({required this.labels});
+/// Header + rows inside one bordered, rounded box — a real table look
+/// instead of a separate dark header pill floating above plain rows.
+class _TableContainer extends StatelessWidget {
+  const _TableContainer({required this.headers, required this.rows});
 
-  final List<String> labels;
+  final List<String> headers;
+  final List<Widget> rows;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.textSecondary,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacingMd,
-          vertical: AppDimensions.spacingSm,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
-        child: Row(
+        child: Column(
           children: [
-            for (final label in labels)
-              Expanded(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.onPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
+            ColoredBox(
+              color: AppColors.surfaceVariant,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.spacingMd,
+                  vertical: AppDimensions.spacingSm,
                 ),
+                child: Row(
+                  children: [
+                    for (final label in headers)
+                      Expanded(
+                        child: Text(
+                          label.toUpperCase(),
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.4,
+                              ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            for (final row in rows)
+              DecoratedBox(
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: AppColors.divider)),
+                ),
+                child: row,
               ),
           ],
         ),
@@ -244,16 +369,16 @@ class _PendingSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
+    return SectionCard(
+      title: AppStrings.pendingSettings,
+      icon: Icons.hourglass_empty_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.pendingSettings,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppColors.primary),
+          const _TableContainer(
+            headers: [AppStrings.setting, AppStrings.pieces, AppStrings.select],
+            rows: [],
           ),
-          const SizedBox(height: AppDimensions.spacingSm),
-          _TableHeaderRow(labels: [AppStrings.setting, AppStrings.pieces, AppStrings.select]),
           const SizedBox(height: AppDimensions.spacingMd),
           Container(
             width: double.infinity,
@@ -264,18 +389,21 @@ class _PendingSettingsCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.warningContainer,
               borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+              border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.info_outline_rounded, size: AppDimensions.iconSm, color: AppColors.warning),
                 const SizedBox(width: AppDimensions.spacingXs),
-                Text(
-                  AppStrings.pleaseSelectPndPredData,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.w600,
-                      ),
+                Flexible(
+                  child: Text(
+                    AppStrings.pleaseSelectPndPredData,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.warning,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
                 ),
               ],
             ),
@@ -293,76 +421,76 @@ class _RecordedSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.recordedSettings,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppColors.primary),
-          ),
-          const SizedBox(height: AppDimensions.spacingSm),
-          _TableHeaderRow(labels: [AppStrings.setting, AppStrings.pieces, '']),
-          Obx(() {
-            if (controller.recordedSettings.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingLg),
-                child: Center(
-                  child: Text(
-                    AppStrings.noDataFound,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
-                  ),
-                ),
-              );
-            }
+    return SectionCard(
+      title: AppStrings.recordedSettings,
+      icon: Icons.fact_check_outlined,
+      child: Obx(() {
+        return _TableContainer(
+          headers: const [AppStrings.setting, AppStrings.pieces, ''],
+          rows: [
+            for (int i = 0; i < controller.recordedSettings.length; i++)
+              _RecordedSettingRow(
+                entry: controller.recordedSettings[i],
+                onRemove: () => controller.removeEntry(i),
+              ),
+          ],
+        );
+      }),
+    );
+  }
+}
 
-            return Column(
-              children: [
-                for (int i = 0; i < controller.recordedSettings.length; i++)
-                  _RecordedSettingRow(
-                    entry: controller.recordedSettings[i],
-                    isLast: i == controller.recordedSettings.length - 1,
-                    onRemove: () => controller.removeEntry(i),
-                  ),
-              ],
-            );
-          }),
+class _RecordedSettingRow extends StatelessWidget {
+  const _RecordedSettingRow({required this.entry, required this.onRemove});
+
+  final SettingEntry entry;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacingMd,
+        vertical: AppDimensions.spacingSm,
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text(entry.setting, style: Theme.of(context).textTheme.bodyMedium)),
+          Expanded(child: Text('${entry.pieces}', style: Theme.of(context).textTheme.bodyMedium)),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: _DangerIconButton(icon: Icons.delete_outline_rounded, onTap: onRemove),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _RecordedSettingRow extends StatelessWidget {
-  const _RecordedSettingRow({required this.entry, required this.isLast, required this.onRemove});
+class _DangerIconButton extends StatelessWidget {
+  const _DangerIconButton({required this.icon, required this.onTap});
 
-  final SettingEntry entry;
-  final bool isLast;
-  final VoidCallback onRemove;
+  final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: isLast ? BorderSide.none : const BorderSide(color: AppColors.divider)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXs),
-        child: Row(
-          children: [
-            Expanded(child: Text(entry.setting, style: Theme.of(context).textTheme.bodyMedium)),
-            Expanded(child: Text('${entry.pieces}', style: Theme.of(context).textTheme.bodyMedium)),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, size: AppDimensions.iconSm),
-                  color: AppColors.error,
-                  onPressed: onRemove,
-                ),
-              ),
-            ),
-          ],
+    return Material(
+      color: AppColors.errorContainer,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        onTap: onTap,
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+          ),
+          child: Icon(icon, size: AppDimensions.iconSm, color: AppColors.error),
         ),
       ),
     );

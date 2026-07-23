@@ -22,6 +22,7 @@ class ReportListScaffold<T> extends StatelessWidget {
     this.emptyMessage,
     this.searchHint,
     this.gridDelegate,
+    this.masonryColumnCount,
   });
 
   final bool isLoading;
@@ -33,9 +34,17 @@ class ReportListScaffold<T> extends StatelessWidget {
   final String? emptyMessage;
   final String? searchHint;
 
-  /// When provided, renders a [GridView] (e.g. Design Image thumbnails)
-  /// instead of a [ListView].
+  /// When provided, renders a [GridView] (e.g. Design Image thumbnails) —
+  /// every tile is forced to the same fixed size, which fits square/near-
+  /// square media but clips a card whose content can grow taller than that.
   final SliverGridDelegate? gridDelegate;
+
+  /// When provided (and [gridDelegate] is not), lays items out in this many
+  /// side-by-side columns with each column an independently-sized
+  /// [Column] — so every item keeps its own natural, content-driven height
+  /// (never clipped, never needs a hand-tuned fixed extent) instead of a
+  /// [GridView]'s uniform row height.
+  final int? masonryColumnCount;
 
   @override
   Widget build(BuildContext context) {
@@ -57,24 +66,86 @@ class ReportListScaffold<T> extends StatelessWidget {
     }
     if (items.isEmpty) return AppEmptyWidget(message: emptyMessage ?? 'No data found');
 
+    if (gridDelegate != null) {
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        child: GridView.builder(
+          padding: const EdgeInsets.all(AppDimensions.spacingMd),
+          gridDelegate: gridDelegate!,
+          itemCount: items.length,
+          itemBuilder: (context, index) => itemBuilder(context, items[index]),
+        ),
+      );
+    }
+
+    if (masonryColumnCount != null) {
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        child: _MasonryList(
+          columnCount: masonryColumnCount!,
+          items: items,
+          itemBuilder: itemBuilder,
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: gridDelegate == null
-          ? ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacingMd,
-                vertical: AppDimensions.spacingSm,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacingMd,
+          vertical: AppDimensions.spacingSm,
+        ),
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppDimensions.spacingSm),
+        itemBuilder: (context, index) => itemBuilder(context, items[index]),
+      ),
+    );
+  }
+}
+
+/// Distributes [items] round-robin across [columnCount] independent
+/// [Column]s inside one scroll view, so each item's height comes purely
+/// from its own content — no shared row height, no clipping.
+class _MasonryList<T> extends StatelessWidget {
+  const _MasonryList({
+    required this.columnCount,
+    required this.items,
+    required this.itemBuilder,
+  });
+
+  final int columnCount;
+  final List<T> items;
+  final Widget Function(BuildContext context, T item) itemBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<List<T>> columns = List.generate(columnCount, (_) => <T>[]);
+    for (int i = 0; i < items.length; i++) {
+      columns[i % columnCount].add(items[i]);
+    }
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(AppDimensions.spacingMd),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int c = 0; c < columnCount; c++) ...[
+            if (c > 0) const SizedBox(width: AppDimensions.spacingLg),
+            Expanded(
+              child: Column(
+                children: [
+                  for (final item in columns[c]) ...[
+                    itemBuilder(context, item),
+                    const SizedBox(height: AppDimensions.spacingLg),
+                  ],
+                ],
               ),
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppDimensions.spacingSm),
-              itemBuilder: (context, index) => itemBuilder(context, items[index]),
-            )
-          : GridView.builder(
-              padding: const EdgeInsets.all(AppDimensions.spacingMd),
-              gridDelegate: gridDelegate!,
-              itemCount: items.length,
-              itemBuilder: (context, index) => itemBuilder(context, items[index]),
             ),
+          ],
+        ],
+      ),
     );
   }
 }
