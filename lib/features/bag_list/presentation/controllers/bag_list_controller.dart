@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/base/list_state_controller.dart';
@@ -12,6 +13,10 @@ class BagListController extends ListStateController<BagEntity> {
 
   final GetBagsUseCase _getBagsUseCase;
 
+  /// Backs the search field so a scanned barcode/QR value can be shown in
+  /// the field itself (not just applied as a silent filter).
+  final TextEditingController searchController = TextEditingController();
+
   @override
   Future<Either<Failure, List<BagEntity>>> fetch(String searchQuery) {
     return _getBagsUseCase(query: searchQuery);
@@ -19,5 +24,16 @@ class BagListController extends ListStateController<BagEntity> {
 
   void onBagDone(BagEntity bag) {
     Get.toNamed(AppRoutes.bagCompletion, arguments: bag);
+  }
+
+  void onScanned(String value) {
+    searchController.text = value;
+    onQueryChanged(value);
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 }

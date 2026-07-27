@@ -1,6 +1,3 @@
-import 'dart:math' as math;
-import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,9 +12,9 @@ import '../../../authentication/domain/entities/employee_entity.dart';
 import '../controllers/profile_controller.dart';
 
 /// Read-only employee profile — opened by tapping the drawer header.
-/// A hero identity card, a work-efficiency card with a radial gauge, then
-/// the rest of the detail as colorful icon tiles grouped under Personal
-/// Details / Contact Details section headers.
+/// A hero identity card (avatar + name only), then the rest of the detail
+/// as paired, colorful icon tiles: Emp. Code & Department, In Time &
+/// Company Code, Total Hrs Till Date & OT Hrs, and Present Days alone.
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
 
@@ -39,8 +36,6 @@ class ProfileView extends GetView<ProfileController> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _ProfileHeroCard(employee: employee),
-                    const SizedBox(height: AppDimensions.spacingLg),
-                    _WorkEfficiencyHeroCard(employee: employee),
                     const SizedBox(height: AppDimensions.spacingLg),
                     _DetailsGrid(employee: employee),
                   ],
@@ -68,7 +63,7 @@ class _ProfileHeroCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
-        vertical: AppDimensions.spacingXl,
+        vertical: AppDimensions.spacingLg,
         horizontal: AppDimensions.spacingLg,
       ),
       decoration: BoxDecoration(
@@ -91,7 +86,7 @@ class _ProfileHeroCard extends StatelessWidget {
                 width: AppDimensions.profileHeroAvatarSize,
                 height: AppDimensions.profileHeroAvatarSize,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -115,7 +110,8 @@ class _ProfileHeroCard extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                         )
-                      : ClipOval(
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                           child: CachedNetworkImage(
                             imageUrl: employee.avatarUrl!,
                             width: AppDimensions.profileHeroAvatarSize,
@@ -146,265 +142,16 @@ class _ProfileHeroCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
           ),
-          if (employee.department != null) ...[
-            const SizedBox(height: AppDimensions.spacingXs),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacingMd,
-                vertical: AppDimensions.spacingXxs,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-              ),
-              child: Text(
-                employee.department!,
-                style: textTheme.labelMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-/// Green hero card with a radial gauge showing [EmployeeEntity.workEfficiency].
-/// Chrome color stays on-brand green regardless of tier; the status pill
-/// text ("Excellent" / "Good" / "Needs Improvement") carries the nuance.
-class _WorkEfficiencyHeroCard extends StatelessWidget {
-  const _WorkEfficiencyHeroCard({required this.employee});
-
-  final EmployeeEntity employee;
-
-  double? _parseFraction(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    final double? parsed = double.tryParse(raw.replaceAll('%', '').trim());
-    if (parsed == null) return null;
-    return (parsed / 100).clamp(0, 1);
-  }
-
-  String _tierLabel(double fraction) {
-    if (fraction >= 0.8) return AppStrings.performanceExcellent;
-    if (fraction >= 0.5) return AppStrings.performanceGood;
-    return AppStrings.performanceNeedsImprovement;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final double? fraction = _parseFraction(employee.workEfficiency);
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      width: double.infinity,
-      clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(AppDimensions.spacingLg),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.success, AppColors.successDark],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.success.withValues(alpha: 0.35),
-            blurRadius: 32,
-            offset: const Offset(0, 16),
-          ),
-        ],
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          const Positioned(top: -50, right: -30, child: _Blob(size: 140, opacity: 0.10)),
-          const Positioned(bottom: -40, left: -40, child: _Blob(size: 130, opacity: 0.08)),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      AppStrings.performanceMetric.toUpperCase(),
-                      style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.onPrimary.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.spacingXxs),
-                    Text(
-                      AppStrings.workEfficiency,
-                      style: textTheme.headlineSmall?.copyWith(
-                        color: AppColors.onPrimary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    if (fraction != null) ...[
-                      const SizedBox(height: AppDimensions.spacingSm),
-                      _FrostedPill(label: _tierLabel(fraction)),
-                    ],
-                  ],
-                ),
-              ),
-              if (fraction != null) ...[
-                const SizedBox(width: AppDimensions.spacingMd),
-                _RadialGauge(fraction: fraction),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FrostedPill extends StatelessWidget {
-  const _FrostedPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingMd,
-            vertical: AppDimensions.spacingXs,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.onPrimary.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.bolt, size: AppDimensions.iconSm, color: AppColors.onPrimary),
-              const SizedBox(width: AppDimensions.spacingXxs),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RadialGauge extends StatelessWidget {
-  const _RadialGauge({required this.fraction});
-
-  final double fraction;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: AppDimensions.profileGaugeSize,
-      height: AppDimensions.profileGaugeSize,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CustomPaint(
-            size: const Size.square(AppDimensions.profileGaugeSize),
-            painter: _RadialGaugePainter(
-              fraction: fraction,
-              trackColor: AppColors.onPrimary.withValues(alpha: 0.25),
-              progressColor: AppColors.onPrimary,
-            ),
-          ),
-          Text(
-            '${(fraction * 100).round()}%',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.onPrimary,
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RadialGaugePainter extends CustomPainter {
-  const _RadialGaugePainter({
-    required this.fraction,
-    required this.trackColor,
-    required this.progressColor,
-  });
-
-  final double fraction;
-  final Color trackColor;
-  final Color progressColor;
-
-  static const double _strokeWidth = 9;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = (size.width - _strokeWidth) / 2;
-
-    final Paint trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _strokeWidth;
-    canvas.drawCircle(center, radius, trackPaint);
-
-    final Paint progressPaint = Paint()
-      ..color = progressColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      2 * math.pi * fraction,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _RadialGaugePainter oldDelegate) =>
-      oldDelegate.fraction != fraction ||
-      oldDelegate.trackColor != trackColor ||
-      oldDelegate.progressColor != progressColor;
-}
-
-class _Blob extends StatelessWidget {
-  const _Blob({required this.size, required this.opacity});
-
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.onPrimary.withValues(alpha: opacity),
-        ),
-      ),
-    );
-  }
-}
-
-/// Emp. Code / Department / In Time — three tiles, laid out side by side on
-/// tablet width or stacked on phone width. Sized by [IntrinsicHeight] (each
-/// tile's own natural content height), never a fixed extent.
+/// Emp. Code & Department, In Time & Company Code, Total Hrs Till Date & OT
+/// Hrs, and Present Days alone — pairs of tiles, side by side on tablet
+/// width or stacked on phone width. Sized by [IntrinsicHeight] (each pair's
+/// own natural content height), never a fixed extent.
 class _DetailsGrid extends StatelessWidget {
   const _DetailsGrid({required this.employee});
 
@@ -431,6 +178,30 @@ class _DetailsGrid extends StatelessWidget {
         label: AppStrings.inTimeLabel,
         value: employee.punchInAt == null ? '' : DateTimeHelper.formatDateTime(employee.punchInAt!),
       ),
+      _InfoTile(
+        icon: Icons.corporate_fare_outlined,
+        color: AppColors.info,
+        label: AppStrings.companyCodeLabel,
+        value: employee.companyCode ?? '',
+      ),
+      _InfoTile(
+        icon: Icons.schedule_outlined,
+        color: AppColors.success,
+        label: AppStrings.totalHrsTillDateLabel,
+        value: employee.totalHoursTillDate ?? '',
+      ),
+      _InfoTile(
+        icon: Icons.more_time_outlined,
+        color: AppColors.warning,
+        label: AppStrings.otHrsLabel,
+        value: employee.otHours ?? '',
+      ),
+      _InfoTile(
+        icon: Icons.event_available_outlined,
+        color: AppColors.success,
+        label: AppStrings.presentDaysLabel,
+        value: employee.presentDays == null ? '' : '${employee.presentDays}',
+      ),
     ];
 
     return LayoutBuilder(
@@ -448,16 +219,32 @@ class _DetailsGrid extends StatelessWidget {
           );
         }
 
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (int i = 0; i < tiles.length; i++) ...[
-                if (i > 0) const SizedBox(width: AppDimensions.spacingMd),
-                Expanded(child: tiles[i]),
-              ],
+        // Paired 2-per-row (Emp Code & Department, In Time & Company Code,
+        // Total Hrs Till Date & OT Hrs), with the odd one out (Present Days)
+        // alone on its own row.
+        final List<Widget> rows = [
+          for (int i = 0; i < tiles.length; i += 2)
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: tiles[i]),
+                  if (i + 1 < tiles.length) ...[
+                    const SizedBox(width: AppDimensions.spacingMd),
+                    Expanded(child: tiles[i + 1]),
+                  ],
+                ],
+              ),
+            ),
+        ];
+
+        return Column(
+          children: [
+            for (int i = 0; i < rows.length; i++) ...[
+              rows[i],
+              if (i != rows.length - 1) const SizedBox(height: AppDimensions.spacingMd),
             ],
-          ),
+          ],
         );
       },
     );
@@ -484,7 +271,7 @@ class _InfoTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.spacingMd),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         boxShadow: [
           BoxShadow(
@@ -499,7 +286,7 @@ class _InfoTile extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(AppDimensions.spacingSm),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.16), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: AppDimensions.iconMd),
           ),
           const SizedBox(width: AppDimensions.spacingMd),

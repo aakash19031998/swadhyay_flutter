@@ -1,27 +1,48 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/employee_model.dart';
 import 'auth_data_source.dart';
 
-/// Real-backend implementation. Not used while
-/// [AppConfig.useMockData] is `true`, but implemented in full so enabling a
-/// live backend later is a one-line binding change.
+/// Real-backend implementation. Wired in whenever
+/// [AppConfig.useMockAuth] is `false` (the default) — see [AuthDependencies].
 class AuthRemoteDataSourceImpl implements AuthDataSource {
   AuthRemoteDataSourceImpl(this._apiClient);
 
   final ApiClient _apiClient;
 
   @override
-  Future<EmployeeModel> login({required String employeeNumber, required String pin}) async {
+  Future<({String message, EmployeeModel employee})> login({
+    required String employeeNumber,
+    required String pin,
+  }) async {
     try {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
-        ApiEndpoints.login,
-        data: {'employeeNumber': employeeNumber, 'pin': pin},
+        ApiEndpoints.checkLogInNew,
+        data: {
+          'empCd': employeeNumber,
+          'empPass': pin,
+          'appVersion': AppConfig.appVersion,
+        },
       );
-      return EmployeeModel.fromJson(response.data!);
+
+      final Map<String, dynamic> body = response.data ?? const <String, dynamic>{};
+      final bool status = body['status'] as bool? ?? false;
+      final String message = body['message'] as String? ?? 'Login failed';
+
+      if (!status) {
+        throw ServerException(message: message, statusCode: response.statusCode);
+      }
+
+      final Map<String, dynamic>? data = body['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw const ServerException(message: 'Malformed login response');
+      }
+
+      return (message: message, employee: EmployeeModel.fromApiJson(data));
     } on DioException catch (e) {
       throw ServerException(
         message: e.response?.data?['message'] as String? ?? 'Login failed',

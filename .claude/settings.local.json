@@ -28,7 +28,11 @@
       "Bash(rm -f test/gen_native_splash_test.dart test/check_pixel_test.dart)",
       "Bash(rm -f android/app/src/main/res/drawable/splash_gradient_background.xml)",
       "Bash(rm -f android/app/src/main/res/drawable/splash_circle_logo.png)",
-      "Bash(rm -f blank_check.png)"
+      "Bash(rm -f blank_check.png)",
+      "PowerShell(adb devices)",
+      "PowerShell($paths = @\\(\"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\", \"$env:ANDROID_HOME\\\\platform-tools\\\\adb.exe\", \"$env:ANDROID_SDK_ROOT\\\\platform-tools\\\\adb.exe\"\\); foreach \\($p in $paths\\) { if \\(Test-Path $p\\) { Write-Output \"FOUND: $p\" } else { Write-Output \"missing: $p\" } })",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices)",
+      "Bash(flutter pub *)"
     ]
   }
 }

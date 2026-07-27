@@ -12,7 +12,7 @@ import 'drawer_menu_data_source.dart';
 /// Timing Report, Artist Production, Folloper Report), Logout.
 class DrawerMenuStaticDataSourceImpl implements DrawerMenuDataSource {
   @override
-  Future<List<DrawerMenuItemModel>> getMenu() async {
+  Future<List<DrawerMenuItemModel>> getMenu(String empCd) async {
     await Future.delayed(AppConfig.mockLatency);
 
     return const [

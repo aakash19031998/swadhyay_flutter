@@ -15,8 +15,9 @@ import '../domain/repositories/auth_repository.dart';
 /// Authentication is a cross-cutting concern needed by Login, Home
 /// (logout) and Change Password — whichever of those screens is entered
 /// first performs the registration; the others simply find the existing
-/// instance. [AppConfig.useMockData] is the single switch between the mock
-/// and live data source.
+/// instance. [AppConfig.useMockAuth] is the switch between the mock and live
+/// data source — kept separate from [AppConfig.useMockData] so login can
+/// target the real `CheckLogInNew` backend while other features stay mocked.
 class AuthDependencies {
   const AuthDependencies._();
 
@@ -24,7 +25,7 @@ class AuthDependencies {
     if (Get.isRegistered<AuthRepository>()) return;
 
     Get.put<AuthDataSource>(
-      AppConfig.useMockData
+      AppConfig.useMockAuth
           ? AuthMockDataSourceImpl()
           : AuthRemoteDataSourceImpl(Get.find<ApiClient>()),
       permanent: true,

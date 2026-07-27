@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -174,8 +175,18 @@ class _LoginForm extends StatelessWidget {
             prefixIcon: Icons.badge_outlined,
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.next,
-            validator: (value) =>
-                value == null || value.trim().isEmpty ? AppStrings.employeeNumberRequired : null,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(AppDimensions.empCodeLength),
+            ],
+            validator: (value) {
+              final String trimmed = value?.trim() ?? '';
+              if (trimmed.isEmpty) return AppStrings.employeeNumberRequired;
+              if (trimmed.length != AppDimensions.empCodeLength) {
+                return AppStrings.employeeNumberInvalidLength;
+              }
+              return null;
+            },
           ),
           const SizedBox(height: AppDimensions.spacingLg),
           Text(

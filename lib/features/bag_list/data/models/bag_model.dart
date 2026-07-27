@@ -18,9 +18,7 @@ class BagModel extends BagEntity {
     super.media,
     super.metal,
     super.designGrossWt,
-    super.extra,
-    super.diamondWax,
-    super.extra2,
+    super.designNetWt,
     super.designInstr,
     super.custInstr,
     super.stampInstr,
@@ -33,6 +31,7 @@ class BagModel extends BagEntity {
     super.poNo,
     super.part,
     super.pieceQty,
+    super.styleNo,
     super.diamondDetails,
     super.rmSummary,
   });
@@ -54,9 +53,7 @@ class BagModel extends BagEntity {
           .toList(),
       metal: json['metal'] as String?,
       designGrossWt: (json['designGrossWt'] as num?)?.toDouble(),
-      extra: json['extra'] as String?,
-      diamondWax: json['diamondWax'] as String?,
-      extra2: json['extra2'] as String?,
+      designNetWt: (json['designNetWt'] as num?)?.toDouble(),
       designInstr: json['designInstr'] as String?,
       custInstr: json['custInstr'] as String?,
       stampInstr: json['stampInstr'] as String?,
@@ -69,6 +66,7 @@ class BagModel extends BagEntity {
       poNo: json['poNo'] as String?,
       part: json['part'] as String?,
       pieceQty: (json['pieceQty'] as num?)?.toInt(),
+      styleNo: json['styleNo'] as String?,
       diamondDetails: (json['diamondDetails'] as List<dynamic>? ?? [])
           .map((d) => DiamondDetailModel.fromJson(d as Map<String, dynamic>))
           .toList(),

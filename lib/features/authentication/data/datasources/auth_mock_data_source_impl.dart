@@ -10,17 +10,23 @@ class AuthMockDataSourceImpl implements AuthDataSource {
   static const String _demoPin = '1234';
 
   @override
-  Future<EmployeeModel> login({required String employeeNumber, required String pin}) async {
+  Future<({String message, EmployeeModel employee})> login({
+    required String employeeNumber,
+    required String pin,
+  }) async {
     await Future.delayed(AppConfig.mockLatency);
 
     if (employeeNumber != _demoEmployeeNumber || pin != _demoPin) {
       throw const ServerException(message: 'Invalid employee number or PIN');
     }
 
-    return EmployeeModel(
-      empCode: _demoEmployeeNumber,
-      name: 'Vikash Kumar D. Nishad',
-      punchInAt: DateTime.now(),
+    return (
+      message: 'Logged in',
+      employee: EmployeeModel(
+        empCode: _demoEmployeeNumber,
+        name: 'Vikash Kumar D. Nishad',
+        punchInAt: DateTime.now(),
+      ),
     );
   }
 

@@ -28,7 +28,6 @@ class AppColors {
 
   // Semantic.
   static const Color success = Color(0xFF1E8E5A);
-  static const Color successDark = Color(0xFF146B45);
   static const Color successContainer = Color(0xFFE1F5EA);
   static const Color warning = Color(0xFFB77E12);
   static const Color warningContainer = Color(0xFFFBF0DD);

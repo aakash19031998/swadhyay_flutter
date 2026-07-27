@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -6,6 +8,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_dropdown.dart';
 import '../../../../core/widgets/app_error_widget.dart';
 import '../../../../core/widgets/app_loader.dart';
 import '../../domain/entities/timing_report_entity.dart';
@@ -36,31 +39,48 @@ class TimingReportView extends GetView<TimingReportController> {
                   return AppErrorWidget(message: controller.errorMessage.value!, onRetry: controller.load);
                 }
 
-                return Padding(
+                return SingleChildScrollView(
                   padding: const EdgeInsets.all(AppDimensions.spacingMd),
-                  child: AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              DateTimeHelper.formatMonthYear(DateTime(controller.year, controller.month)),
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MonthFilterCard(controller: controller),
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      _TillDateSummaryCard(
+                        usedMinutes: controller.totalUsedMinutes,
+                        unusedMinutes: controller.totalUnusedMinutes,
+                      ),
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.6,
+                        child: AppCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  _SectionIcon(icon: Icons.bar_chart_rounded, color: AppColors.primary),
+                                  const SizedBox(width: AppDimensions.spacingSm),
+                                  Text(
+                                    AppStrings.dailyBreakdown,
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                   ),
-                            ),
-                            const Spacer(),
-                            const _LegendChip(color: AppColors.success, label: AppStrings.usedMinutes),
-                            const SizedBox(width: AppDimensions.spacingMd),
-                            const _LegendChip(color: AppColors.chartAmber, label: AppStrings.unusedMinutes),
-                          ],
+                                  const Spacer(),
+                                  const _LegendChip(color: AppColors.success, label: AppStrings.usedMinutes),
+                                  const SizedBox(width: AppDimensions.spacingMd),
+                                  const _LegendChip(color: AppColors.chartAmber, label: AppStrings.unusedMinutes),
+                                ],
+                              ),
+                              const SizedBox(height: AppDimensions.spacingLg),
+                              Expanded(child: _Chart(entries: controller.entries)),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: AppDimensions.spacingLg),
-                        Expanded(child: _Chart(entries: controller.entries)),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               }),
@@ -107,6 +127,73 @@ class _TopBar extends StatelessWidget {
   }
 }
 
+/// Small rounded-square icon badge used as the leading element of every
+/// section header on this screen — consistent with the icon-badge language
+/// used for cards elsewhere in the app (Bag Summary, Manufacturing
+/// Instructions, KPI cards), instead of a bare icon floating next to text.
+class _SectionIcon extends StatelessWidget {
+  const _SectionIcon({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppDimensions.avatarSm,
+      height: AppDimensions.avatarSm,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      ),
+      child: Icon(icon, color: color, size: AppDimensions.iconMd),
+    );
+  }
+}
+
+/// Floating bordered/shadowed filter card (matching the Artist Production
+/// report's date-range filter) housing the month dropdown — its own
+/// section instead of being buried inside the bar chart's card.
+class _MonthFilterCard extends StatelessWidget {
+  const _MonthFilterCard({required this.controller});
+
+  final TimingReportController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.spacingMd),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.03),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const _SectionIcon(icon: Icons.calendar_month_rounded, color: AppColors.primary),
+          const SizedBox(width: AppDimensions.spacingMd),
+          Expanded(
+            child: AppDropdown<DateTime>(
+              label: AppStrings.selectMonth,
+              value: controller.selectedMonth.value,
+              items: controller.pastYearMonths,
+              itemLabel: DateTimeHelper.formatMonthYear,
+              onChanged: controller.onMonthChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LegendChip extends StatelessWidget {
   const _LegendChip({required this.color, required this.label});
 
@@ -128,6 +215,220 @@ class _LegendChip extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Used vs unused minutes, summed over every day currently loaded (i.e.
+/// "till date" for the selected month) as a donut chart with the used-%
+/// centered inside the ring — a glanceable proportion to sit above the
+/// day-by-day bar chart, which shows the same two series broken out per
+/// day instead of totalled.
+class _TillDateSummaryCard extends StatelessWidget {
+  const _TillDateSummaryCard({required this.usedMinutes, required this.unusedMinutes});
+
+  final int usedMinutes;
+  final int unusedMinutes;
+
+  @override
+  Widget build(BuildContext context) {
+    final int total = usedMinutes + unusedMinutes;
+    final double usedFraction = total == 0 ? 0 : usedMinutes / total;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _SectionIcon(icon: Icons.donut_large_rounded, color: AppColors.primary),
+              const SizedBox(width: AppDimensions.spacingSm),
+              Text(
+                AppStrings.tillDateSummary,
+                style: textTheme.titleMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacingLg),
+          Row(
+            children: [
+              SizedBox(
+                width: AppDimensions.timingPieChartSize,
+                height: AppDimensions.timingPieChartSize,
+                child: total == 0
+                    ? const DecoratedBox(
+                        decoration: BoxDecoration(color: AppColors.surfaceVariant, shape: BoxShape.circle),
+                        child: Icon(Icons.donut_large_outlined, color: AppColors.textHint),
+                      )
+                    : Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CustomPaint(
+                            size: const Size.square(AppDimensions.timingPieChartSize),
+                            painter: _DonutChartPainter(
+                              usedFraction: usedFraction,
+                              usedColor: AppColors.success,
+                              unusedColor: AppColors.chartAmber,
+                              trackColor: AppColors.divider,
+                            ),
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${(usedFraction * 100).round()}%',
+                                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              Text(
+                                AppStrings.usedMinutes,
+                                style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
+              const SizedBox(width: AppDimensions.spacingLg),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SummaryLegendChip(
+                      icon: Icons.check_circle_outline_rounded,
+                      color: AppColors.success,
+                      label: AppStrings.usedMinutes,
+                      value: usedMinutes,
+                    ),
+                    const SizedBox(height: AppDimensions.spacingSm),
+                    _SummaryLegendChip(
+                      icon: Icons.hourglass_empty_rounded,
+                      color: AppColors.chartAmber,
+                      label: AppStrings.unusedMinutes,
+                      value: unusedMinutes,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Icon-badge chip (matching the same recipe used for Bag Summary /
+/// Manufacturing Instructions chips elsewhere in the app) instead of a bare
+/// colored dot + label — used specifically for this card's two totals.
+class _SummaryLegendChip extends StatelessWidget {
+  const _SummaryLegendChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.spacingSm),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: AppDimensions.iconLg,
+            height: AppDimensions.iconLg,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(icon, color: AppColors.onPrimary, size: AppDimensions.iconSm),
+          ),
+          const SizedBox(width: AppDimensions.spacingSm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary, letterSpacing: 0.4),
+                ),
+                Text(
+                  '$value min',
+                  style: textTheme.titleSmall?.copyWith(color: color, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DonutChartPainter extends CustomPainter {
+  const _DonutChartPainter({
+    required this.usedFraction,
+    required this.usedColor,
+    required this.unusedColor,
+    required this.trackColor,
+  });
+
+  final double usedFraction;
+  final Color usedColor;
+  final Color unusedColor;
+  final Color trackColor;
+
+  static const double _strokeWidth = 14;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    final double radius = (math.min(size.width, size.height) - _strokeWidth) / 2;
+    final Rect rect = Rect.fromCircle(center: center, radius: radius);
+
+    final Paint trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    final double usedSweep = 2 * math.pi * usedFraction;
+    if (usedFraction > 0) {
+      final Paint usedPaint = Paint()
+        ..color = usedColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, -math.pi / 2, usedSweep, false, usedPaint);
+    }
+
+    if (usedFraction < 1) {
+      final Paint unusedPaint = Paint()
+        ..color = unusedColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, -math.pi / 2 + usedSweep, (2 * math.pi) - usedSweep, false, unusedPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutChartPainter oldDelegate) =>
+      oldDelegate.usedFraction != usedFraction ||
+      oldDelegate.usedColor != usedColor ||
+      oldDelegate.unusedColor != unusedColor ||
+      oldDelegate.trackColor != trackColor;
 }
 
 class _Chart extends StatelessWidget {

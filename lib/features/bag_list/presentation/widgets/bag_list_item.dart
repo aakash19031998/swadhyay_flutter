@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_card.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../controllers/bag_media_viewer_args.dart';
 import '../controllers/bag_timer_controller.dart';
+import 'pause_reason_dialog.dart';
 
 /// One Bag List grid card: image with a floating quality badge, a fixed
 /// 2x2 info grid (Bag ID / Order No. on top, Department / Qty below), a
@@ -42,13 +43,7 @@ class BagListItem extends StatelessWidget {
           const SizedBox(height: AppDimensions.spacingMd),
           _PointsSummary(bag: bag),
           const SizedBox(height: AppDimensions.spacingMd),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _ProductivityClock(timer: _timer),
-              _StatusActions(timer: _timer, bag: bag, onDone: onDone),
-            ],
-          ),
+          _StatusRow(timer: _timer, bag: bag, onDone: onDone),
         ],
       ),
     );
@@ -368,76 +363,85 @@ class _ProductivityClock extends StatelessWidget {
   }
 }
 
-class _StatusActions extends StatelessWidget {
-  const _StatusActions({required this.timer, required this.bag, this.onDone});
+/// Lays the timer and its Start/Pause/Resume/Done action(s) out as a fixed
+/// three-slot row — [Expanded] on both sides of the (naturally sized)
+/// clock, each aligned to its own outer edge — so the clock always sits
+/// dead-center no matter which side has content and which is empty,
+/// mirroring the pattern used by the bag detail screen's top bar.
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({required this.timer, required this.bag, this.onDone});
 
   final BagTimerController timer;
   final BagEntity bag;
   final ValueChanged<BagEntity>? onDone;
 
+  Future<void> _handlePause() async {
+    final String? reason = await PauseReasonDialog.show();
+    if (reason != null) timer.pause(reason: reason);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      Widget? left;
+      Widget? right;
+
       switch (timer.status.value) {
         case BagWorkStatus.notStarted:
-          return _ActionButton(
+          right = _ActionButton(
             label: AppStrings.start,
             icon: Icons.play_arrow_rounded,
             color: AppColors.primary,
             onTap: timer.start,
           );
         case BagWorkStatus.running:
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ActionButton(
-                label: AppStrings.pause,
-                icon: Icons.pause_rounded,
-                color: AppColors.warning,
-                onTap: timer.pause,
-              ),
-              const SizedBox(width: AppDimensions.spacingSm),
-              _ActionButton(
-                label: AppStrings.done,
-                icon: Icons.check_rounded,
-                color: AppColors.success,
-                onTap: () {
-                  timer.done();
-                  onDone?.call(bag);
-                },
-              ),
-            ],
+          left = _ActionButton(
+            label: AppStrings.pause,
+            icon: Icons.pause_rounded,
+            color: AppColors.warning,
+            onTap: _handlePause,
+          );
+          right = _ActionButton(
+            label: AppStrings.done,
+            icon: Icons.check_rounded,
+            color: AppColors.success,
+            onTap: () {
+              timer.done();
+              onDone?.call(bag);
+            },
           );
         case BagWorkStatus.paused:
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ActionButton(
-                label: AppStrings.resume,
-                icon: Icons.play_arrow_rounded,
-                color: AppColors.info,
-                onTap: timer.resume,
-              ),
-              const SizedBox(width: AppDimensions.spacingSm),
-              _ActionButton(
-                label: AppStrings.done,
-                icon: Icons.check_rounded,
-                color: AppColors.success,
-                onTap: () {
-                  timer.done();
-                  onDone?.call(bag);
-                },
-              ),
-            ],
+          left = _ActionButton(
+            label: AppStrings.resume,
+            icon: Icons.play_arrow_rounded,
+            color: AppColors.info,
+            onTap: timer.resume,
+          );
+          right = _ActionButton(
+            label: AppStrings.done,
+            icon: Icons.check_rounded,
+            color: AppColors.success,
+            onTap: () {
+              timer.done();
+              onDone?.call(bag);
+            },
           );
         case BagWorkStatus.done:
-          return _ActionButton(
+          right = _ActionButton(
             label: AppStrings.completed,
             icon: Icons.check_circle_rounded,
             color: AppColors.success,
             onTap: null,
           );
       }
+
+      return Row(
+        children: [
+          Expanded(child: Align(alignment: Alignment.centerLeft, child: left ?? const SizedBox())),
+          _ProductivityClock(timer: timer),
+          Expanded(child: Align(alignment: Alignment.centerRight, child: right)),
+        ],
+      );
     });
   }
 }
@@ -460,49 +464,55 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-      elevation: 0,
-      child: InkWell(
+    // Scales the whole pill down (never up) so the longest label —
+    // "Completed" — can't overflow the narrower half-width it's given when
+    // the other side of the status row is empty.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Material(
+        color: color,
         borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingMd,
-            vertical: AppDimensions.spacingSm,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.35),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                    ),
-              ),
-              const SizedBox(width: AppDimensions.spacingXs),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppColors.onPrimary.withValues(alpha: 0.24),
-                  shape: BoxShape.circle,
+        elevation: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacingMd,
+              vertical: AppDimensions.spacingSm,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.35),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
-                child: Icon(icon, color: AppColors.onPrimary, size: AppDimensions.iconMd),
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: AppColors.onPrimary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
+                ),
+                const SizedBox(width: AppDimensions.spacingXs),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.onPrimary.withValues(alpha: 0.24),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: AppColors.onPrimary, size: AppDimensions.iconMd),
+                ),
+              ],
+            ),
           ),
         ),
       ),

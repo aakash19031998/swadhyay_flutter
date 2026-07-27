@@ -18,18 +18,21 @@ class AuthRepositoryImpl implements AuthRepository {
   final LocalStorageService _localStorage;
 
   @override
-  Future<Either<Failure, EmployeeEntity>> login({
+  Future<Either<Failure, ({String message, EmployeeEntity employee})>> login({
     required String employeeNumber,
     required String pin,
   }) async {
     try {
-      final EmployeeModel employee = await _dataSource.login(employeeNumber: employeeNumber, pin: pin);
+      final ({String message, EmployeeModel employee}) result =
+          await _dataSource.login(employeeNumber: employeeNumber, pin: pin);
 
-      await _secureStorage.saveAuthToken('session-${employee.empCode}-${DateTime.now().millisecondsSinceEpoch}');
-      await _localStorage.saveJson(StorageKeys.loggedInEmployee, employee.toJson());
+      await _secureStorage.saveAuthToken(
+        'session-${result.employee.empCode}-${DateTime.now().millisecondsSinceEpoch}',
+      );
+      await _localStorage.saveJson(StorageKeys.loggedInEmployee, result.employee.toJson());
       await _localStorage.setLoggedIn(true);
 
-      return Right(employee);
+      return Right((message: result.message, employee: result.employee));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on UnauthorizedException catch (e) {

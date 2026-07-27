@@ -29,10 +29,12 @@ class AppStrings {
   static const String employeeNumber = 'Employee number';
   static const String employeeNumberHint = 'Enter your employee number';
   static const String employeeNumberRequired = 'Employee number is required';
+  static const String employeeNumberInvalidLength = 'Employee number must be exactly 5 digits';
   static const String enterPinNumber = 'Enter pin number';
   static const String pinRequired = 'Please enter a valid 4-digit PIN';
   static const String signIn = 'SIGN IN';
   static const String invalidCredentials = 'Invalid employee number or PIN';
+  static const String loginSuccessTitle = 'Success';
 
   // Home / Drawer.
   static const String welcome = 'Welcome,';
@@ -63,14 +65,22 @@ class AppStrings {
   static const String resume = 'Resume';
   static const String done = 'Done';
   static const String completed = 'Completed';
+  static const String scanBag = 'Scan Bag';
+  static const String cameraPermissionDeniedTitle = 'Camera Permission Needed';
+  static const String cameraPermissionDeniedMessage =
+      'Camera access was denied. Please allow camera permission from app settings to scan.';
+  static const String cameraUnavailable = 'No front camera available on this device';
+  static const String openSettings = 'Open Settings';
+  static const String pauseReasonTitle = 'Pause Reason';
+  static const String pauseReasonMessage = 'Please let us know why you are pausing this task.';
+  static const String pauseReasonHint = 'Select reason for pause';
+  static const String pauseReasonRequired = 'Reason is required';
 
   // Bag detail.
   static const String backPause = 'Back / Pause';
   static const String metal = 'Metal';
   static const String designGrossWt = 'Design Gross Wt';
-  static const String extra = 'Extra';
-  static const String diamondWax = 'Diamond (Wax)';
-  static const String extra2 = 'Extra2';
+  static const String designNetWt = 'Design Net Weight';
   static const String designInstr = 'Design Instr.';
   static const String custInstr = 'Cust Instr.';
   static const String stampInstr = 'Stamp Instr.';
@@ -84,6 +94,7 @@ class AppStrings {
   static const String customer = 'Customer';
   static const String part = 'Part';
   static const String poNo = 'PoNo';
+  static const String styleNo = 'Style No.';
   static const String noDataAvailable = 'No data available';
   static const String manufacturingInstructions = 'Manufacturing Instructions';
   static const String srNo = 'Sr No';
@@ -118,25 +129,27 @@ class AppStrings {
   static const String pendingSettings = 'Pending Settings';
   static const String addSettingBeforeSubmit = 'Add at least one setting before submitting';
   static const String bagCompletedSuccess = 'Bag completed successfully';
+  static const String submitConfirmTitle = 'Submit Entry';
+  static const String submitConfirmMessage =
+      'Are you sure you want to save this work entry? Once submitted, the bag will be marked as completed.';
 
   // Profile.
   static const String profile = 'Profile';
   static const String empCodeLabel = 'Emp. Code';
   static const String department = 'Department';
   static const String inTimeLabel = 'In Time';
-  static const String workEfficiency = 'Work Efficiency';
-  static const String performanceMetric = 'Performance Metric';
-  static const String performanceExcellent = 'Excellent';
-  static const String performanceGood = 'Good';
-  static const String performanceNeedsImprovement = 'Needs Improvement';
+  static const String companyCodeLabel = 'Company Code';
+  static const String totalHrsTillDateLabel = 'Total Hrs Till Date';
+  static const String otHrsLabel = 'OT Hrs';
+  static const String presentDaysLabel = 'Present Days';
 
   // Artist production report.
   static const String artistProductionReportTitle = 'Artist Production Report';
   static const String fromDate = 'From Date';
   static const String toDate = 'To Date';
   static const String show = 'Show';
-  static const String prediction = 'Prediction';
-  static const String totalPrediction = 'Total Prediction';
+  static const String prediction = 'Parts Qty';
+  static const String actualBagPieces = 'Actual Bag Pieces';
   static const String actualPcsStone = 'Actual Pcs/Stone';
   static const String workTypeSummary = 'Work Type Summary';
   static const String productionDetail = 'Production Detail';
@@ -147,6 +160,9 @@ class AppStrings {
   static const String usedMinutes = 'Used Minutes';
   static const String unusedMinutes = 'Unused';
   static const String noTimingData = 'No timing data for this month yet';
+  static const String selectMonth = 'Select Month';
+  static const String tillDateSummary = 'Till Date Summary';
+  static const String dailyBreakdown = 'Daily Breakdown';
 
   // Skip bag.
   static const String bagNumber = 'Bag Number';

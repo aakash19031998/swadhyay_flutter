@@ -7,7 +7,8 @@
 class ApiEndpoints {
   const ApiEndpoints._();
 
-  static const String login = '/auth/login';
+  static const String checkLogInNew = '/CheckLogInNew';
+  static const String menuListNew = '/MenuListNew';
   static const String logout = '/auth/logout';
   static const String changePassword = '/auth/change-password';
   static const String bagList = '/bags';

@@ -11,10 +11,16 @@ class EmployeeEntity extends Equatable {
     this.avatarUrl,
     this.punchInAt,
     this.department,
+    this.deptCode,
+    this.employeeType,
     this.contactNumber,
     this.alternateContactNumber,
     this.address,
     this.workEfficiency,
+    this.companyCode,
+    this.totalHoursTillDate,
+    this.otHours,
+    this.presentDays,
   });
 
   final String empCode;
@@ -22,10 +28,16 @@ class EmployeeEntity extends Equatable {
   final String? avatarUrl;
   final DateTime? punchInAt;
   final String? department;
+  final String? deptCode;
+  final String? employeeType;
   final String? contactNumber;
   final String? alternateContactNumber;
   final String? address;
   final String? workEfficiency;
+  final String? companyCode;
+  final String? totalHoursTillDate;
+  final String? otHours;
+  final int? presentDays;
 
   @override
   List<Object?> get props => [
@@ -34,9 +46,15 @@ class EmployeeEntity extends Equatable {
         avatarUrl,
         punchInAt,
         department,
+        deptCode,
+        employeeType,
         contactNumber,
         alternateContactNumber,
         address,
         workEfficiency,
+        companyCode,
+        totalHoursTillDate,
+        otHours,
+        presentDays,
       ];
 }

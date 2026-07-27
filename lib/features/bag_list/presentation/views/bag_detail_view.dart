@@ -13,11 +13,12 @@ import '../../domain/entities/diamond_detail_entity.dart';
 import '../controllers/bag_detail_controller.dart';
 import '../controllers/bag_timer_controller.dart';
 
-/// Bag detail screen: a live productivity clock in the top bar, a
-/// manufacturing-instructions spec grid, a Diamond Details / Bag RM Summary
-/// tab pair, a jewelry preview, and a right-hand summary sidebar. Laid out
-/// primarily for tablet width; narrow screens stack the sidebar below the
-/// main content instead of beside it.
+/// Bag detail screen: a live productivity clock in the top bar, then Bag
+/// Summary + the jewelry preview side by side (tablet) / stacked (phone),
+/// and — full width, below that pair — Manufacturing Instructions and the
+/// Diamond Details / Bag RM Summary tabs. Diamond Details / Bag RM Summary
+/// render as a flex-column table that always fills the available width
+/// exactly — no horizontal scrolling, on any phone or tablet size.
 class BagDetailView extends GetView<BagDetailController> {
   const BagDetailView({super.key});
 
@@ -32,34 +33,121 @@ class BagDetailView extends GetView<BagDetailController> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(AppDimensions.spacingMd),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
-
-                    final Widget main = _MainContent(controller: controller);
-                    final Widget sidebar = _Sidebar(controller: controller);
-
-                    if (!isTablet) {
-                      return Column(
-                        children: [main, const SizedBox(height: AppDimensions.spacingMd), sidebar],
-                      );
-                    }
-
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: main),
-                        const SizedBox(width: AppDimensions.spacingMd),
-                        SizedBox(width: AppDimensions.bagDetailSidebarWidth, child: sidebar),
-                      ],
-                    );
-                  },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HeaderRow(controller: controller),
+                    const SizedBox(height: AppDimensions.spacingMd),
+                    SectionCard(
+                      title: AppStrings.manufacturingInstructions,
+                      icon: Icons.build_outlined,
+                      child: _ManufacturingSpecs(bag: controller.bag),
+                    ),
+                    const SizedBox(height: AppDimensions.spacingMd),
+                    SectionCard(
+                      padding: EdgeInsets.zero,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                        child: Column(
+                          children: [
+                            _SegmentedTabBar(tabController: controller.tabController),
+                            // Swaps the visible table directly off the tab index —
+                            // switching only by tapping the segmented tab bar above,
+                            // no left/right swipe gesture — while the section's
+                            // height always matches exactly whichever table is
+                            // currently selected.
+                            AnimatedBuilder(
+                              animation: controller.tabController,
+                              builder: (context, _) {
+                                return controller.tabController.index == 0
+                                    ? _DiamondDetailsTable(details: controller.bag.diamondDetails)
+                                    : _RmSummaryTable(items: controller.bag.rmSummary);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Bag Summary and the jewelry preview as a matched pair at the top — side
+/// by side on tablet width, stacked on phone width. On tablet, the preview
+/// is sized to exactly [_summaryHeight] x [_summaryHeight] — a true square
+/// whose side equals the Bag Summary card's own (content-driven) height —
+/// so the two always finish at the same bottom edge, with the image never
+/// distorted into a tall or wide rectangle.
+///
+/// [_summaryHeight] is measured (not computed via [IntrinsicHeight], which
+/// probes every descendant's intrinsic height and crashes given this card's
+/// [Expanded]-based chip grid) by attaching a [GlobalKey] to the already
+/// on-screen Bag Summary card and reading its real rendered size back after
+/// each frame — the same measure-then-rebuild approach already used for
+/// [_ExpandingTabBarView]'s dynamic tab height.
+class _HeaderRow extends StatefulWidget {
+  const _HeaderRow({required this.controller});
+
+  final BagDetailController controller;
+
+  @override
+  State<_HeaderRow> createState() => _HeaderRowState();
+}
+
+class _HeaderRowState extends State<_HeaderRow> {
+  final GlobalKey _summaryKey = GlobalKey();
+  double? _summaryHeight;
+
+  void _scheduleMeasure() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final double? height = _summaryKey.currentContext?.size?.height;
+      if (height != null && height != _summaryHeight) {
+        setState(() => _summaryHeight = height);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _scheduleMeasure();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
+        final Widget summary = KeyedSubtree(
+          key: _summaryKey,
+          child: _BagSummaryCard(bag: widget.controller.bag, columns: isTablet ? 3 : 1),
+        );
+        final Widget preview = _JewelryPreview(imageUrl: widget.controller.bag.imageUrl);
+
+        if (!isTablet) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [summary, const SizedBox(height: AppDimensions.spacingMd), preview],
+          );
+        }
+
+        // Fall back to the old fixed size for the one frame before the
+        // real height has been measured.
+        final double squareSide = _summaryHeight ?? AppDimensions.bagDetailSidebarWidth;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: summary),
+            const SizedBox(width: AppDimensions.spacingMd),
+            SizedBox(width: squareSide, height: squareSide, child: preview),
+          ],
+        );
+      },
     );
   }
 }
@@ -100,10 +188,10 @@ class _TopBar extends StatelessWidget {
                     onTap: controller.pauseAndGoBack,
                     filled: false,
                   ),
-                  const SizedBox(width: AppDimensions.spacingSm),
+                  const SizedBox(width: AppDimensions.spacingLg),
                   Text(
                     controller.bag.bagNo,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.onPrimary,
                           fontWeight: FontWeight.w700,
                         ),
@@ -148,7 +236,7 @@ class _LiveTimerPill extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.spacingMd,
-          vertical: AppDimensions.spacingXs,
+          vertical: AppDimensions.spacingSm,
         ),
         decoration: BoxDecoration(
           color: AppColors.successContainer,
@@ -159,8 +247,8 @@ class _LiveTimerPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 10,
+              height: 10,
               decoration: BoxDecoration(
                 color: isRunning ? AppColors.success : AppColors.textHint,
                 shape: BoxShape.circle,
@@ -169,7 +257,7 @@ class _LiveTimerPill extends StatelessWidget {
             const SizedBox(width: AppDimensions.spacingXs),
             Text(
               DateTimeHelper.formatStopwatch(elapsed),
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppColors.success,
                     fontWeight: FontWeight.w800,
                   ),
@@ -230,54 +318,166 @@ class _TopBarButton extends StatelessWidget {
   }
 }
 
-class _MainContent extends StatelessWidget {
-  const _MainContent({required this.controller});
+/// Del Date / Part / Bag Qty / Pieces / Size / Customer / PoNo as a grid of
+/// soft, color-coded icon-leading tiles (2 per row on tablet, 1 on phone).
+/// Each tile's icon badge cycles through the app's semantic accent colors
+/// (info/warning/success/primary) purely for visual variety — the colors
+/// carry no status meaning here, unlike their use elsewhere in the app.
+/// The card's height is left to size naturally to its content; see
+/// [_HeaderRow], which stretches the jewelry preview to match it.
+class _BagSummaryCard extends StatelessWidget {
+  const _BagSummaryCard({required this.bag, required this.columns});
 
-  final BagDetailController controller;
+  final BagEntity bag;
+  final int columns;
+
+  static const List<Color> _accents = [
+    AppColors.info,
+    AppColors.warning,
+    AppColors.success,
+    AppColors.primary,
+  ];
+  static const List<Color> _accentContainers = [
+    AppColors.infoContainer,
+    AppColors.warningContainer,
+    AppColors.successContainer,
+    AppColors.primaryContainer,
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final BagEntity bag = controller.bag;
+    final List<_SummaryFieldData> fields = [
+      _SummaryFieldData(
+        icon: Icons.event_outlined,
+        label: AppStrings.delDate,
+        value: bag.delDate == null ? '' : DateTimeHelper.formatDate(bag.delDate!),
+      ),
+      _SummaryFieldData(icon: Icons.inventory_2_outlined, label: AppStrings.bagQty, value: '${bag.bagQty}'),
+      _SummaryFieldData(icon: Icons.style_outlined, label: AppStrings.styleNo, value: bag.styleNo ?? ''),
+      _SummaryFieldData(icon: Icons.person_outline, label: AppStrings.customer, value: bag.customer ?? ''),
+      _SummaryFieldData(icon: Icons.tag, label: AppStrings.part, value: bag.part ?? ''),
+      _SummaryFieldData(icon: Icons.straighten_outlined, label: AppStrings.size, value: bag.size ?? ''),
+    ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionCard(
-          title: AppStrings.manufacturingInstructions,
-          icon: Icons.build_outlined,
-          child: _ManufacturingSpecs(bag: bag),
+    final List<Widget> items = [
+      for (int i = 0; i < fields.length; i++)
+        _SummaryDetailItem(
+          icon: fields[i].icon,
+          label: fields[i].label,
+          value: fields[i].value,
+          accent: _accents[i % _accents.length],
+          accentContainer: _accentContainers[i % _accentContainers.length],
         ),
-        const SizedBox(height: AppDimensions.spacingMd),
-        SectionCard(
-          padding: EdgeInsets.zero,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            child: Column(
-              children: [
-                _SegmentedTabBar(tabController: controller.tabController),
-                SizedBox(
-                  height: AppDimensions.bagDetailTabViewHeight,
-                  child: TabBarView(
-                    controller: controller.tabController,
-                    children: [
-                      _DiamondDetailsTable(details: bag.diamondDetails),
-                      _RmSummaryTable(items: bag.rmSummary),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+    ];
+
+    final List<Widget> rows = [
+      for (int i = 0; i < items.length; i += columns)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (int c = 0; c < columns; c++) ...[
+              if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
+              Expanded(child: i + c < items.length ? items[i + c] : const SizedBox()),
+            ],
+          ],
         ),
-      ],
+    ];
+
+    return SectionCard(
+      title: AppStrings.bagSummary,
+      icon: Icons.summarize_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < rows.length; i++) ...[
+            if (i > 0) const SizedBox(height: AppDimensions.spacingSm),
+            rows[i],
+          ],
+        ],
+      ),
     );
   }
 }
 
-/// Metal / Design Gross Wt / Extra / Diamond (Wax) / Extra2 as a wrapped
-/// row of spec chips, then the six longer instruction fields as a
-/// responsive 2-column (tablet) / 1-column (phone) grid — replacing the
-/// old label-only bordered table with real values.
+class _SummaryFieldData {
+  const _SummaryFieldData({required this.icon, required this.label, required this.value});
+
+  final IconData icon;
+  final String label;
+  final String value;
+}
+
+class _SummaryDetailItem extends StatelessWidget {
+  const _SummaryDetailItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.accent,
+    required this.accentContainer,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color accent;
+  final Color accentContainer;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.spacingSm),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accentContainer,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ),
+            child: Icon(icon, size: AppDimensions.iconSm, color: accent),
+          ),
+          const SizedBox(width: AppDimensions.spacingSm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: textTheme.labelSmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                      ),
+                ),
+                const SizedBox(height: AppDimensions.spacingXxs),
+                Text(
+                  value.isEmpty ? '—' : value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Metal / Design Gross Wt / Design Net Weight as a wrapped row of spec
+/// chips, then the six instruction fields stacked one per line (always a
+/// single column, on every screen size).
 class _ManufacturingSpecs extends StatelessWidget {
   const _ManufacturingSpecs({required this.bag});
 
@@ -297,54 +497,45 @@ class _ManufacturingSpecs extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: AppDimensions.spacingSm,
-          runSpacing: AppDimensions.spacingSm,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _SpecBox(label: AppStrings.metal, value: bag.metal),
-            _SpecBox(
-              label: AppStrings.designGrossWt,
-              value: bag.designGrossWt == null ? null : '${bag.designGrossWt!.toStringAsFixed(2)} grm',
+            Expanded(
+              child: _SpecBox(
+                icon: Icons.diamond_outlined,
+                color: AppColors.primary,
+                label: AppStrings.metal,
+                value: bag.metal,
+              ),
             ),
-            _SpecBox(label: AppStrings.diamondWax, value: bag.diamondWax),
-            _SpecBox(label: AppStrings.extra, value: bag.extra),
-            _SpecBox(label: AppStrings.extra2, value: bag.extra2),
+            const SizedBox(width: AppDimensions.spacingSm),
+            Expanded(
+              child: _SpecBox(
+                icon: Icons.scale_outlined,
+                color: AppColors.info,
+                label: AppStrings.designGrossWt,
+                value: bag.designGrossWt == null ? null : '${bag.designGrossWt!.toStringAsFixed(2)} grm',
+              ),
+            ),
+            const SizedBox(width: AppDimensions.spacingSm),
+            Expanded(
+              child: _SpecBox(
+                icon: Icons.monitor_weight_outlined,
+                color: AppColors.success,
+                label: AppStrings.designNetWt,
+                value: bag.designNetWt == null ? null : '${bag.designNetWt!.toStringAsFixed(2)} grm',
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppDimensions.spacingMd),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
-
-            if (!isTablet) {
-              return Column(
-                children: [
-                  for (final tile in instructionTiles) ...[
-                    tile,
-                    if (tile != instructionTiles.last) const SizedBox(height: AppDimensions.spacingSm),
-                  ],
-                ],
-              );
-            }
-
-            return Column(
-              children: [
-                for (int i = 0; i < instructionTiles.length; i += 2) ...[
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: instructionTiles[i]),
-                        const SizedBox(width: AppDimensions.spacingSm),
-                        Expanded(child: instructionTiles[i + 1]),
-                      ],
-                    ),
-                  ),
-                  if (i + 2 < instructionTiles.length) const SizedBox(height: AppDimensions.spacingSm),
-                ],
-              ],
-            );
-          },
+        Column(
+          children: [
+            for (final tile in instructionTiles) ...[
+              tile,
+              if (tile != instructionTiles.last) const SizedBox(height: AppDimensions.spacingSm),
+            ],
+          ],
         ),
       ],
     );
@@ -352,8 +543,10 @@ class _ManufacturingSpecs extends StatelessWidget {
 }
 
 class _SpecBox extends StatelessWidget {
-  const _SpecBox({required this.label, required this.value});
+  const _SpecBox({required this.icon, required this.color, required this.label, required this.value});
 
+  final IconData icon;
+  final Color color;
   final String label;
   final String? value;
 
@@ -362,27 +555,41 @@ class _SpecBox extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingMd,
-        vertical: AppDimensions.spacingSm,
-      ),
+      padding: const EdgeInsets.all(AppDimensions.spacingXs),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-        border: Border.all(color: AppColors.border),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            label.toUpperCase(),
-            style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary, letterSpacing: 0.4),
+          Container(
+            width: AppDimensions.iconMd,
+            height: AppDimensions.iconMd,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(icon, size: AppDimensions.iconSm, color: AppColors.onPrimary),
           ),
-          const SizedBox(height: AppDimensions.spacingXxs),
-          Text(
-            value ?? '—',
-            style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          const SizedBox(width: AppDimensions.spacingXs),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary, letterSpacing: 0.4),
+                ),
+                const SizedBox(height: AppDimensions.spacingXxs),
+                Text(
+                  value ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(color: color, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -401,6 +608,7 @@ class _InstructionTile extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.spacingMd,
         vertical: AppDimensions.spacingSm,
@@ -463,6 +671,131 @@ class _SegmentedTabBar extends StatelessWidget {
   }
 }
 
+/// One column definition for [_FlexTable]: [flex] controls its share of the
+/// table's total width (so the table always fills exactly 100% of
+/// whatever width it's given — tablet or phone — with no fixed pixel
+/// widths and no horizontal scrolling).
+class _FlexColumn {
+  const _FlexColumn({required this.label, this.flex = 2, this.alignEnd = false});
+
+  final String label;
+  final int flex;
+  final bool alignEnd;
+}
+
+/// A table that always fits the width it's laid out in. Each cell is
+/// wrapped in [FittedBox] so a value that's still too long for its column
+/// on a narrow phone scales down instead of overflowing or forcing a
+/// horizontal scrollbar.
+class _FlexTable extends StatelessWidget {
+  const _FlexTable({required this.columns, required this.rows, required this.isEmpty});
+
+  final List<_FlexColumn> columns;
+  final List<List<String>> rows;
+  final bool isEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimensions.spacingMd),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ColoredBox(
+                color: AppColors.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.spacingSm,
+                    vertical: AppDimensions.spacingSm,
+                  ),
+                  child: Row(
+                    children: [
+                      for (final column in columns)
+                        Expanded(
+                          flex: column.flex,
+                          child: _FlexCell(
+                            text: column.label.toUpperCase(),
+                            alignEnd: column.alignEnd,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(AppDimensions.spacingLg),
+                  child: Text(
+                    AppStrings.noDataAvailable,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
+                  ),
+                )
+              else
+                for (int r = 0; r < rows.length; r++)
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: r.isEven ? AppColors.surface : AppColors.background,
+                      border: const Border(top: BorderSide(color: AppColors.divider)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.spacingSm,
+                        vertical: AppDimensions.spacingSm,
+                      ),
+                      child: Row(
+                        children: [
+                          for (int c = 0; c < columns.length; c++)
+                            Expanded(
+                              flex: columns[c].flex,
+                              child: _FlexCell(text: rows[r][c], alignEnd: columns[c].alignEnd),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FlexCell extends StatelessWidget {
+  const _FlexCell({required this.text, required this.alignEnd, this.style});
+
+  final String text;
+  final bool alignEnd;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+        child: Text(
+          text,
+          maxLines: 1,
+          style: style ?? Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+    );
+  }
+}
+
 class _DiamondDetailsTable extends StatelessWidget {
   const _DiamondDetailsTable({required this.details});
 
@@ -470,34 +803,31 @@ class _DiamondDetailsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _DataTableTab(
+    return _FlexTable(
       isEmpty: details.isEmpty,
-      table: DataTable(
-        headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant),
-        columns: const [
-          DataColumn(label: Text(AppStrings.srNo)),
-          DataColumn(label: Text(AppStrings.shape)),
-          DataColumn(label: Text(AppStrings.sizeMm)),
-          DataColumn(label: Text(AppStrings.pcs)),
-          DataColumn(label: Text(AppStrings.weightCt)),
-          DataColumn(label: Text(AppStrings.color)),
-          DataColumn(label: Text(AppStrings.clarity)),
-          DataColumn(label: Text(AppStrings.setting)),
-        ],
-        rows: [
-          for (final d in details)
-            DataRow(cells: [
-              DataCell(Text('${d.srNo}')),
-              DataCell(Text(d.shape)),
-              DataCell(Text(d.sizeMm.toStringAsFixed(2))),
-              DataCell(Text('${d.pcs}')),
-              DataCell(Text(d.weightCt.toStringAsFixed(2))),
-              DataCell(Text(d.color)),
-              DataCell(Text(d.clarity)),
-              DataCell(Text(d.setting)),
-            ]),
-        ],
-      ),
+      columns: const [
+        _FlexColumn(label: AppStrings.srNo, flex: 2),
+        _FlexColumn(label: AppStrings.shape, flex: 3),
+        _FlexColumn(label: AppStrings.sizeMm, flex: 3, alignEnd: true),
+        _FlexColumn(label: AppStrings.pcs, flex: 2, alignEnd: true),
+        _FlexColumn(label: AppStrings.weightCt, flex: 3, alignEnd: true),
+        _FlexColumn(label: AppStrings.color, flex: 2),
+        _FlexColumn(label: AppStrings.clarity, flex: 2),
+        _FlexColumn(label: AppStrings.setting, flex: 3),
+      ],
+      rows: [
+        for (final d in details)
+          [
+            '${d.srNo}',
+            d.shape,
+            d.sizeMm.toStringAsFixed(2),
+            '${d.pcs}',
+            d.weightCt.toStringAsFixed(2),
+            d.color,
+            d.clarity,
+            d.setting,
+          ],
+      ],
     );
   }
 }
@@ -509,124 +839,28 @@ class _RmSummaryTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _DataTableTab(
+    return _FlexTable(
       isEmpty: items.isEmpty,
-      table: DataTable(
-        headingRowColor: WidgetStateProperty.all(AppColors.surfaceVariant),
-        columns: const [
-          DataColumn(label: Text(AppStrings.materialCode)),
-          DataColumn(label: Text(AppStrings.rmDescription)),
-          DataColumn(label: Text(AppStrings.allocatedQty)),
-          DataColumn(label: Text(AppStrings.issuedQty)),
-          DataColumn(label: Text(AppStrings.status)),
-        ],
-        rows: [
-          for (final r in items)
-            DataRow(cells: [
-              DataCell(Text(r.materialCode)),
-              DataCell(Text(r.description)),
-              DataCell(Text(r.allocatedQty)),
-              DataCell(Text(r.issuedQty)),
-              DataCell(
-                Text(
-                  r.status,
-                  style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800),
-                ),
-              ),
-            ]),
-        ],
-      ),
-    );
-  }
-}
-
-class _DataTableTab extends StatelessWidget {
-  const _DataTableTab({required this.table, required this.isEmpty});
-
-  final DataTable table;
-  final bool isEmpty;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.spacingMd),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: table,
-          ),
-          if (isEmpty) ...[
-            const SizedBox(height: AppDimensions.spacingSm),
-            Text(
-              AppStrings.noDataAvailable,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _Sidebar extends StatelessWidget {
-  const _Sidebar({required this.controller});
-
-  final BagDetailController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final BagEntity bag = controller.bag;
-
-    return Column(
-      children: [
-        SectionCard(
-          padding: const EdgeInsets.all(AppDimensions.spacingSm),
-          child: _JewelryPreview(imageUrl: bag.imageUrl),
-        ),
-        const SizedBox(height: AppDimensions.spacingMd),
-        SectionCard(
-          title: AppStrings.bagSummary,
-          icon: Icons.summarize_outlined,
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXs),
-          child: Column(
-            children: [
-              _SidebarField(
-                icon: Icons.event_outlined,
-                label: AppStrings.delDate,
-                value: bag.delDate == null ? '' : DateTimeHelper.formatDate(bag.delDate!),
-              ),
-              _SidebarField(icon: Icons.tag, label: AppStrings.part, value: bag.part ?? ''),
-              _SidebarField(
-                icon: Icons.inventory_2_outlined,
-                label: AppStrings.bagQty,
-                value: '${bag.bagQty}',
-              ),
-              _SidebarField(
-                icon: Icons.numbers_outlined,
-                label: AppStrings.pieces,
-                value: bag.pieceQty == null ? '' : '${bag.pieceQty}',
-              ),
-              _SidebarField(icon: Icons.straighten_outlined, label: AppStrings.size, value: bag.size ?? ''),
-              _SidebarField(icon: Icons.person_outline, label: AppStrings.customer, value: bag.customer ?? ''),
-              _SidebarField(
-                icon: Icons.receipt_long_outlined,
-                label: AppStrings.poNo,
-                value: bag.poNo ?? '',
-                isLast: true,
-              ),
-            ],
-          ),
-        ),
+      columns: const [
+        _FlexColumn(label: AppStrings.materialCode, flex: 3),
+        _FlexColumn(label: AppStrings.rmDescription, flex: 4),
+        _FlexColumn(label: AppStrings.allocatedQty, flex: 3, alignEnd: true),
+        _FlexColumn(label: AppStrings.issuedQty, flex: 3, alignEnd: true),
+        _FlexColumn(label: AppStrings.status, flex: 2, alignEnd: true),
+      ],
+      rows: [
+        for (final r in items) [r.materialCode, r.description, r.allocatedQty, r.issuedQty, r.status],
       ],
     );
   }
 }
 
-/// The jewelry preview lives here — on its own hero card in the sidebar —
-/// rather than inside the Diamond Details tab, so it stays visible no
-/// matter which tab is selected.
+/// The jewelry preview — its own hero card so it stays visible no matter
+/// which tab is selected below it. Always a true square ([AspectRatio] of
+/// 1) — on tablet its width is fixed to [AppDimensions.bagDetailSidebarWidth]
+/// (see [_HeaderRow]), so the square's side is exactly that; on phone it's
+/// stretched to the full column width, so the square's side is the screen
+/// width. The image itself is `cover`-fit so it never distorts.
 class _JewelryPreview extends StatelessWidget {
   const _JewelryPreview({required this.imageUrl});
 
@@ -634,74 +868,30 @@ class _JewelryPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-        child: imageUrl == null
-            ? const ColoredBox(
-                color: AppColors.surfaceVariant,
-                child: Icon(Icons.diamond_outlined, color: AppColors.textHint, size: AppDimensions.iconXl),
-              )
-            : CachedNetworkImage(
-                imageUrl: imageUrl!,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                errorWidget: (context, url, error) => const ColoredBox(
+    return SectionCard(
+      padding: const EdgeInsets.all(AppDimensions.spacingSm),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          child: imageUrl == null
+              ? const ColoredBox(
                   color: AppColors.surfaceVariant,
-                  child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
-                ),
-              ),
-      ),
-    );
-  }
-}
-
-class _SidebarField extends StatelessWidget {
-  const _SidebarField({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.isLast = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: isLast ? BorderSide.none : const BorderSide(color: AppColors.divider)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacingMd,
-          vertical: AppDimensions.spacingSm,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: AppDimensions.iconSm, color: AppColors.textSecondary),
-            const SizedBox(width: AppDimensions.spacingSm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary)),
-                  Text(
-                    value.isEmpty ? '—' : value,
-                    style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                  child: Center(
+                    child: Icon(Icons.diamond_outlined, color: AppColors.textHint, size: AppDimensions.iconXl),
                   ),
-                ],
-              ),
-            ),
-          ],
+                )
+              : CachedNetworkImage(
+                  imageUrl: imageUrl!,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  errorWidget: (context, url, error) => const ColoredBox(
+                    color: AppColors.surfaceVariant,
+                    child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
+                  ),
+                ),
         ),
       ),
     );

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze *)",
+      "Bash(flutter build *)",
+      "Bash(find / -path \"*/mobile_scanner-*/lib/src/mobile_scanner.dart\" 2>/dev/null | head -5)",
+      "Read(//c//**)",
+      "Read(//c/Users/ADMIN/AppData/Local/Pub/Cache/hosted/pub.dev/mobile_scanner-7.4.0/lib/src/**)",
+      "Read(//c/Users/ADMIN/AppData/Local/Temp/claude/**)",
+      "Bash(find / -path \"*mobile_scanner-7.4.0/lib/src/mobile_scanner_controller.dart\" 2>/dev/null | head -5)"
+    ]
+  }
+}

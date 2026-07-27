@@ -12,9 +12,9 @@ class DrawerMenuRepositoryImpl implements DrawerMenuRepository {
   final DrawerMenuDataSource _dataSource;
 
   @override
-  Future<Either<Failure, List<DrawerMenuItemEntity>>> getMenu() async {
+  Future<Either<Failure, List<DrawerMenuItemEntity>>> getMenu(String empCd) async {
     try {
-      final items = await _dataSource.getMenu();
+      final items = await _dataSource.getMenu(empCd);
       return Right(items);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

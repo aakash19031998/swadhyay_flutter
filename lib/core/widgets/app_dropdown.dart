@@ -11,6 +11,7 @@ class AppDropdown<T> extends StatelessWidget {
     this.onChanged,
     this.validator,
     this.hint,
+    this.icon,
   });
 
   final String label;
@@ -21,12 +22,21 @@ class AppDropdown<T> extends StatelessWidget {
   final String? Function(T?)? validator;
   final String? hint;
 
+  /// Optional leading icon (e.g. distinguishing "Work Type" from "Work" at
+  /// a glance) — omitted entirely when null, so every existing call site is
+  /// unaffected.
+  final IconData? icon;
+
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
       initialValue: value,
       isExpanded: true,
-      decoration: InputDecoration(labelText: label, hintText: hint),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: icon == null ? null : Icon(icon),
+      ),
       items: items
           .map((item) => DropdownMenuItem<T>(value: item, child: Text(itemLabel(item))))
           .toList(growable: false),

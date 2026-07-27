@@ -5,5 +5,5 @@ import '../models/drawer_menu_item_model.dart';
 /// is ready for when the menu becomes backend-driven — swapping which one
 /// [HomeBinding] wires in is the only change required.
 abstract class DrawerMenuDataSource {
-  Future<List<DrawerMenuItemModel>> getMenu();
+  Future<List<DrawerMenuItemModel>> getMenu(String empCd);
 }

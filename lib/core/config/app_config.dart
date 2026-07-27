@@ -10,13 +10,32 @@ class AppConfig {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.swadhyay.example.com',
+    defaultValue: 'http://192.168.88.137:99/api',
   );
 
   static const bool useMockData = bool.fromEnvironment(
     'USE_MOCK_DATA',
     defaultValue: true,
   );
+
+  /// Separate from [useMockData]: authentication is wired to the live
+  /// backend by default while every other feature still ships on mock data,
+  /// so this is its own switch rather than reusing the shared one.
+  static const bool useMockAuth = bool.fromEnvironment(
+    'USE_MOCK_AUTH',
+    defaultValue: false,
+  );
+
+  /// Separate from [useMockData]: the navigation drawer is wired to the live
+  /// `MenuListNew` backend by default, independent of other still-mocked
+  /// features.
+  static const bool useMockDrawerMenu = bool.fromEnvironment(
+    'USE_MOCK_DRAWER_MENU',
+    defaultValue: false,
+  );
+
+  /// Sent as `appVersion` in the login request body.
+  static const int appVersion = 0;
 
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 15);

@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-import '../../../../core/storage/local_storage_service.dart';
 import '../../di/auth_dependencies.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
@@ -12,8 +11,6 @@ class LoginBinding extends Bindings {
     AuthDependencies.ensureRegistered();
 
     Get.lazyPut<LoginUseCase>(() => LoginUseCase(Get.find<AuthRepository>()));
-    Get.lazyPut<LoginController>(
-      () => LoginController(Get.find<LoginUseCase>(), Get.find<LocalStorageService>()),
-    );
+    Get.lazyPut<LoginController>(() => LoginController(Get.find<LoginUseCase>()));
   }
 }

@@ -52,13 +52,13 @@ class AppDimensions {
   static const double bagCardImageHeight = 170;
 
   // Bag detail.
-  static const double bagDetailSidebarWidth = 190;
-  static const double bagDetailTabViewHeight = 420;
+  static const double bagDetailSidebarWidth = 200;
   static const double bagDetailSegmentedTabBarHeight = 40;
 
-  // Profile.
-  static const double profileHeroAvatarSize = 130;
-  static const double profileGaugeSize = 110;
+  // Profile. Avatar grown from 130 -> 146 with the hero card's vertical
+  // padding correspondingly reduced (spacingXl -> spacingLg, 8px/side) so
+  // the card's overall height stays the same.
+  static const double profileHeroAvatarSize = 146;
 
   // Timing report chart. Plot height is computed at runtime from the
   // available screen space (full-screen chart) rather than fixed, clamped
@@ -70,11 +70,15 @@ class AppDimensions {
   static const double timingChartBarGap = 3;
   static const double timingChartDayColumnGap = 10;
   static const double timingChartYAxisWidth = 40;
+  static const double timingPieChartSize = 120;
 
   // PIN input.
   static const double pinBoxSize = 56;
   static const double pinBoxSpacing = spacingMd;
   static const int pinLength = 4;
+
+  // Login. Employee number is a fixed-length numeric code (min == max).
+  static const int empCodeLength = 5;
 
   // Drawer. Two fractions so width actually scales with screen size at both
   // ends instead of sitting pinned at drawerMinWidth for every phone.
