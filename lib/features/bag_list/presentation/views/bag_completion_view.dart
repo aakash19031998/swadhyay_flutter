@@ -106,9 +106,24 @@ class _MetaPillsRow extends StatelessWidget {
         final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
 
         final List<Widget> pills = [
-          _MetaPill(label: AppStrings.bagNoShort, value: controller.bag.bagNo),
-          _MetaPill(label: AppStrings.designNoLabel, value: controller.bag.designNo),
-          _MetaPill(label: AppStrings.orderNo, value: controller.bag.locationCode),
+          _MetaPill(
+            icon: Icons.qr_code_2_rounded,
+            color: AppColors.primary,
+            label: AppStrings.bagNoShort,
+            value: controller.bag.bagNo,
+          ),
+          _MetaPill(
+            icon: Icons.design_services_outlined,
+            color: AppColors.info,
+            label: AppStrings.designNoLabel,
+            value: controller.bag.designNo,
+          ),
+          _MetaPill(
+            icon: Icons.receipt_long_outlined,
+            color: AppColors.success,
+            label: AppStrings.orderNo,
+            value: controller.bag.locationCode,
+          ),
         ];
 
         if (!isTablet) {
@@ -139,8 +154,10 @@ class _MetaPillsRow extends StatelessWidget {
 }
 
 class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.label, required this.value});
+  const _MetaPill({required this.icon, required this.color, required this.label, required this.value});
 
+  final IconData icon;
+  final Color color;
   final String label;
   final String value;
 
@@ -148,57 +165,54 @@ class _MetaPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.textPrimary.withValues(alpha: 0.03),
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(width: 4, child: ColoredBox(color: AppColors.primary)),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacingMd,
-                    vertical: AppDimensions.spacingSm,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label.toUpperCase(),
-                        style: textTheme.labelSmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.spacingXxs),
-                      Text(
-                        value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                    ],
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.spacingMd),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.03),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: AppDimensions.avatarSm,
+            height: AppDimensions.avatarSm,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(icon, color: AppColors.onPrimary, size: AppDimensions.iconMd),
+          ),
+          const SizedBox(width: AppDimensions.spacingMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.6,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppDimensions.spacingXxs),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: color),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -230,6 +244,7 @@ class _WorkFormCard extends StatelessWidget {
               return Obx(() {
                 final Widget workTypeField = AppDropdown<String>(
                   label: AppStrings.workType,
+                  icon: Icons.category_outlined,
                   items: BagCompletionController.workTypeOptions,
                   itemLabel: (item) => item,
                   value: controller.workType.value,
@@ -237,6 +252,7 @@ class _WorkFormCard extends StatelessWidget {
                 );
                 final Widget workField = AppDropdown<String>(
                   label: AppStrings.work,
+                  icon: Icons.construction_outlined,
                   items: BagCompletionController.workOptions,
                   itemLabel: (item) => item,
                   value: controller.work.value,

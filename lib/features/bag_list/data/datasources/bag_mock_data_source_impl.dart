@@ -52,6 +52,7 @@ class BagMockDataSourceImpl implements BagDataSource {
   // sample specs so every bag isn't identical.
   static const List<String> _metals = ['18K Yellow Gold', '14K White Gold'];
   static const List<double> _grossWeights = [8.50, 6.25];
+  static const List<double> _netWeights = [7.20, 5.10];
   static const List<String> _customers = ['HK Design', 'Aurelia Jewels'];
 
   static List<DiamondDetailModel> _diamondDetailsFor(int index) {
@@ -107,9 +108,7 @@ class BagMockDataSourceImpl implements BagDataSource {
       media: media,
       metal: _metals[index % _metals.length],
       designGrossWt: _grossWeights[index % _grossWeights.length],
-      extra: '—',
-      diamondWax: 'Included',
-      extra2: '—',
+      designNetWt: _netWeights[index % _netWeights.length],
       designInstr: 'High polish finish required.',
       custInstr: 'Laser engrave logo on shank.',
       stampInstr: '18K Hallmark Stamp',
@@ -122,6 +121,7 @@ class BagMockDataSourceImpl implements BagDataSource {
       poNo: 'PO-${99238 + index}',
       part: 'Main Body',
       pieceQty: 1,
+      styleNo: 'ST-${4400 + index}',
       diamondDetails: _diamondDetailsFor(index),
       rmSummary: _rmSummaryFor(index),
     );

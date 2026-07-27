@@ -9,5 +9,5 @@ class GetDrawerMenuUseCase {
 
   final DrawerMenuRepository _repository;
 
-  Future<Either<Failure, List<DrawerMenuItemEntity>>> call() => _repository.getMenu();
+  Future<Either<Failure, List<DrawerMenuItemEntity>>> call(String empCd) => _repository.getMenu(empCd);
 }

@@ -5,7 +5,10 @@ import '../models/employee_model.dart';
 /// (real backend). [AuthRepositoryImpl] depends only on this interface, so
 /// [AuthBinding] is the single place that decides which one is wired in.
 abstract class AuthDataSource {
-  Future<EmployeeModel> login({required String employeeNumber, required String pin});
+  Future<({String message, EmployeeModel employee})> login({
+    required String employeeNumber,
+    required String pin,
+  });
 
   Future<void> logout();
 

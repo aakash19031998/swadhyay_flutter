@@ -17,7 +17,7 @@ class LoginUseCase {
 
   final AuthRepository _repository;
 
-  Future<Either<Failure, EmployeeEntity>> call(LoginParams params) {
+  Future<Either<Failure, ({String message, EmployeeEntity employee})>> call(LoginParams params) {
     return _repository.login(employeeNumber: params.employeeNumber, pin: params.pin);
   }
 }

@@ -11,6 +11,7 @@ class AppRoutes {
   static const String bagMediaViewer = '/bag-list/media-viewer';
   static const String bagDetail = '/bag-list/detail';
   static const String bagCompletion = '/bag-list/completion';
+  static const String bagScanner = '/bag-list/scanner';
   static const String skipBag = '/skip-bag';
   static const String changePassword = '/change-password';
   static const String designImage = '/reports/design-image';

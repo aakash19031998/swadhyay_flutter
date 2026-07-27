@@ -16,7 +16,7 @@ class DrawerMenuDependencies {
     if (Get.isRegistered<DrawerMenuRepository>()) return;
 
     Get.put<DrawerMenuDataSource>(
-      AppConfig.useMockData
+      AppConfig.useMockDrawerMenu
           ? DrawerMenuStaticDataSourceImpl()
           : DrawerMenuRemoteDataSourceImpl(Get.find<ApiClient>()),
       permanent: true,

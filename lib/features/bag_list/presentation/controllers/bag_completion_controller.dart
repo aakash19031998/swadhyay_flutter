@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../domain/entities/bag_entity.dart';
+import '../widgets/submit_confirmation_dialog.dart';
 
 class SettingEntry {
   const SettingEntry({required this.setting, required this.pieces});
@@ -68,11 +69,15 @@ class BagCompletionController extends GetxController {
 
   void removeEntry(int index) => recordedSettings.removeAt(index);
 
-  void submit() {
+  Future<void> submit() async {
     if (recordedSettings.isEmpty) {
       Get.snackbar(AppStrings.somethingWentWrong, AppStrings.addSettingBeforeSubmit);
       return;
     }
+
+    final bool confirmed = await SubmitConfirmationDialog.show();
+    if (!confirmed) return;
+
     Get.snackbar(AppStrings.bagList, AppStrings.bagCompletedSuccess);
     Get.until((route) => route.settings.name == AppRoutes.bagList);
   }

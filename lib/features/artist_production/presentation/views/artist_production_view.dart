@@ -46,58 +46,90 @@ class ArtistProductionView extends GetView<ArtistProductionController> {
                         );
                       }
 
+                      final Widget productionDetail = SectionCard(
+                        title: AppStrings.productionDetail,
+                        icon: Icons.insights_outlined,
+                        padding: EdgeInsets.zero,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                          child: _ReportTable(
+                            columns: const [
+                              AppStrings.workType,
+                              AppStrings.prediction,
+                              AppStrings.actualPcsStone,
+                              AppStrings.totalPoints,
+                            ],
+                            rows: [
+                              for (final entry in controller.items)
+                                [
+                                  entry.workType,
+                                  entry.prediction.toStringAsFixed(2),
+                                  '${entry.actualQty}',
+                                  entry.totalPoints.toStringAsFixed(2),
+                                ],
+                            ],
+                          ),
+                        ),
+                      );
+
+                      final Widget workTypeSummary = SectionCard(
+                        title: AppStrings.workTypeSummary,
+                        icon: Icons.summarize_outlined,
+                        padding: EdgeInsets.zero,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                          child: _ReportTable(
+                            columns: const [
+                              AppStrings.workType,
+                              AppStrings.actualPcsStone,
+                              AppStrings.totalPoints,
+                            ],
+                            rows: [
+                              for (final entry in controller.summary)
+                                [
+                                  entry.workType,
+                                  '${entry.actualQty}',
+                                  entry.totalPoints.toStringAsFixed(2),
+                                ],
+                            ],
+                          ),
+                        ),
+                      );
+
                       return Column(
                         children: [
                           _KpiRow(controller: controller),
                           const SizedBox(height: AppDimensions.spacingMd),
-                          SectionCard(
-                            title: AppStrings.productionDetail,
-                            icon: Icons.insights_outlined,
-                            padding: EdgeInsets.zero,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                              child: _ReportTable(
-                                columns: const [
-                                  AppStrings.workType,
-                                  AppStrings.prediction,
-                                  AppStrings.actualPcsStone,
-                                  AppStrings.totalPoints,
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
+
+                              if (!isTablet) {
+                                return Column(
+                                  children: [
+                                    productionDetail,
+                                    const SizedBox(height: AppDimensions.spacingMd),
+                                    workTypeSummary,
+                                  ],
+                                );
+                              }
+
+                              // Production Detail (4 columns) gets more width than
+                              // Work Type Summary (3 columns), roughly matching
+                              // their column-count ratio. Deliberately
+                              // CrossAxisAlignment.start (not .stretch/
+                              // IntrinsicHeight) — each table's height should
+                              // come from its own row count, not be forced to
+                              // match the other's.
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(flex: 4, child: productionDetail),
+                                  const SizedBox(width: AppDimensions.spacingMd),
+                                  Expanded(flex: 3, child: workTypeSummary),
                                 ],
-                                rows: [
-                                  for (final entry in controller.items)
-                                    [
-                                      entry.workType,
-                                      entry.prediction.toStringAsFixed(2),
-                                      '${entry.actualQty}',
-                                      entry.totalPoints.toStringAsFixed(2),
-                                    ],
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.spacingMd),
-                          SectionCard(
-                            title: AppStrings.workTypeSummary,
-                            icon: Icons.summarize_outlined,
-                            padding: EdgeInsets.zero,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                              child: _ReportTable(
-                                columns: const [
-                                  AppStrings.workType,
-                                  AppStrings.actualPcsStone,
-                                  AppStrings.totalPoints,
-                                ],
-                                rows: [
-                                  for (final entry in controller.summary)
-                                    [
-                                      entry.workType,
-                                      '${entry.actualQty}',
-                                      entry.totalPoints.toStringAsFixed(2),
-                                    ],
-                                ],
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ],
                       );
@@ -251,8 +283,10 @@ class _DateField extends StatelessWidget {
   }
 }
 
-/// Total Prediction / Actual Pcs/Stone / Total Points at a glance, above
-/// the detail tables — side by side on tablet width, stacked on phone.
+/// Actual Bag Pieces / Prediction / Total Points at a glance, above the
+/// detail tables — side by side on tablet width, stacked on phone. Values
+/// are unchanged from before (still bound to the same underlying totals);
+/// only the labels, icons, and colors were redesigned.
 class _KpiRow extends StatelessWidget {
   const _KpiRow({required this.controller});
 
@@ -263,19 +297,25 @@ class _KpiRow extends StatelessWidget {
     return Obx(() {
       final List<Widget> cards = [
         _KpiCard(
-          icon: Icons.bar_chart_rounded,
-          title: AppStrings.totalPrediction,
+          icon: Icons.inventory_2_outlined,
+          title: AppStrings.actualBagPieces,
           value: controller.totalPrediction.toStringAsFixed(2),
+          color: AppColors.info,
+          containerColor: AppColors.infoContainer,
         ),
         _KpiCard(
-          icon: Icons.diamond_outlined,
-          title: AppStrings.actualPcsStone,
+          icon: Icons.insights_outlined,
+          title: AppStrings.prediction,
           value: '${controller.totalActualQty}',
+          color: AppColors.warning,
+          containerColor: AppColors.warningContainer,
         ),
         _KpiCard(
           icon: Icons.star_border_rounded,
           title: AppStrings.totalPoints,
           value: controller.totalPoints.toStringAsFixed(2),
+          color: AppColors.success,
+          containerColor: AppColors.successContainer,
         ),
       ];
 
@@ -312,11 +352,19 @@ class _KpiRow extends StatelessWidget {
 }
 
 class _KpiCard extends StatelessWidget {
-  const _KpiCard({required this.icon, required this.title, required this.value});
+  const _KpiCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+    required this.containerColor,
+  });
 
   final IconData icon;
   final String title;
   final String value;
+  final Color color;
+  final Color containerColor;
 
   @override
   Widget build(BuildContext context) {
@@ -345,10 +393,10 @@ class _KpiCard extends StatelessWidget {
             width: AppDimensions.avatarSm,
             height: AppDimensions.avatarSm,
             decoration: BoxDecoration(
-              color: AppColors.primaryContainer,
+              color: containerColor,
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             ),
-            child: Icon(icon, color: AppColors.primary, size: AppDimensions.iconMd),
+            child: Icon(icon, color: color, size: AppDimensions.iconMd),
           ),
           const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
@@ -365,7 +413,7 @@ class _KpiCard extends StatelessWidget {
                 const SizedBox(height: AppDimensions.spacingXxs),
                 Text(
                   value,
-                  style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                  style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: color),
                 ),
               ],
             ),
@@ -384,7 +432,10 @@ class _ReportTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           decoration: const BoxDecoration(
@@ -402,13 +453,13 @@ class _ReportTable extends StatelessWidget {
             children: [
               for (int i = 0; i < columns.length; i++)
                 Expanded(
-                  child: Text(
-                    columns[i],
-                    textAlign: i == 0 ? TextAlign.left : TextAlign.right,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppColors.onPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                  child: _ReportCell(
+                    text: columns[i],
+                    alignEnd: i != 0,
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
             ],
@@ -419,7 +470,7 @@ class _ReportTable extends StatelessWidget {
             padding: const EdgeInsets.all(AppDimensions.spacingLg),
             child: Text(
               AppStrings.noDataFound,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textHint),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textHint),
             ),
           )
         else
@@ -437,13 +488,13 @@ class _ReportTable extends StatelessWidget {
                   children: [
                     for (int c = 0; c < rows[i].length; c++)
                       Expanded(
-                        child: c == 0
-                            ? Align(alignment: Alignment.centerLeft, child: _WorkTypePill(rows[i][c]))
-                            : Text(
-                                rows[i][c],
-                                textAlign: TextAlign.right,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                        child: _ReportCell(
+                          text: rows[i][c],
+                          alignEnd: c != 0,
+                          style: c == 0
+                              ? textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)
+                              : textTheme.bodyMedium,
+                        ),
                       ),
                   ],
                 ),
@@ -454,32 +505,23 @@ class _ReportTable extends StatelessWidget {
   }
 }
 
-/// The work-type value rendered as a colored pill instead of plain text —
-/// it's the row's key/category, so it's worth visually setting apart from
-/// the numeric columns beside it.
-class _WorkTypePill extends StatelessWidget {
-  const _WorkTypePill(this.label);
+/// One header or value cell. Header and value cells always go through this
+/// same widget (same [Align], same lack of extra padding) so a column's
+/// header and its values are guaranteed to line up pixel-for-pixel — unlike
+/// before, when the work-type value was wrapped in a padded pill that the
+/// plain header text didn't account for.
+class _ReportCell extends StatelessWidget {
+  const _ReportCell({required this.text, required this.alignEnd, this.style});
 
-  final String label;
+  final String text;
+  final bool alignEnd;
+  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingSm,
-        vertical: AppDimensions.spacingXxs,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-            ),
-      ),
+    return Align(
+      alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+      child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
     );
   }
 }

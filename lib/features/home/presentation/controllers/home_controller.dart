@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -29,11 +30,25 @@ class HomeController extends GetxController {
   final RxBool isMenuLoading = true.obs;
   final RxBool isLoggingOut = false.obs;
 
+  /// `MenuListNew` never sends a logout entry — it's an app-level action,
+  /// not a backend screen — so it's always appended locally.
+  static const DrawerMenuItemEntity _logoutMenuItem = DrawerMenuItemEntity(
+    id: 'logout',
+    label: AppStrings.logout,
+    icon: Icons.logout,
+    type: DrawerMenuItemType.action,
+    actionKey: 'logout',
+  );
+
   @override
   void onInit() {
     super.onInit();
-    _loadEmployee();
-    _loadMenu();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _loadEmployee();
+    await _loadMenu();
   }
 
   Future<void> _loadEmployee() async {
@@ -42,10 +57,10 @@ class HomeController extends GetxController {
 
   Future<void> _loadMenu() async {
     isMenuLoading.value = true;
-    final result = await _getDrawerMenuUseCase();
+    final result = await _getDrawerMenuUseCase(employee.value?.empCode ?? '');
     result.fold(
       (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
-      (items) => menuItems.assignAll(items),
+      (items) => menuItems.assignAll([...items, _logoutMenuItem]),
     );
     isMenuLoading.value = false;
   }

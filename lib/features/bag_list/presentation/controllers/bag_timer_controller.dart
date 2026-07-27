@@ -11,15 +11,20 @@ enum BagWorkStatus { notStarted, running, paused, done }
 class BagTimerController extends GetxController {
   final Rx<BagWorkStatus> status = BagWorkStatus.notStarted.obs;
   final Rx<Duration> elapsed = Duration.zero.obs;
+  final Rxn<String> pauseReason = Rxn<String>();
 
   Timer? _ticker;
 
   void start() => _resumeFrom(BagWorkStatus.running);
 
-  void resume() => _resumeFrom(BagWorkStatus.running);
+  void resume() {
+    pauseReason.value = null;
+    _resumeFrom(BagWorkStatus.running);
+  }
 
-  void pause() {
+  void pause({String? reason}) {
     _ticker?.cancel();
+    pauseReason.value = reason;
     status.value = BagWorkStatus.paused;
   }
 

@@ -37,6 +37,7 @@ class AppDrawer extends GetView<HomeController> {
                   name: employee?.name ?? '',
                   empCode: employee?.empCode ?? '',
                   department: employee?.department,
+                  avatarUrl: employee?.avatarUrl,
                   inTimeLabel: employee?.punchInAt == null
                       ? null
                       : DateTimeHelper.formatDateTime(employee!.punchInAt!),

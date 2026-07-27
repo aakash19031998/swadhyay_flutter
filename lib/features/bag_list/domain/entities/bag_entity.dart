@@ -19,9 +19,7 @@ class BagEntity extends Equatable {
     this.media = const [],
     this.metal,
     this.designGrossWt,
-    this.extra,
-    this.diamondWax,
-    this.extra2,
+    this.designNetWt,
     this.designInstr,
     this.custInstr,
     this.stampInstr,
@@ -34,6 +32,7 @@ class BagEntity extends Equatable {
     this.poNo,
     this.part,
     this.pieceQty,
+    this.styleNo,
     this.diamondDetails = const [],
     this.rmSummary = const [],
   });
@@ -58,9 +57,7 @@ class BagEntity extends Equatable {
   // bag may not have every field filled in yet.
   final String? metal;
   final double? designGrossWt;
-  final String? extra;
-  final String? diamondWax;
-  final String? extra2;
+  final double? designNetWt;
   final String? designInstr;
   final String? custInstr;
   final String? stampInstr;
@@ -75,6 +72,7 @@ class BagEntity extends Equatable {
   final String? poNo;
   final String? part;
   final int? pieceQty;
+  final String? styleNo;
 
   final List<DiamondDetailEntity> diamondDetails;
   final List<BagRmSummaryEntity> rmSummary;
@@ -96,9 +94,7 @@ class BagEntity extends Equatable {
         media,
         metal,
         designGrossWt,
-        extra,
-        diamondWax,
-        extra2,
+        designNetWt,
         designInstr,
         custInstr,
         stampInstr,
@@ -111,6 +107,7 @@ class BagEntity extends Equatable {
         poNo,
         part,
         pieceQty,
+        styleNo,
         diamondDetails,
         rmSummary,
       ];

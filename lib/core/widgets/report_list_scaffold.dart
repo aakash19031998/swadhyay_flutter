@@ -23,6 +23,8 @@ class ReportListScaffold<T> extends StatelessWidget {
     this.searchHint,
     this.gridDelegate,
     this.masonryColumnCount,
+    this.searchBarTrailing,
+    this.searchController,
   });
 
   final bool isLoading;
@@ -33,6 +35,16 @@ class ReportListScaffold<T> extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final String? emptyMessage;
   final String? searchHint;
+
+  /// An optional widget (e.g. a scan button) placed to the right of the
+  /// search field. Only the screens that pass one get it — every other
+  /// caller's search bar is unchanged.
+  final Widget? searchBarTrailing;
+
+  /// Optional external controller for the search field — e.g. so a scanned
+  /// barcode/QR value can be shown in the field itself, not just applied as
+  /// a silent filter. Omitted by every caller except Bag List.
+  final TextEditingController? searchController;
 
   /// When provided, renders a [GridView] (e.g. Design Image thumbnails) —
   /// every tile is forced to the same fixed size, which fits square/near-
@@ -52,7 +64,21 @@ class ReportListScaffold<T> extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.all(AppDimensions.spacingMd),
-          child: AppSearchField(onChanged: onSearchChanged, hint: searchHint ?? 'Search'),
+          child: searchBarTrailing == null
+              ? AppSearchField(onChanged: onSearchChanged, hint: searchHint ?? 'Search', controller: searchController)
+              : Row(
+                  children: [
+                    Expanded(
+                      child: AppSearchField(
+                        onChanged: onSearchChanged,
+                        hint: searchHint ?? 'Search',
+                        controller: searchController,
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.spacingSm),
+                    searchBarTrailing!,
+                  ],
+                ),
         ),
         Expanded(child: _buildBody(context)),
       ],

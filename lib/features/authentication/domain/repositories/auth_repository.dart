@@ -7,7 +7,7 @@ import '../entities/employee_entity.dart';
 /// layer provides the only implementation, backed by either a real or mock
 /// data source depending on [AppConfig.useMockData].
 abstract class AuthRepository {
-  Future<Either<Failure, EmployeeEntity>> login({
+  Future<Either<Failure, ({String message, EmployeeEntity employee})>> login({
     required String employeeNumber,
     required String pin,
   });

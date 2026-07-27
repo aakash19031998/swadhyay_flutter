@@ -3,11 +3,9 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../core/storage/local_storage_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_pin_field.dart';
-import '../../data/models/employee_model.dart';
 import '../../domain/usecases/login_usecase.dart';
 
 /// Receives UI events from [LoginView], delegates authentication to
@@ -15,10 +13,9 @@ import '../../domain/usecases/login_usecase.dart';
 /// business logic (validation of *what makes credentials valid* lives in
 /// the use case/repository) beyond wiring form state.
 class LoginController extends GetxController {
-  LoginController(this._loginUseCase, this._localStorageService);
+  LoginController(this._loginUseCase);
 
   final LoginUseCase _loginUseCase;
-  final LocalStorageService _localStorageService;
 
   final formKey = GlobalKey<FormState>();
   final employeeNumberController = TextEditingController();
@@ -34,34 +31,12 @@ class LoginController extends GetxController {
     if (pinErrorText.value != null) pinErrorText.value = null;
   }
 
-  // DEMO BYPASS: skips LoginUseCase entirely so any employee number + any
-  // 4-digit PIN logs in. Remove this short-circuit and restore the
-  // _loginUseCase call below before shipping past the demo.
-  static const bool _demoBypassAuth = true;
-
   Future<void> login() async {
     final bool isFormValid = formKey.currentState?.validate() ?? false;
     if (_pin.length != AppDimensions.pinLength) {
       pinErrorText.value = AppStrings.pinRequired;
     }
     if (!isFormValid || _pin.length != AppDimensions.pinLength) return;
-
-    if (_demoBypassAuth) {
-      final EmployeeModel demoEmployee = EmployeeModel(
-        empCode: '11111',
-        name: 'HK Design',
-        punchInAt: DateTime.now(),
-        department: 'Filing C',
-        contactNumber: '+91 98765 43210',
-        alternateContactNumber: '+91 91234 56789',
-        address: '123, Diamond Market, Surat, Gujarat',
-        workEfficiency: '92%',
-      );
-      await _localStorageService.saveJson(StorageKeys.loggedInEmployee, demoEmployee.toJson());
-      await _localStorageService.setLoggedIn(true);
-      Get.offAllNamed(AppRoutes.home);
-      return;
-    }
 
     isLoading.value = true;
     final result = await _loginUseCase(
@@ -73,13 +48,44 @@ class LoginController extends GetxController {
       (failure) {
         pinFieldController.clear();
         pinErrorText.value = failure.message;
-        Get.snackbar(
-          AppStrings.somethingWentWrong,
-          failure.message,
-          snackPosition: SnackPosition.BOTTOM,
+        _showResultSnackbar(
+          title: AppStrings.somethingWentWrong,
+          message: failure.message,
+          isSuccess: false,
         );
       },
-      (_) => Get.offAllNamed(AppRoutes.home),
+      (success) {
+        _showResultSnackbar(
+          title: AppStrings.loginSuccessTitle,
+          message: success.message,
+          isSuccess: true,
+        );
+        Get.offAllNamed(AppRoutes.home);
+      },
+    );
+  }
+
+  /// Solid, high-contrast success/failure snackbar — the GetX default
+  /// (dark-grey background, no icon) reads poorly against this app's
+  /// gradient login screen, so title/message color and background are set
+  /// explicitly against the app's semantic success/error tokens.
+  void _showResultSnackbar({required String title, required String message, required bool isSuccess}) {
+    final Color color = isSuccess ? AppColors.success : AppColors.error;
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: color,
+      colorText: AppColors.onPrimary,
+      icon: Icon(
+        isSuccess ? Icons.check_circle_outline : Icons.error_outline,
+        color: AppColors.onPrimary,
+      ),
+      shouldIconPulse: false,
+      margin: const EdgeInsets.all(AppDimensions.spacingMd),
+      borderRadius: AppDimensions.radiusMd,
+      duration: Duration(seconds: isSuccess ? 2 : 3),
+      snackStyle: SnackStyle.FLOATING,
     );
   }
 

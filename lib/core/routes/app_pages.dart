@@ -8,10 +8,12 @@ import '../../features/bag_list/presentation/bindings/bag_completion_binding.dar
 import '../../features/bag_list/presentation/bindings/bag_detail_binding.dart';
 import '../../features/bag_list/presentation/bindings/bag_list_binding.dart';
 import '../../features/bag_list/presentation/bindings/bag_media_viewer_binding.dart';
+import '../../features/bag_list/presentation/bindings/bag_scanner_binding.dart';
 import '../../features/bag_list/presentation/views/bag_completion_view.dart';
 import '../../features/bag_list/presentation/views/bag_detail_view.dart';
 import '../../features/bag_list/presentation/views/bag_list_view.dart';
 import '../../features/bag_list/presentation/views/bag_media_viewer_view.dart';
+import '../../features/bag_list/presentation/views/bag_scanner_view.dart';
 import '../../features/change_password/presentation/bindings/change_password_binding.dart';
 import '../../features/change_password/presentation/views/change_password_view.dart';
 import '../../features/design_image/presentation/bindings/design_image_binding.dart';
@@ -78,6 +80,11 @@ class AppPages {
       name: AppRoutes.bagCompletion,
       page: () => const BagCompletionView(),
       binding: BagCompletionBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.bagScanner,
+      page: () => const BagScannerView(),
+      binding: BagScannerBinding(),
     ),
     GetPage(
       name: AppRoutes.skipBag,
