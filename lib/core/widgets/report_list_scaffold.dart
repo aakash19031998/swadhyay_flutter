@@ -25,6 +25,7 @@ class ReportListScaffold<T> extends StatelessWidget {
     this.masonryColumnCount,
     this.searchBarTrailing,
     this.searchController,
+    this.searchSuggestionsBuilder,
   });
 
   final bool isLoading;
@@ -46,6 +47,10 @@ class ReportListScaffold<T> extends StatelessWidget {
   /// a silent filter. Omitted by every caller except Bag List.
   final TextEditingController? searchController;
 
+  /// Returns tap-to-fill suggestions for the current search text. Omitted by
+  /// every caller except Bag List.
+  final List<String> Function(String text)? searchSuggestionsBuilder;
+
   /// When provided, renders a [GridView] (e.g. Design Image thumbnails) —
   /// every tile is forced to the same fixed size, which fits square/near-
   /// square media but clips a card whose content can grow taller than that.
@@ -65,7 +70,12 @@ class ReportListScaffold<T> extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(AppDimensions.spacingMd),
           child: searchBarTrailing == null
-              ? AppSearchField(onChanged: onSearchChanged, hint: searchHint ?? 'Search', controller: searchController)
+              ? AppSearchField(
+                  onChanged: onSearchChanged,
+                  hint: searchHint ?? 'Search',
+                  controller: searchController,
+                  suggestionsBuilder: searchSuggestionsBuilder,
+                )
               : Row(
                   children: [
                     Expanded(
@@ -73,6 +83,7 @@ class ReportListScaffold<T> extends StatelessWidget {
                         onChanged: onSearchChanged,
                         hint: searchHint ?? 'Search',
                         controller: searchController,
+                        suggestionsBuilder: searchSuggestionsBuilder,
                       ),
                     ),
                     const SizedBox(width: AppDimensions.spacingSm),

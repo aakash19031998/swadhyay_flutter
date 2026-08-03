@@ -16,6 +16,7 @@ class LoggingInterceptor extends Interceptor {
   void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
     if (kDebugMode) {
       debugPrint('⬅️ [${response.statusCode}] ${response.requestOptions.uri}');
+      if (response.data != null) debugPrint('   response: ${response.data}');
     }
     handler.next(response);
   }
@@ -24,6 +25,7 @@ class LoggingInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (kDebugMode) {
       debugPrint('✖️ [${err.response?.statusCode}] ${err.requestOptions.uri}: ${err.message}');
+      if (err.response?.data != null) debugPrint('   response: ${err.response?.data}');
     }
     handler.next(err);
   }

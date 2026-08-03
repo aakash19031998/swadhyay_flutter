@@ -28,6 +28,17 @@ class SwadhyayApp extends StatelessWidget {
       initialBinding: InitialBinding(),
       initialRoute: AppRoutes.splash,
       getPages: AppPages.pages,
+      // Tapping anywhere outside the focused field (any screen, not just
+      // one) dismisses the keyboard. `opaque` is required — otherwise this
+      // GestureDetector only catches taps on already-painted content, not
+      // blank space, which is exactly where a user taps to dismiss.
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          behavior: HitTestBehavior.opaque,
+          child: child,
+        );
+      },
     );
   }
 }

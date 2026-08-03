@@ -11,10 +11,16 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      appBar: CommonAppBar(showNotification: false),
-      drawer: AppDrawer(),
-      body: DashboardBody(),
+    return Scaffold(
+      appBar: const CommonAppBar(showNotification: false),
+      drawer: const AppDrawer(),
+      // Fires every time the drawer is opened (hamburger tap or swipe) —
+      // re-fetches the menu fresh each time instead of showing whatever
+      // was last loaded.
+      onDrawerChanged: (isOpened) {
+        if (isOpened) controller.loadMenu();
+      },
+      body: const DashboardBody(),
     );
   }
 }

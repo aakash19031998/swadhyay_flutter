@@ -18,6 +18,8 @@ class DrawerMenuRepositoryImpl implements DrawerMenuRepository {
       return Right(items);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     }
   }
 }

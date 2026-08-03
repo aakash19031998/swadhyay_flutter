@@ -7,14 +7,9 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/common_app_bar.dart';
 import '../../../../core/widgets/report_list_scaffold.dart';
+import '../../domain/entities/bag_entity.dart';
 import '../controllers/bag_list_controller.dart';
 import '../widgets/bag_list_item.dart';
-
-// Placeholder totals shown in the app bar. As of now these are static (not
-// derived from the current/filtered list) — swap for a real summary source
-// (e.g. an unfiltered totals endpoint) once one exists.
-const int _staticBagCount = 18;
-const int _staticImageCount = 72;
 
 class BagListView extends GetView<BagListController> {
   const BagListView({super.key});
@@ -22,10 +17,17 @@ class BagListView extends GetView<BagListController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CommonAppBar(
+      appBar: CommonAppBar(
         title: AppStrings.bagList,
         showNotification: false,
-        actions: [_BagListCounters(bagCount: _staticBagCount, imageCount: _staticImageCount)],
+        actions: [
+          // `bagCount`/`pcsCount` are read here, inside the Obx builder, so
+          // GetX is actually tracking them as dependencies for this Obx —
+          // reading them one level down, inside _BagListCounters' own
+          // build(), would not register as a dependency and the pills
+          // would never update after the initial (zero) build.
+          Obx(() => _BagListCounters(bagCount: controller.bagCount.value, pcsCount: controller.pcsCount.value)),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -36,20 +38,42 @@ class BagListView extends GetView<BagListController> {
                     ? 2
                     : 1;
 
-            return Obx(
-              () => ReportListScaffold(
+            return Obx(() {
+              // Materialized here, inside the Obx builder, so GetX is
+              // actually tracking `items` as a dependency of this Obx.
+              // Passing `controller.items` straight through as a
+              // constructor argument does not count as a "read" — the
+              // list only gets iterated later, inside ReportListScaffold's
+              // own build(), by which point GetX's dependency tracking for
+              // *this* Obx has already closed. `onQueryChanged` no longer
+              // touches `isLoading`/`errorMessage` (it filters purely
+              // in-memory, no network call — see BagListController), so
+              // this Obx would otherwise never rebuild after a search or a
+              // clear.
+              final List<BagEntity> items = List<BagEntity>.of(controller.items);
+
+              // Shows the exact text that was searched (including a
+              // scanned barcode's raw value) so a mismatch between what
+              // was scanned and the stored bag/design number is visible
+              // right in the empty state, not just in the debug console.
+              final String query = controller.query.value;
+              final String? emptyMessage = query.isEmpty ? null : 'No bag found for "$query"';
+
+              return ReportListScaffold(
                 isLoading: controller.isLoading.value,
                 errorMessage: controller.errorMessage.value,
-                items: controller.items,
+                items: items,
+                emptyMessage: emptyMessage,
                 onRefresh: controller.refreshData,
                 onSearchChanged: controller.onQueryChanged,
                 searchHint: 'Search by bag no. or design no.',
                 masonryColumnCount: columns,
                 searchController: controller.searchController,
+                searchSuggestionsBuilder: controller.suggestionsFor,
                 searchBarTrailing: _ScanButton(onScanned: controller.onScanned),
                 itemBuilder: (context, bag) => BagListItem(bag: bag, onDone: controller.onBagDone),
-              ),
-            );
+              );
+            });
           },
         ),
       ),
@@ -57,12 +81,12 @@ class BagListView extends GetView<BagListController> {
   }
 }
 
-/// "N Bags / N Images" summary shown in the app bar's trailing area.
+/// "N Bags / N Pcs" summary shown in the app bar's trailing area.
 class _BagListCounters extends StatelessWidget {
-  const _BagListCounters({required this.bagCount, required this.imageCount});
+  const _BagListCounters({required this.bagCount, required this.pcsCount});
 
   final int bagCount;
-  final int imageCount;
+  final int pcsCount;
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +104,9 @@ class _BagListCounters extends StatelessWidget {
           ),
           const SizedBox(width: AppDimensions.spacingSm),
           _CounterPill(
-            icon: Icons.image_outlined,
-            value: imageCount,
-            label: AppStrings.totalImages,
+            icon: Icons.diamond_outlined,
+            value: pcsCount,
+            label: AppStrings.totalPcs,
             color: AppColors.warning,
             backgroundColor: AppColors.warningContainer,
           ),

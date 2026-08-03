@@ -48,6 +48,12 @@ class BagScannerController extends GetxController {
     final String? value = capture.barcodes.first.rawValue;
     if (value == null || value.isEmpty) return;
 
+    // Surfaces exactly what was decoded (length included, since a stray
+    // leading/trailing space or newline from some barcode symbologies is
+    // otherwise invisible in a normal print) — useful for diagnosing a
+    // scan that doesn't match a bag the user can see is really there.
+    debugPrint('📷 scanned "$value" (${value.length} chars, format: ${capture.barcodes.first.format})');
+
     _hasReturned = true;
     Get.back(result: value);
   }

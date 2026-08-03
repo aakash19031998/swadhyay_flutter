@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Swadhyay_master",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "Swadhyay_master (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "Swadhyay_master (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "agent-ad79ed8797a540209",
+            "cwd": ".claude\\worktrees\\agent-ad79ed8797a540209",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "agent-ad79ed8797a540209 (profile mode)",
+            "cwd": ".claude\\worktrees\\agent-ad79ed8797a540209",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "agent-ad79ed8797a540209 (release mode)",
+            "cwd": ".claude\\worktrees\\agent-ad79ed8797a540209",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

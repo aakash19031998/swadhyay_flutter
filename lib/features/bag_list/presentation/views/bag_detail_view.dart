@@ -6,12 +6,14 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/section_card.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/entities/bag_rm_summary_entity.dart';
 import '../../domain/entities/diamond_detail_entity.dart';
 import '../controllers/bag_detail_controller.dart';
 import '../controllers/bag_timer_controller.dart';
+import '../widgets/bag_action_button.dart';
 
 /// Bag detail screen: a live productivity clock in the top bar, then Bag
 /// Summary + the jewelry preview side by side (tablet) / stacked (phone),
@@ -24,58 +26,71 @@ class BagDetailView extends GetView<BagDetailController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _TopBar(controller: controller),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppDimensions.spacingMd),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HeaderRow(controller: controller),
-                    const SizedBox(height: AppDimensions.spacingMd),
-                    SectionCard(
-                      title: AppStrings.manufacturingInstructions,
-                      icon: Icons.build_outlined,
-                      child: _ManufacturingSpecs(bag: controller.bag),
-                    ),
-                    const SizedBox(height: AppDimensions.spacingMd),
-                    SectionCard(
-                      padding: EdgeInsets.zero,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+    return Obx(() {
+      // Read once here, inside the Obx builder, so GetX actually tracks
+      // `bag` as a dependency of this Obx — reading it one level down,
+      // inside a child widget's own build(), would not register as a
+      // dependency and the screen would never reflect the BagDetailsNew
+      // fetch once it resolves. The resolved value is then passed down as
+      // a plain BagEntity, not re-read from the controller by any child.
+      final BagEntity bag = controller.bag.value;
+      final bool isLoading = controller.isLoading.value;
+
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _TopBar(controller: controller, bag: bag),
+              Expanded(
+                child: isLoading
+                    ? const AppLoader()
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(AppDimensions.spacingMd),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _SegmentedTabBar(tabController: controller.tabController),
-                            // Swaps the visible table directly off the tab index —
-                            // switching only by tapping the segmented tab bar above,
-                            // no left/right swipe gesture — while the section's
-                            // height always matches exactly whichever table is
-                            // currently selected.
-                            AnimatedBuilder(
-                              animation: controller.tabController,
-                              builder: (context, _) {
-                                return controller.tabController.index == 0
-                                    ? _DiamondDetailsTable(details: controller.bag.diamondDetails)
-                                    : _RmSummaryTable(items: controller.bag.rmSummary);
-                              },
+                            _HeaderRow(bag: bag),
+                            const SizedBox(height: AppDimensions.spacingMd),
+                            SectionCard(
+                              title: AppStrings.manufacturingInstructions,
+                              icon: Icons.build_outlined,
+                              child: _ManufacturingSpecs(bag: bag),
+                            ),
+                            const SizedBox(height: AppDimensions.spacingMd),
+                            SectionCard(
+                              padding: EdgeInsets.zero,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                                child: Column(
+                                  children: [
+                                    _SegmentedTabBar(tabController: controller.tabController),
+                                    // Swaps the visible table directly off the tab index —
+                                    // switching only by tapping the segmented tab bar above,
+                                    // no left/right swipe gesture — while the section's
+                                    // height always matches exactly whichever table is
+                                    // currently selected.
+                                    AnimatedBuilder(
+                                      animation: controller.tabController,
+                                      builder: (context, _) {
+                                        return controller.tabController.index == 0
+                                            ? _DiamondDetailsTable(details: bag.diamondDetails)
+                                            : _RmSummaryTable(items: bag.rmSummary);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -93,9 +108,9 @@ class BagDetailView extends GetView<BagDetailController> {
 /// each frame — the same measure-then-rebuild approach already used for
 /// [_ExpandingTabBarView]'s dynamic tab height.
 class _HeaderRow extends StatefulWidget {
-  const _HeaderRow({required this.controller});
+  const _HeaderRow({required this.bag});
 
-  final BagDetailController controller;
+  final BagEntity bag;
 
   @override
   State<_HeaderRow> createState() => _HeaderRowState();
@@ -124,9 +139,9 @@ class _HeaderRowState extends State<_HeaderRow> {
         final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
         final Widget summary = KeyedSubtree(
           key: _summaryKey,
-          child: _BagSummaryCard(bag: widget.controller.bag, columns: isTablet ? 3 : 1),
+          child: _BagSummaryCard(bag: widget.bag, columns: isTablet ? 4 : 1),
         );
-        final Widget preview = _JewelryPreview(imageUrl: widget.controller.bag.imageUrl);
+        final Widget preview = _JewelryPreview(imageUrl: widget.bag.imageUrl);
 
         if (!isTablet) {
           return Column(
@@ -153,9 +168,10 @@ class _HeaderRowState extends State<_HeaderRow> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.controller});
+  const _TopBar({required this.controller, required this.bag});
 
   final BagDetailController controller;
+  final BagEntity bag;
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +191,7 @@ class _TopBar extends StatelessWidget {
         // Three-section layout — equal-flex Expanded on both sides of the
         // timer — keeps the timer pill dead-center in the toolbar no
         // matter how the leading (back button + bag no.) and trailing
-        // (Done button) content widths differ from each other.
+        // (Pause/Resume + Done) content widths differ from each other.
         child: Row(
           children: [
             Expanded(
@@ -184,13 +200,13 @@ class _TopBar extends StatelessWidget {
                 children: [
                   _TopBarButton(
                     icon: Icons.arrow_back_rounded,
-                    label: AppStrings.backPause,
-                    onTap: controller.pauseAndGoBack,
+                    label: AppStrings.back,
+                    onTap: controller.goBack,
                     filled: false,
                   ),
                   const SizedBox(width: AppDimensions.spacingLg),
                   Text(
-                    controller.bag.bagNo,
+                    bag.bagNo,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.onPrimary,
                           fontWeight: FontWeight.w700,
@@ -203,12 +219,7 @@ class _TopBar extends StatelessWidget {
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: _TopBarButton(
-                  icon: Icons.check_rounded,
-                  label: AppStrings.done,
-                  onTap: controller.onDone,
-                  filled: true,
-                ),
+                child: _TopBarActions(controller: controller),
               ),
             ),
           ],
@@ -229,9 +240,8 @@ class _LiveTimerPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final BagTimerController? timer = controller.timer;
-      final bool isRunning = timer?.status.value == BagWorkStatus.running;
-      final Duration elapsed = timer?.elapsed.value ?? Duration.zero;
+      final bool isRunning = controller.timer.status.value == BagWorkStatus.running;
+      final Duration elapsed = controller.timer.elapsed.value;
 
       return Container(
         padding: const EdgeInsets.symmetric(
@@ -269,6 +279,78 @@ class _LiveTimerPill extends StatelessWidget {
   }
 }
 
+/// Status-driven Start / Pause+Done / Resume+Done / Completed cluster —
+/// same statuses, same [BagActionButton] widget, same per-status
+/// color/icon mapping as [BagListItem]'s `_StatusRow` — so these buttons
+/// aren't a visual approximation, they're literally the same button —
+/// just grouped together in the top-right corner instead of split either
+/// side of the clock.
+class _TopBarActions extends StatelessWidget {
+  const _TopBarActions({required this.controller});
+
+  final BagDetailController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      switch (controller.timer.status.value) {
+        case BagWorkStatus.notStarted:
+          return BagActionButton(
+            label: AppStrings.start,
+            icon: Icons.play_arrow_rounded,
+            color: AppColors.primary,
+            onTap: controller.timer.start,
+          );
+        case BagWorkStatus.running:
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BagActionButton(
+                label: AppStrings.pause,
+                icon: Icons.pause_rounded,
+                color: AppColors.warning,
+                onTap: controller.pause,
+              ),
+              const SizedBox(width: AppDimensions.spacingSm),
+              BagActionButton(
+                label: AppStrings.done,
+                icon: Icons.check_rounded,
+                color: AppColors.success,
+                onTap: controller.onDone,
+              ),
+            ],
+          );
+        case BagWorkStatus.paused:
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BagActionButton(
+                label: AppStrings.resume,
+                icon: Icons.play_arrow_rounded,
+                color: AppColors.info,
+                onTap: controller.timer.resume,
+              ),
+              const SizedBox(width: AppDimensions.spacingSm),
+              BagActionButton(
+                label: AppStrings.done,
+                icon: Icons.check_rounded,
+                color: AppColors.success,
+                onTap: controller.onDone,
+              ),
+            ],
+          );
+        case BagWorkStatus.done:
+          return const BagActionButton(
+            label: AppStrings.completed,
+            icon: Icons.check_circle_rounded,
+            color: AppColors.success,
+            onTap: null,
+          );
+      }
+    });
+  }
+}
+
 class _TopBarButton extends StatelessWidget {
   const _TopBarButton({
     required this.icon,
@@ -279,7 +361,7 @@ class _TopBarButton extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool filled;
 
   @override
@@ -305,7 +387,7 @@ class _TopBarButton extends StatelessWidget {
               const SizedBox(width: AppDimensions.spacingXxs),
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: foreground,
                       fontWeight: FontWeight.w700,
                     ),
@@ -318,13 +400,14 @@ class _TopBarButton extends StatelessWidget {
   }
 }
 
-/// Del Date / Part / Bag Qty / Pieces / Size / Customer / PoNo as a grid of
-/// soft, color-coded icon-leading tiles (2 per row on tablet, 1 on phone).
-/// Each tile's icon badge cycles through the app's semantic accent colors
-/// (info/warning/success/primary) purely for visual variety — the colors
-/// carry no status meaning here, unlike their use elsewhere in the app.
-/// The card's height is left to size naturally to its content; see
-/// [_HeaderRow], which stretches the jewelry preview to match it.
+/// Del Date / Bag Qty / Style No. / Order No. / Customer / Part / Size /
+/// Design Ctg/Sub Ctg as a grid of soft, color-coded icon-leading tiles (4
+/// per row on tablet, 1 on phone). Each tile's icon badge cycles through
+/// the app's semantic accent colors (info/warning/success/primary) purely
+/// for visual variety — the colors carry no status meaning here, unlike
+/// their use elsewhere in the app. The card's height is left to size
+/// naturally to its content; see [_HeaderRow], which stretches the
+/// jewelry preview to match it.
 class _BagSummaryCard extends StatelessWidget {
   const _BagSummaryCard({required this.bag, required this.columns});
 
@@ -350,13 +433,19 @@ class _BagSummaryCard extends StatelessWidget {
       _SummaryFieldData(
         icon: Icons.event_outlined,
         label: AppStrings.delDate,
-        value: bag.delDate == null ? '' : DateTimeHelper.formatDate(bag.delDate!),
+        value: bag.delDate == null ? '' : DateTimeHelper.formatDateDashed(bag.delDate!),
       ),
       _SummaryFieldData(icon: Icons.inventory_2_outlined, label: AppStrings.bagQty, value: '${bag.bagQty}'),
       _SummaryFieldData(icon: Icons.style_outlined, label: AppStrings.styleNo, value: bag.styleNo ?? ''),
+      _SummaryFieldData(icon: Icons.receipt_long_outlined, label: AppStrings.orderNo, value: bag.locationCode),
       _SummaryFieldData(icon: Icons.person_outline, label: AppStrings.customer, value: bag.customer ?? ''),
       _SummaryFieldData(icon: Icons.tag, label: AppStrings.part, value: bag.part ?? ''),
       _SummaryFieldData(icon: Icons.straighten_outlined, label: AppStrings.size, value: bag.size ?? ''),
+      _SummaryFieldData(
+        icon: Icons.category_outlined,
+        label: AppStrings.designCategory,
+        value: bag.designCategory ?? '',
+      ),
     ];
 
     final List<Widget> items = [
@@ -462,8 +551,6 @@ class _SummaryDetailItem extends StatelessWidget {
                 const SizedBox(height: AppDimensions.spacingXxs),
                 Text(
                   value.isEmpty ? '—' : value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
               ],
@@ -676,11 +763,10 @@ class _SegmentedTabBar extends StatelessWidget {
 /// whatever width it's given — tablet or phone — with no fixed pixel
 /// widths and no horizontal scrolling).
 class _FlexColumn {
-  const _FlexColumn({required this.label, this.flex = 2, this.alignEnd = false});
+  const _FlexColumn({required this.label, this.flex = 1});
 
   final String label;
   final int flex;
-  final bool alignEnd;
 }
 
 /// A table that always fits the width it's laid out in. Each cell is
@@ -717,18 +803,19 @@ class _FlexTable extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      for (final column in columns)
+                      for (int c = 0; c < columns.length; c++) ...[
+                        if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
                         Expanded(
-                          flex: column.flex,
+                          flex: columns[c].flex,
                           child: _FlexCell(
-                            text: column.label.toUpperCase(),
-                            alignEnd: column.alignEnd,
+                            text: columns[c].label.toUpperCase(),
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: AppColors.primaryDark,
                                   fontWeight: FontWeight.w800,
                                 ),
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ),
@@ -755,11 +842,13 @@ class _FlexTable extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          for (int c = 0; c < columns.length; c++)
+                          for (int c = 0; c < columns.length; c++) ...[
+                            if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
                             Expanded(
                               flex: columns[c].flex,
-                              child: _FlexCell(text: rows[r][c], alignEnd: columns[c].alignEnd),
+                              child: _FlexCell(text: rows[r][c]),
                             ),
+                          ],
                         ],
                       ),
                     ),
@@ -773,22 +862,22 @@ class _FlexTable extends StatelessWidget {
 }
 
 class _FlexCell extends StatelessWidget {
-  const _FlexCell({required this.text, required this.alignEnd, this.style});
+  const _FlexCell({required this.text, this.style});
 
   final String text;
-  final bool alignEnd;
   final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: Alignment.center,
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: Alignment.center,
         child: Text(
           text,
           maxLines: 1,
+          textAlign: TextAlign.center,
           style: style ?? Theme.of(context).textTheme.bodyMedium,
         ),
       ),
@@ -806,25 +895,21 @@ class _DiamondDetailsTable extends StatelessWidget {
     return _FlexTable(
       isEmpty: details.isEmpty,
       columns: const [
-        _FlexColumn(label: AppStrings.srNo, flex: 2),
-        _FlexColumn(label: AppStrings.shape, flex: 3),
-        _FlexColumn(label: AppStrings.sizeMm, flex: 3, alignEnd: true),
-        _FlexColumn(label: AppStrings.pcs, flex: 2, alignEnd: true),
-        _FlexColumn(label: AppStrings.weightCt, flex: 3, alignEnd: true),
-        _FlexColumn(label: AppStrings.color, flex: 2),
-        _FlexColumn(label: AppStrings.clarity, flex: 2),
-        _FlexColumn(label: AppStrings.setting, flex: 3),
+        _FlexColumn(label: AppStrings.srNo, flex: 1),
+        _FlexColumn(label: AppStrings.itemCode, flex: 1),
+        _FlexColumn(label: AppStrings.size, flex: 1),
+        _FlexColumn(label: AppStrings.pcs, flex: 1),
+        _FlexColumn(label: AppStrings.weight, flex: 1),
+        _FlexColumn(label: AppStrings.setting, flex: 1),
       ],
       rows: [
         for (final d in details)
           [
             '${d.srNo}',
-            d.shape,
-            d.sizeMm.toStringAsFixed(2),
+            d.itemCode,
+            d.size.toStringAsFixed(2),
             '${d.pcs}',
-            d.weightCt.toStringAsFixed(2),
-            d.color,
-            d.clarity,
+            d.weight.toStringAsFixed(2),
             d.setting,
           ],
       ],
@@ -842,14 +927,13 @@ class _RmSummaryTable extends StatelessWidget {
     return _FlexTable(
       isEmpty: items.isEmpty,
       columns: const [
-        _FlexColumn(label: AppStrings.materialCode, flex: 3),
-        _FlexColumn(label: AppStrings.rmDescription, flex: 4),
-        _FlexColumn(label: AppStrings.allocatedQty, flex: 3, alignEnd: true),
-        _FlexColumn(label: AppStrings.issuedQty, flex: 3, alignEnd: true),
-        _FlexColumn(label: AppStrings.status, flex: 2, alignEnd: true),
+        _FlexColumn(label: AppStrings.materialType, flex: 1),
+        _FlexColumn(label: AppStrings.itemCode, flex: 1),
+        _FlexColumn(label: AppStrings.size, flex: 1),
+        _FlexColumn(label: AppStrings.issuedQty, flex: 1),
       ],
       rows: [
-        for (final r in items) [r.materialCode, r.description, r.allocatedQty, r.issuedQty, r.status],
+        for (final r in items) [r.materialType, r.itemCode, r.size, r.issuedQty],
       ],
     );
   }

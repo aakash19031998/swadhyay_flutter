@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../network/api_client.dart';
+import '../network/connectivity_checker.dart';
 import '../network/interceptors/auth_interceptor.dart';
 import '../network/network_info.dart';
 import '../storage/local_storage_service.dart';
@@ -34,6 +35,10 @@ class InitialBinding extends Bindings {
       NetworkInfoImpl(Get.find<Connectivity>()),
       permanent: true,
     );
+    Get.put<ConnectivityChecker>(
+      ConnectivityChecker(Get.find<NetworkInfo>()),
+      permanent: true,
+    );
 
     final AuthInterceptor authInterceptor = AuthInterceptor(
       Get.find<SecureStorageService>(),
@@ -43,7 +48,7 @@ class InitialBinding extends Bindings {
       },
     );
     Get.put<ApiClient>(
-      ApiClient(ApiClient.buildDio(authInterceptor: authInterceptor)),
+      ApiClient(ApiClient.buildDio(authInterceptor: authInterceptor), Get.find<NetworkInfo>()),
       permanent: true,
     );
   }

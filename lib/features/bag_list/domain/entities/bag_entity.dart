@@ -33,6 +33,7 @@ class BagEntity extends Equatable {
     this.part,
     this.pieceQty,
     this.styleNo,
+    this.designCategory,
     this.diamondDetails = const [],
     this.rmSummary = const [],
   });
@@ -73,11 +74,71 @@ class BagEntity extends Equatable {
   final String? part;
   final int? pieceQty;
   final String? styleNo;
+  final String? designCategory;
 
   final List<DiamondDetailEntity> diamondDetails;
   final List<BagRmSummaryEntity> rmSummary;
 
   double get totalPoints => designPoints * bagQty;
+
+  /// Returns a copy with the given fields replaced — used to merge
+  /// `BagDetailsNew`'s Bag Summary/Manufacturing Instructions data onto the
+  /// [BagEntity] the list screen already loaded, once the detail screen's
+  /// own fetch resolves.
+  BagEntity copyWith({
+    int? bagQty,
+    String? metal,
+    double? designGrossWt,
+    double? designNetWt,
+    String? designInstr,
+    String? custInstr,
+    String? stampInstr,
+    String? rhodInstr,
+    String? diamInstr,
+    String? sizeInstr,
+    DateTime? delDate,
+    String? size,
+    String? customer,
+    String? poNo,
+    String? part,
+    int? pieceQty,
+    String? styleNo,
+    String? designCategory,
+    String? locationCode,
+  }) {
+    return BagEntity(
+      id: id,
+      bagNo: bagNo,
+      designNo: designNo,
+      imageUrl: imageUrl,
+      locationCode: locationCode ?? this.locationCode,
+      department: department,
+      filling: filling,
+      bagQty: bagQty ?? this.bagQty,
+      designPoints: designPoints,
+      assignedDate: assignedDate,
+      media: media,
+      metal: metal ?? this.metal,
+      designGrossWt: designGrossWt ?? this.designGrossWt,
+      designNetWt: designNetWt ?? this.designNetWt,
+      designInstr: designInstr ?? this.designInstr,
+      custInstr: custInstr ?? this.custInstr,
+      stampInstr: stampInstr ?? this.stampInstr,
+      rhodInstr: rhodInstr ?? this.rhodInstr,
+      diamInstr: diamInstr ?? this.diamInstr,
+      sizeInstr: sizeInstr ?? this.sizeInstr,
+      delDate: delDate ?? this.delDate,
+      size: size ?? this.size,
+      customer: customer ?? this.customer,
+      poNo: poNo ?? this.poNo,
+      part: part ?? this.part,
+      pieceQty: pieceQty ?? this.pieceQty,
+      styleNo: styleNo ?? this.styleNo,
+      designCategory: designCategory ?? this.designCategory,
+      diamondDetails: diamondDetails,
+      rmSummary: rmSummary,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -108,6 +169,7 @@ class BagEntity extends Equatable {
         part,
         pieceQty,
         styleNo,
+        designCategory,
         diamondDetails,
         rmSummary,
       ];

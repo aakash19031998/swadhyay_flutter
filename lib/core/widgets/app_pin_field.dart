@@ -33,6 +33,9 @@ class AppPinField extends StatefulWidget {
     this.onChanged,
     this.onCompleted,
     this.errorText,
+    this.boxSize = AppDimensions.pinBoxSize,
+    this.boxRadius = AppDimensions.radiusMd,
+    this.fillColor,
   });
 
   final int length;
@@ -43,6 +46,13 @@ class AppPinField extends StatefulWidget {
   final ValueChanged<String>? onCompleted;
   final String? errorText;
 
+  /// Single side length — boxes are always square. Default to the login
+  /// screen's look; callers with a different visual language (e.g. Change
+  /// Password's filled boxes) override this instead of forking the widget.
+  final double boxSize;
+  final double boxRadius;
+  final Color? fillColor;
+
   @override
   State<AppPinField> createState() => _AppPinFieldState();
 }
@@ -50,6 +60,7 @@ class AppPinField extends StatefulWidget {
 class _AppPinFieldState extends State<AppPinField> {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
+  late final List<GlobalKey> _boxKeys;
 
   String get _currentPin => _controllers.map((c) => c.text).join();
 
@@ -58,7 +69,29 @@ class _AppPinFieldState extends State<AppPinField> {
     super.initState();
     _controllers = List.generate(widget.length, (_) => TextEditingController());
     _focusNodes = List.generate(widget.length, (_) => FocusNode());
+    _boxKeys = List.generate(widget.length, (_) => GlobalKey());
     widget.controller?._attach(this);
+  }
+
+  /// Scrolls whichever box just gained focus fully above the keyboard.
+  /// Needed on top of Flutter's built-in "scroll focused field into view"
+  /// behavior because that only reliably fires when the keyboard is first
+  /// raised — auto-advancing to the *next* box (typing) or back to the
+  /// *previous* one (backspace) moves focus while the keyboard is already
+  /// up, which doesn't always re-trigger it, so the last box in a stack of
+  /// several (e.g. Change Password's "Confirm New Password") can end up
+  /// hidden behind the keyboard.
+  void _scrollBoxIntoView(int index) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final BuildContext? boxContext = _boxKeys[index].currentContext;
+      if (boxContext == null || !boxContext.mounted) return;
+      Scrollable.ensureVisible(
+        boxContext,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -143,13 +176,17 @@ class _AppPinFieldState extends State<AppPinField> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(widget.length, (index) {
             return Padding(
+              key: _boxKeys[index],
               padding: EdgeInsets.only(
                 right: index == widget.length - 1 ? 0 : AppDimensions.pinBoxSpacing,
               ),
               child: SizedBox(
-                width: AppDimensions.pinBoxSize,
-                height: AppDimensions.pinBoxSize,
+                width: widget.boxSize,
+                height: widget.boxSize,
                 child: Focus(
+                  onFocusChange: (hasFocus) {
+                    if (hasFocus) _scrollBoxIntoView(index);
+                  },
                   onKeyEvent: (node, event) {
                     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
                       _handleBackspace(index);
@@ -170,16 +207,18 @@ class _AppPinFieldState extends State<AppPinField> {
                     decoration: InputDecoration(
                       counterText: '',
                       contentPadding: EdgeInsets.zero,
+                      filled: widget.fillColor != null,
+                      fillColor: widget.fillColor,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                        borderRadius: BorderRadius.circular(widget.boxRadius),
                         borderSide: BorderSide(color: hasError ? colors.error : colors.outlineVariant),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                        borderRadius: BorderRadius.circular(widget.boxRadius),
                         borderSide: BorderSide(color: hasError ? colors.error : colors.outlineVariant),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                        borderRadius: BorderRadius.circular(widget.boxRadius),
                         borderSide: BorderSide(color: hasError ? colors.error : colors.primary, width: 1.5),
                       ),
                     ),

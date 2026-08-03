@@ -18,6 +18,8 @@ class DesignImageRepositoryImpl implements DesignImageRepository {
       return Right(images);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     }
   }
 }
