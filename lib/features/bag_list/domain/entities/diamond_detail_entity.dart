@@ -4,24 +4,20 @@ import 'package:equatable/equatable.dart';
 class DiamondDetailEntity extends Equatable {
   const DiamondDetailEntity({
     required this.srNo,
-    required this.shape,
-    required this.sizeMm,
+    required this.itemCode,
+    required this.size,
     required this.pcs,
-    required this.weightCt,
-    required this.color,
-    required this.clarity,
+    required this.weight,
     required this.setting,
   });
 
   final int srNo;
-  final String shape;
-  final double sizeMm;
+  final String itemCode;
+  final double size;
   final int pcs;
-  final double weightCt;
-  final String color;
-  final String clarity;
+  final double weight;
   final String setting;
 
   @override
-  List<Object?> get props => [srNo, shape, sizeMm, pcs, weightCt, color, clarity, setting];
+  List<Object?> get props => [srNo, itemCode, size, pcs, weight, setting];
 }

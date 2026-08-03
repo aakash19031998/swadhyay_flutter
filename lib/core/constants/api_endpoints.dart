@@ -11,7 +11,8 @@ class ApiEndpoints {
   static const String menuListNew = '/MenuListNew';
   static const String logout = '/auth/logout';
   static const String changePassword = '/auth/change-password';
-  static const String bagList = '/bags';
+  static const String issuedBagListNew = '/IssuedBagListNew';
+  static const String bagDetailsNew = '/BagDetailsNew';
   static const String skipBag = '/bags/skip';
   static const String designImages = '/reports/design-images';
   static const String qcChecking = '/reports/qc-checking';

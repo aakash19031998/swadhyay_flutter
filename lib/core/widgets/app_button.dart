@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../constants/app_dimensions.dart';
+import '../network/connectivity_checker.dart';
 
 enum AppButtonVariant { filled, outlined, text }
 
 /// Standard button used across every form/action in the app so tap targets,
 /// loading affordance and disabled styling stay consistent.
+///
+/// Every tap is gated behind [ConnectivityChecker] first — offline taps
+/// show the shared "no internet" snackbar and never reach [onPressed] — so
+/// no screen needs its own pre-flight connectivity check on a button.
 class AppButton extends StatelessWidget {
   const AppButton({
     required this.label,
@@ -23,6 +29,13 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final IconData? icon;
   final bool fullWidth;
+
+  Future<void> _handleTap() async {
+    final VoidCallback? callback = onPressed;
+    if (callback == null) return;
+    if (!await Get.find<ConnectivityChecker>().ensureConnected()) return;
+    callback();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +66,9 @@ class AppButton extends StatelessWidget {
               );
 
     final Widget button = switch (variant) {
-      AppButtonVariant.filled => ElevatedButton(onPressed: isDisabled ? null : onPressed, child: child),
-      AppButtonVariant.outlined => OutlinedButton(onPressed: isDisabled ? null : onPressed, child: child),
-      AppButtonVariant.text => TextButton(onPressed: isDisabled ? null : onPressed, child: child),
+      AppButtonVariant.filled => ElevatedButton(onPressed: isDisabled ? null : _handleTap, child: child),
+      AppButtonVariant.outlined => OutlinedButton(onPressed: isDisabled ? null : _handleTap, child: child),
+      AppButtonVariant.text => TextButton(onPressed: isDisabled ? null : _handleTap, child: child),
     };
 
     if (!fullWidth) return button;

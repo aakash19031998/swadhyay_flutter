@@ -18,6 +18,8 @@ class FolloperReportRepositoryImpl implements FolloperReportRepository {
       return Right(entries);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     }
   }
 }

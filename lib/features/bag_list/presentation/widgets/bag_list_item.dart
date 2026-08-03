@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_card.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../controllers/bag_media_viewer_args.dart';
 import '../controllers/bag_timer_controller.dart';
+import 'bag_action_button.dart';
 import 'pause_reason_dialog.dart';
 
 /// One Bag List grid card: image with a floating quality badge, a fixed
@@ -23,12 +24,7 @@ class BagListItem extends StatelessWidget {
   final BagEntity bag;
   final ValueChanged<BagEntity>? onDone;
 
-  BagTimerController get _timer {
-    if (Get.isRegistered<BagTimerController>(tag: bag.id)) {
-      return Get.find<BagTimerController>(tag: bag.id);
-    }
-    return Get.put(BagTimerController(), tag: bag.id);
-  }
+  BagTimerController get _timer => BagTimerController.of(bag.id);
 
   @override
   Widget build(BuildContext context) {
@@ -68,27 +64,33 @@ class _BagImageHeader extends StatelessWidget {
                     AppRoutes.bagMediaViewer,
                     arguments: BagMediaViewerArgs(media: bag.media),
                   ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            child: SizedBox(
-              width: double.infinity,
-              height: AppDimensions.bagCardImageHeight,
-              child: bag.imageUrl == null
-                  ? const ColoredBox(
-                      color: AppColors.surfaceVariant,
-                      child: Icon(Icons.diamond_outlined, color: AppColors.textHint),
-                    )
-                  : CachedNetworkImage(
-                      imageUrl: bag.imageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      errorWidget: (context, url, error) => const ColoredBox(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.primary, width: 2),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              child: SizedBox(
+                width: double.infinity,
+                height: AppDimensions.bagCardImageHeight,
+                child: bag.imageUrl == null
+                    ? const ColoredBox(
                         color: AppColors.surfaceVariant,
-                        child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
+                        child: Icon(Icons.diamond_outlined, color: AppColors.textHint),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: bag.imageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        errorWidget: (context, url, error) => const ColoredBox(
+                          color: AppColors.surfaceVariant,
+                          child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
         ),
@@ -167,9 +169,9 @@ class _BagInfoGrid extends StatelessWidget {
             ),
           ),
           right: _InfoTile(
-            icon: Icons.receipt_long_outlined,
-            caption: AppStrings.orderNo,
-            value: bag.locationCode,
+            icon: Icons.style_outlined,
+            caption: AppStrings.styleNo,
+            value: bag.designNo,
             color: AppColors.textSecondary,
           ),
         ),
@@ -388,20 +390,20 @@ class _StatusRow extends StatelessWidget {
 
       switch (timer.status.value) {
         case BagWorkStatus.notStarted:
-          right = _ActionButton(
+          right = BagActionButton(
             label: AppStrings.start,
             icon: Icons.play_arrow_rounded,
             color: AppColors.primary,
             onTap: timer.start,
           );
         case BagWorkStatus.running:
-          left = _ActionButton(
+          left = BagActionButton(
             label: AppStrings.pause,
             icon: Icons.pause_rounded,
             color: AppColors.warning,
             onTap: _handlePause,
           );
-          right = _ActionButton(
+          right = BagActionButton(
             label: AppStrings.done,
             icon: Icons.check_rounded,
             color: AppColors.success,
@@ -411,13 +413,13 @@ class _StatusRow extends StatelessWidget {
             },
           );
         case BagWorkStatus.paused:
-          left = _ActionButton(
+          left = BagActionButton(
             label: AppStrings.resume,
             icon: Icons.play_arrow_rounded,
             color: AppColors.info,
             onTap: timer.resume,
           );
-          right = _ActionButton(
+          right = BagActionButton(
             label: AppStrings.done,
             icon: Icons.check_rounded,
             color: AppColors.success,
@@ -427,7 +429,7 @@ class _StatusRow extends StatelessWidget {
             },
           );
         case BagWorkStatus.done:
-          right = _ActionButton(
+          right = BagActionButton(
             label: AppStrings.completed,
             icon: Icons.check_circle_rounded,
             color: AppColors.success,
@@ -443,79 +445,5 @@ class _StatusRow extends StatelessWidget {
         ],
       );
     });
-  }
-}
-
-/// Elevated pill action button — solid brand color, drop shadow, and the
-/// icon set inside its own translucent circle for the "3D" look, matching
-/// [AppButton]'s filled style but compact enough for a card footer.
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    // Scales the whole pill down (never up) so the longest label —
-    // "Completed" — can't overflow the narrower half-width it's given when
-    // the other side of the status row is empty.
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Material(
-        color: color,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-        elevation: 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingMd,
-              vertical: AppDimensions.spacingSm,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.35),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColors.onPrimary,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
-                      ),
-                ),
-                const SizedBox(width: AppDimensions.spacingXs),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppColors.onPrimary.withValues(alpha: 0.24),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: AppColors.onPrimary, size: AppDimensions.iconMd),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

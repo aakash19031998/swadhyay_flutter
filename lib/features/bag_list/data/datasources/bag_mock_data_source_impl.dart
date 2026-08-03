@@ -42,6 +42,8 @@ class BagMockDataSourceImpl implements BagDataSource {
 
   static const List<String> _fillings = ['PREMIUM', 'Normal'];
 
+  static const List<String> _designCategories = ['Necklace', 'Ring', 'Earring', 'Bracelet', 'Pendant'];
+
   // The department a bag is currently sitting in — changes as it moves
   // through the process, so it's driven by data, never a fixed label.
   static const List<String> _departments = ['Filling', 'Setting', 'Polishing', 'Casting', 'Quality Check'];
@@ -59,22 +61,18 @@ class BagMockDataSourceImpl implements BagDataSource {
     return [
       DiamondDetailModel(
         srNo: 1,
-        shape: 'Round',
-        sizeMm: 1.50,
+        itemCode: 'DIA-${1200 + index}',
+        size: 1.50,
         pcs: 12,
-        weightCt: 0.18,
-        color: 'F-G',
-        clarity: 'VS',
+        weight: 0.18,
         setting: 'Prong',
       ),
       DiamondDetailModel(
         srNo: 2,
-        shape: index.isEven ? 'Round' : 'Princess',
-        sizeMm: 2.00,
+        itemCode: 'DIA-${1300 + index}',
+        size: 2.00,
         pcs: 6,
-        weightCt: 0.24,
-        color: 'F-G',
-        clarity: 'VS',
+        weight: 0.24,
         setting: 'Pave',
       ),
     ];
@@ -83,11 +81,10 @@ class BagMockDataSourceImpl implements BagDataSource {
   static List<BagRmSummaryModel> _rmSummaryFor(int index) {
     return [
       BagRmSummaryModel(
-        materialCode: 'RM-${10023 + index}',
-        description: '${_metals[index % _metals.length]} Grain',
-        allocatedQty: '9.00 grm',
+        materialType: _metals[index % _metals.length],
+        itemCode: 'RM-${10023 + index}',
+        size: '7.0 US',
         issuedQty: '9.00 grm',
-        status: 'Issued',
       ),
     ];
   }
@@ -100,6 +97,7 @@ class BagMockDataSourceImpl implements BagDataSource {
       designNo: _designNos[index % _designNos.length],
       imageUrl: media.first.url,
       locationCode: _locationCodes[index % _locationCodes.length],
+      designCategory: _designCategories[index % _designCategories.length],
       department: _departments[index % _departments.length],
       filling: _fillings[index % _fillings.length],
       bagQty: (index % 3) + 1,
@@ -128,13 +126,13 @@ class BagMockDataSourceImpl implements BagDataSource {
   });
 
   @override
-  Future<List<BagModel>> getBags({String query = ''}) async {
+  Future<({int bagCount, int pcsCount, List<BagModel> bags})> getBags({required String empCd}) async {
     await Future.delayed(AppConfig.mockLatency);
 
-    if (query.isEmpty) return _bags;
-    final String needle = query.toLowerCase();
-    return _bags
-        .where((bag) => bag.bagNo.toLowerCase().contains(needle) || bag.designNo.toLowerCase().contains(needle))
-        .toList();
+    return (
+      bagCount: _bags.length,
+      pcsCount: _bags.fold(0, (sum, bag) => sum + bag.bagQty),
+      bags: _bags,
+    );
   }
 }

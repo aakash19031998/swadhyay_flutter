@@ -30,6 +30,12 @@ class HomeController extends GetxController {
   final RxBool isMenuLoading = true.obs;
   final RxBool isLoggingOut = false.obs;
 
+  /// Plain (non-reactive) re-entrancy guard for [loadMenu] — separate from
+  /// [isMenuLoading], which starts `true` to show a loader before the very
+  /// first fetch has even begun and so can't double as an "already
+  /// fetching" check.
+  bool _isFetchingMenu = false;
+
   /// `MenuListNew` never sends a logout entry — it's an app-level action,
   /// not a backend screen — so it's always appended locally.
   static const DrawerMenuItemEntity _logoutMenuItem = DrawerMenuItemEntity(
@@ -48,21 +54,40 @@ class HomeController extends GetxController {
 
   Future<void> _initialize() async {
     await _loadEmployee();
-    await _loadMenu();
+    await loadMenu();
   }
 
   Future<void> _loadEmployee() async {
     employee.value = await _getCurrentEmployeeUseCase();
   }
 
-  Future<void> _loadMenu() async {
+  /// Re-fetches `MenuListNew` fresh every time it's called — no local
+  /// caching, so [AppDrawer] calls this on every single open (see
+  /// `Scaffold.onDrawerChanged` in [HomeView]), not just once at startup.
+  ///
+  /// Guarded against overlapping calls: the startup load from [_initialize]
+  /// and a drawer-open triggered reload can otherwise race if the drawer is
+  /// opened right as the screen first appears, firing two concurrent
+  /// requests against the same `isMenuLoading`/`menuItems` state.
+  ///
+  /// Also re-loads [employee] first if it isn't populated yet — a fast
+  /// drawer-open can otherwise win that same race and call the API with an
+  /// empty `empCd` before [_initialize]'s own load has finished, which the
+  /// backend rejects outright (500).
+  Future<void> loadMenu() async {
+    if (_isFetchingMenu) return;
+    _isFetchingMenu = true;
     isMenuLoading.value = true;
+
+    if (employee.value == null) await _loadEmployee();
+
     final result = await _getDrawerMenuUseCase(employee.value?.empCode ?? '');
     result.fold(
       (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
       (items) => menuItems.assignAll([...items, _logoutMenuItem]),
     );
     isMenuLoading.value = false;
+    _isFetchingMenu = false;
   }
 
   void onProfileTap() {

@@ -34,11 +34,19 @@ class AppConfig {
     defaultValue: false,
   );
 
+  /// Separate from [useMockData]: Bag List is wired to the live
+  /// `IssuedBagListNew` backend by default, independent of other
+  /// still-mocked features.
+  static const bool useMockBagList = bool.fromEnvironment(
+    'USE_MOCK_BAG_LIST',
+    defaultValue: false,
+  );
+
   /// Sent as `appVersion` in the login request body.
   static const int appVersion = 0;
 
-  static const Duration connectTimeout = Duration(seconds: 15);
-  static const Duration receiveTimeout = Duration(seconds: 15);
+  static const Duration connectTimeout = Duration(minutes: 2);
+  static const Duration receiveTimeout = Duration(minutes: 2);
 
   /// Simulated latency for mock data sources so loading states are visible
   /// and representative of real network conditions during development.

@@ -18,6 +18,8 @@ class SkipBagRepositoryImpl implements SkipBagRepository {
       return Right(bags);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     }
   }
 
@@ -28,6 +30,8 @@ class SkipBagRepositoryImpl implements SkipBagRepository {
       return Right(entry);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     }
   }
 }

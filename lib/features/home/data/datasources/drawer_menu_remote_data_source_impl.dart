@@ -9,9 +9,9 @@ import 'drawer_menu_data_source.dart';
 /// Real-backend implementation, wired in whenever [AppConfig.useMockDrawerMenu]
 /// is `false` (the default) — see [DrawerMenuDependencies].
 ///
-/// `MenuListNew`'s payload is unusually double-wrapped: the top-level
-/// `data` is a one-element list, and the actual menu array is that
-/// element's own nested `data` field.
+/// `MenuListNew`'s response is a single flat object: `Status` ("True"/
+/// "False", as a string, not a bool), `Message`, and `data` holding the
+/// menu array directly.
 class DrawerMenuRemoteDataSourceImpl implements DrawerMenuDataSource {
   DrawerMenuRemoteDataSourceImpl(this._apiClient);
 
@@ -31,15 +31,12 @@ class DrawerMenuRemoteDataSourceImpl implements DrawerMenuDataSource {
       );
 
       final Map<String, dynamic> body = response.data ?? const <String, dynamic>{};
-      if (body['status'] != true) {
-        throw ServerException(message: body['message'] as String? ?? 'Unable to load menu');
+      final bool status = (body['Status'] as String?)?.toLowerCase() == 'true';
+      if (!status) {
+        throw ServerException(message: body['Message'] as String? ?? 'Unable to load menu');
       }
 
-      final List<dynamic> envelopes = body['data'] as List<dynamic>? ?? const [];
-      if (envelopes.isEmpty) return const [];
-
-      final List<dynamic> menuJson =
-          (envelopes.first as Map<String, dynamic>)['data'] as List<dynamic>? ?? const [];
+      final List<dynamic> menuJson = body['data'] as List<dynamic>? ?? const [];
       return DrawerMenuItemModel.fromApiList(menuJson);
     } on DioException catch (e) {
       throw ServerException(message: 'Unable to load menu', statusCode: e.response?.statusCode);

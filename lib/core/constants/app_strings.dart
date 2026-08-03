@@ -45,6 +45,8 @@ class AppStrings {
   static const String changePassword = 'Change Password';
   static const String reports = 'Reports';
   static const String designImage = 'Design Image';
+  static const String designImageSearchHint = 'Search by design no. or category';
+  static const String noDesignsFound = 'No designs found matching your search.';
   static const String qcChecking = 'Qc Checking';
   static const String timingReport = 'Timing Report';
   static const String artistProduction = 'Artist Production';
@@ -59,7 +61,7 @@ class AppStrings {
   static const String designPoints = 'Design Points';
   static const String totalPoints = 'Total Points';
   static const String totalBags = 'Bags';
-  static const String totalImages = 'Images';
+  static const String totalPcs = 'Pcs';
   static const String start = 'Start';
   static const String pause = 'Pause';
   static const String resume = 'Resume';
@@ -77,7 +79,7 @@ class AppStrings {
   static const String pauseReasonRequired = 'Reason is required';
 
   // Bag detail.
-  static const String backPause = 'Back / Pause';
+  static const String back = 'Back';
   static const String metal = 'Metal';
   static const String designGrossWt = 'Design Gross Wt';
   static const String designNetWt = 'Design Net Weight';
@@ -95,20 +97,15 @@ class AppStrings {
   static const String part = 'Part';
   static const String poNo = 'PoNo';
   static const String styleNo = 'Style No.';
+  static const String designCategory = 'Design Ctg/Sub Ctg';
   static const String noDataAvailable = 'No data available';
   static const String manufacturingInstructions = 'Manufacturing Instructions';
   static const String srNo = 'Sr No';
-  static const String shape = 'Shape';
-  static const String sizeMm = 'Size (MM)';
+  static const String itemCode = 'Item Code';
   static const String pcs = 'Pcs';
-  static const String weightCt = 'Wt (ct)';
-  static const String color = 'Color';
-  static const String clarity = 'Clarity';
-  static const String materialCode = 'Material Code';
-  static const String rmDescription = 'Description';
-  static const String allocatedQty = 'Allocated Qty';
+  static const String weight = 'Weight';
+  static const String materialType = 'Material Type';
   static const String issuedQty = 'Issued Qty';
-  static const String status = 'Status';
   static const String bagSummary = 'Bag Summary';
 
   // Bag completion.
@@ -116,7 +113,7 @@ class AppStrings {
   static const String addNewWorkEntry = 'Add New Work Entry';
   static const String bagNoShort = 'Bag No.';
   static const String designNoLabel = 'Design No.';
-  static const String orderNo = 'OrderNo';
+  static const String orderNo = 'Order No';
   static const String workType = 'Work Type';
   static const String work = 'Work';
   static const String pieceStone = 'Piece/Stone';
@@ -178,4 +175,11 @@ class AppStrings {
   static const String confirmNewPassword = 'Confirm New Password';
   static const String passwordUpdated = 'Password updated successfully';
   static const String passwordsDoNotMatch = 'Passwords do not match';
+  static const String changePasswordSubtitle = 'Set up a new 4-digit code to keep your account secure';
+  static const String updatePassword = 'Update Password';
+  static const String hide = 'Hide';
+  static const String pinStrengthEmpty = 'Enter 4 digits';
+  static const String pinStrengthWeak = 'Weak PIN';
+  static const String pinStrengthModerate = 'Moderate';
+  static const String pinStrengthStrong = 'Strong PIN';
 }

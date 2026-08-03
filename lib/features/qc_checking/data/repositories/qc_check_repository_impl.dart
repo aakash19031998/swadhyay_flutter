@@ -18,6 +18,8 @@ class QcCheckRepositoryImpl implements QcCheckRepository {
       return Right(checks);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     }
   }
 }

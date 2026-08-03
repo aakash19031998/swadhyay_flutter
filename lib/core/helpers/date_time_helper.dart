@@ -6,11 +6,18 @@ class DateTimeHelper {
   const DateTimeHelper._();
 
   static final DateFormat _date = DateFormat('dd/MM/yyyy');
+  static final DateFormat _dateDashed = DateFormat('dd-MM-yyyy');
   static final DateFormat _time = DateFormat('HH:mm');
   static final DateFormat _dateTime = DateFormat('dd/MM/yyyy HH:mm');
   static final DateFormat _monthYear = DateFormat('MMMM yyyy');
 
   static String formatDate(DateTime value) => _date.format(value);
+
+  /// `DD-MM-YYYY` (dashed) — distinct from [formatDate]'s `dd/MM/yyyy`
+  /// because some fields (currently Bag Detail's delivery date) are
+  /// specced against this exact separator while every other date display
+  /// in the app keeps the slashed format.
+  static String formatDateDashed(DateTime value) => _dateDashed.format(value);
 
   static String formatMonthYear(DateTime value) => _monthYear.format(value);
 

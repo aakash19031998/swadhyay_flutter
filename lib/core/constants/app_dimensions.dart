@@ -80,6 +80,12 @@ class AppDimensions {
   // Login. Employee number is a fixed-length numeric code (min == max).
   static const int empCodeLength = 5;
 
+  // Change password. Filled, larger boxes than the login PIN field.
+  static const double changePinBoxSize = 64;
+
+  // Design image gallery card.
+  static const double designCardRadius = radiusXl;
+
   // Drawer. Two fractions so width actually scales with screen size at both
   // ends instead of sitting pinned at drawerMinWidth for every phone.
   static const double drawerPhoneWidthFraction = 0.82;
