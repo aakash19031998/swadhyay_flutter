@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_loader.dart';
+import '../../../../core/widgets/flex_table.dart';
 import '../../../../core/widgets/section_card.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/entities/bag_rm_summary_entity.dart';
@@ -50,7 +51,7 @@ class BagDetailView extends GetView<BagDetailController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _HeaderRow(bag: bag),
+                            _HeaderRow(bag: bag, onViewMedia: controller.openMediaGallery),
                             const SizedBox(height: AppDimensions.spacingMd),
                             SectionCard(
                               title: AppStrings.manufacturingInstructions,
@@ -108,9 +109,10 @@ class BagDetailView extends GetView<BagDetailController> {
 /// each frame — the same measure-then-rebuild approach already used for
 /// [_ExpandingTabBarView]'s dynamic tab height.
 class _HeaderRow extends StatefulWidget {
-  const _HeaderRow({required this.bag});
+  const _HeaderRow({required this.bag, required this.onViewMedia});
 
   final BagEntity bag;
+  final VoidCallback onViewMedia;
 
   @override
   State<_HeaderRow> createState() => _HeaderRowState();
@@ -141,7 +143,7 @@ class _HeaderRowState extends State<_HeaderRow> {
           key: _summaryKey,
           child: _BagSummaryCard(bag: widget.bag, columns: isTablet ? 4 : 1),
         );
-        final Widget preview = _JewelryPreview(imageUrl: widget.bag.imageUrl);
+        final Widget preview = _JewelryPreview(imageUrl: widget.bag.imageUrl, onTap: widget.onViewMedia);
 
         if (!isTablet) {
           return Column(
@@ -293,13 +295,18 @@ class _TopBarActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      // Disables the action buttons while a Start/Pause/Resume call is in
+      // flight — prevents a slow response from being triggered twice.
+      final bool busy = controller.timer.isProcessing.value;
+      final BagEntity bag = controller.bag.value;
+
       switch (controller.timer.status.value) {
         case BagWorkStatus.notStarted:
           return BagActionButton(
             label: AppStrings.start,
             icon: Icons.play_arrow_rounded,
             color: AppColors.primary,
-            onTap: controller.timer.start,
+            onTap: busy ? null : () => controller.timer.start(bag),
           );
         case BagWorkStatus.running:
           return Row(
@@ -309,7 +316,7 @@ class _TopBarActions extends StatelessWidget {
                 label: AppStrings.pause,
                 icon: Icons.pause_rounded,
                 color: AppColors.warning,
-                onTap: controller.pause,
+                onTap: busy ? null : () => controller.timer.pause(bag),
               ),
               const SizedBox(width: AppDimensions.spacingSm),
               BagActionButton(
@@ -328,7 +335,7 @@ class _TopBarActions extends StatelessWidget {
                 label: AppStrings.resume,
                 icon: Icons.play_arrow_rounded,
                 color: AppColors.info,
-                onTap: controller.timer.resume,
+                onTap: busy ? null : () => controller.timer.resume(bag),
               ),
               const SizedBox(width: AppDimensions.spacingSm),
               BagActionButton(
@@ -758,133 +765,6 @@ class _SegmentedTabBar extends StatelessWidget {
   }
 }
 
-/// One column definition for [_FlexTable]: [flex] controls its share of the
-/// table's total width (so the table always fills exactly 100% of
-/// whatever width it's given — tablet or phone — with no fixed pixel
-/// widths and no horizontal scrolling).
-class _FlexColumn {
-  const _FlexColumn({required this.label, this.flex = 1});
-
-  final String label;
-  final int flex;
-}
-
-/// A table that always fits the width it's laid out in. Each cell is
-/// wrapped in [FittedBox] so a value that's still too long for its column
-/// on a narrow phone scales down instead of overflowing or forcing a
-/// horizontal scrollbar.
-class _FlexTable extends StatelessWidget {
-  const _FlexTable({required this.columns, required this.rows, required this.isEmpty});
-
-  final List<_FlexColumn> columns;
-  final List<List<String>> rows;
-  final bool isEmpty;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.spacingMd),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ColoredBox(
-                color: AppColors.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacingSm,
-                    vertical: AppDimensions.spacingSm,
-                  ),
-                  child: Row(
-                    children: [
-                      for (int c = 0; c < columns.length; c++) ...[
-                        if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
-                        Expanded(
-                          flex: columns[c].flex,
-                          child: _FlexCell(
-                            text: columns[c].label.toUpperCase(),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: AppColors.primaryDark,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              if (isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(AppDimensions.spacingLg),
-                  child: Text(
-                    AppStrings.noDataAvailable,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
-                  ),
-                )
-              else
-                for (int r = 0; r < rows.length; r++)
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: r.isEven ? AppColors.surface : AppColors.background,
-                      border: const Border(top: BorderSide(color: AppColors.divider)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacingSm,
-                        vertical: AppDimensions.spacingSm,
-                      ),
-                      child: Row(
-                        children: [
-                          for (int c = 0; c < columns.length; c++) ...[
-                            if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
-                            Expanded(
-                              flex: columns[c].flex,
-                              child: _FlexCell(text: rows[r][c]),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FlexCell extends StatelessWidget {
-  const _FlexCell({required this.text, this.style});
-
-  final String text;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.center,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          maxLines: 1,
-          textAlign: TextAlign.center,
-          style: style ?? Theme.of(context).textTheme.bodyMedium,
-        ),
-      ),
-    );
-  }
-}
-
 class _DiamondDetailsTable extends StatelessWidget {
   const _DiamondDetailsTable({required this.details});
 
@@ -892,24 +772,24 @@ class _DiamondDetailsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _FlexTable(
+    return FlexTable(
       isEmpty: details.isEmpty,
       columns: const [
-        _FlexColumn(label: AppStrings.srNo, flex: 1),
-        _FlexColumn(label: AppStrings.itemCode, flex: 1),
-        _FlexColumn(label: AppStrings.size, flex: 1),
-        _FlexColumn(label: AppStrings.pcs, flex: 1),
-        _FlexColumn(label: AppStrings.weight, flex: 1),
-        _FlexColumn(label: AppStrings.setting, flex: 1),
+        FlexColumn(label: AppStrings.srNo, flex: 1),
+        FlexColumn(label: AppStrings.itemCode, flex: 1),
+        FlexColumn(label: AppStrings.size, flex: 1),
+        FlexColumn(label: AppStrings.pcs, flex: 1),
+        FlexColumn(label: AppStrings.weight, flex: 1),
+        FlexColumn(label: AppStrings.setting, flex: 1),
       ],
       rows: [
         for (final d in details)
           [
             '${d.srNo}',
             d.itemCode,
-            d.size.toStringAsFixed(2),
+            d.size,
             '${d.pcs}',
-            d.weight.toStringAsFixed(2),
+            d.weight,
             d.setting,
           ],
       ],
@@ -924,16 +804,17 @@ class _RmSummaryTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _FlexTable(
+    return FlexTable(
       isEmpty: items.isEmpty,
       columns: const [
-        _FlexColumn(label: AppStrings.materialType, flex: 1),
-        _FlexColumn(label: AppStrings.itemCode, flex: 1),
-        _FlexColumn(label: AppStrings.size, flex: 1),
-        _FlexColumn(label: AppStrings.issuedQty, flex: 1),
+        FlexColumn(label: AppStrings.materialType, flex: 1),
+        FlexColumn(label: AppStrings.itemCode, flex: 1),
+        FlexColumn(label: AppStrings.size, flex: 1),
+        FlexColumn(label: AppStrings.currentQty, flex: 1),
+        FlexColumn(label: AppStrings.wt, flex: 1),
       ],
       rows: [
-        for (final r in items) [r.materialType, r.itemCode, r.size, r.issuedQty],
+        for (final r in items) [r.materialType, r.itemCode, r.size, r.issuedQty, r.wt],
       ],
     );
   }
@@ -944,38 +825,59 @@ class _RmSummaryTable extends StatelessWidget {
 /// 1) — on tablet its width is fixed to [AppDimensions.bagDetailSidebarWidth]
 /// (see [_HeaderRow]), so the square's side is exactly that; on phone it's
 /// stretched to the full column width, so the square's side is the screen
-/// width. The image itself is `cover`-fit so it never distorts.
+/// width. The image itself is `cover`-fit so it never distorts. Tapping it
+/// opens the full image/video gallery — same `ImageAndVideoUrls` call and
+/// same shared viewer as the Bag List screen's thumbnail.
 class _JewelryPreview extends StatelessWidget {
-  const _JewelryPreview({required this.imageUrl});
+  const _JewelryPreview({required this.imageUrl, required this.onTap});
 
   final String? imageUrl;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return SectionCard(
       padding: const EdgeInsets.all(AppDimensions.spacingSm),
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          child: imageUrl == null
-              ? const ColoredBox(
-                  color: AppColors.surfaceVariant,
-                  child: Center(
-                    child: Icon(Icons.diamond_outlined, color: AppColors.textHint, size: AppDimensions.iconXl),
-                  ),
-                )
-              : CachedNetworkImage(
-                  imageUrl: imageUrl!,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  errorWidget: (context, url, error) => const ColoredBox(
-                    color: AppColors.surfaceVariant,
-                    child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
-                  ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                  child: imageUrl == null
+                      ? const ColoredBox(
+                          color: AppColors.surfaceVariant,
+                          child: Center(
+                            child: Icon(Icons.diamond_outlined, color: AppColors.textHint, size: AppDimensions.iconXl),
+                          ),
+                        )
+                      : CachedNetworkImage(
+                          imageUrl: imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          errorWidget: (context, url, error) => const ColoredBox(
+                            color: AppColors.surfaceVariant,
+                            child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
+                          ),
+                        ),
                 ),
+              ),
+              Positioned(
+                right: AppDimensions.spacingXs,
+                bottom: AppDimensions.spacingXs,
+                child: Container(
+                  padding: const EdgeInsets.all(AppDimensions.spacingXxs),
+                  decoration: const BoxDecoration(color: AppColors.overlayScrim, shape: BoxShape.circle),
+                  child: const Icon(Icons.photo_library_outlined, color: AppColors.surface, size: AppDimensions.iconSm),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

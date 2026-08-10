@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_pin_field.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/usecases/login_usecase.dart';
 
 /// Receives UI events from [LoginView], delegates authentication to
@@ -48,44 +48,20 @@ class LoginController extends GetxController {
       (failure) {
         pinFieldController.clear();
         pinErrorText.value = failure.message;
-        _showResultSnackbar(
+        AppSnackbar.show(
           title: AppStrings.somethingWentWrong,
           message: failure.message,
           isSuccess: false,
         );
       },
       (success) {
-        _showResultSnackbar(
+        AppSnackbar.show(
           title: AppStrings.loginSuccessTitle,
           message: success.message,
           isSuccess: true,
         );
         Get.offAllNamed(AppRoutes.home);
       },
-    );
-  }
-
-  /// Solid, high-contrast success/failure snackbar — the GetX default
-  /// (dark-grey background, no icon) reads poorly against this app's
-  /// gradient login screen, so title/message color and background are set
-  /// explicitly against the app's semantic success/error tokens.
-  void _showResultSnackbar({required String title, required String message, required bool isSuccess}) {
-    final Color color = isSuccess ? AppColors.success : AppColors.error;
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: color,
-      colorText: AppColors.onPrimary,
-      icon: Icon(
-        isSuccess ? Icons.check_circle_outline : Icons.error_outline,
-        color: AppColors.onPrimary,
-      ),
-      shouldIconPulse: false,
-      margin: const EdgeInsets.all(AppDimensions.spacingMd),
-      borderRadius: AppDimensions.radiusMd,
-      duration: Duration(seconds: isSuccess ? 2 : 3),
-      snackStyle: SnackStyle.FLOATING,
     );
   }
 

@@ -12,7 +12,6 @@ class BagModel extends BagEntity {
     required super.designPoints,
     required super.assignedDate,
     super.imageUrl,
-    super.media,
     super.metal,
     super.designGrossWt,
     super.designNetWt,
@@ -30,6 +29,12 @@ class BagModel extends BagEntity {
     super.pieceQty,
     super.styleNo,
     super.designCategory,
+    super.byy,
+    super.bchr,
+    super.bno,
+    super.bagCmpCd,
+    super.spStatus,
+    super.seconds,
     super.diamondDetails,
     super.rmSummary,
   });
@@ -56,6 +61,12 @@ class BagModel extends BagEntity {
       filling: json['process'] as String? ?? '',
       bagQty: int.tryParse(json['bag_qty'] as String? ?? '') ?? 1,
       designPoints: double.tryParse(json['bag_points'] as String? ?? '') ?? 0,
+      byy: json['Byy'] as String?,
+      bchr: json['Bchr'] as String?,
+      bno: (json['Bno'] as num?)?.toInt(),
+      bagCmpCd: json['bag_cmp_cd'] as String?,
+      spStatus: json['SPStatus'] as String?,
+      seconds: (json['Seconds'] as num?)?.toInt(),
       // Not part of this API's response; not displayed by the bag list or
       // detail screens.
       assignedDate: DateTime.now(),

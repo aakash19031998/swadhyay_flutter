@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Allows plain HTTP (cleartext) traffic to the backend's LAN IP only — not
+  app-wide. Needed because native plugins that use Android's own networking
+  stack (video_player -> ExoPlayer, for the DesignVideo streams) are blocked
+  from cleartext traffic by default on Android 9+, unlike Flutter's own
+  dart:io-based HTTP client (Dio/cached_network_image), which isn't subject
+  to this OS-level restriction and already worked without this file.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.88.137</domain>
+    </domain-config>
+</network-security-config>

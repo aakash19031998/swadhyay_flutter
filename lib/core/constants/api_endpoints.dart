@@ -13,8 +13,14 @@ class ApiEndpoints {
   static const String changePassword = '/auth/change-password';
   static const String issuedBagListNew = '/IssuedBagListNew';
   static const String bagDetailsNew = '/BagDetailsNew';
+  static const String imageAndVideoUrls = '/ImageAndVideoUrls';
+  static const String pauseReasonMaster = '/PauseReasonMaster';
+  static const String bagTimeTracking = '/BagTimeTracking';
+  static const String bagDoneDetail = '/BagDoneDetail';
+  static const String subWorkType = '/SubWorkType';
+  static const String dummyAddBtnValidation = '/DummyAddBtnValidation';
   static const String skipBag = '/bags/skip';
-  static const String designImages = '/reports/design-images';
+  static const String designMaster = '/reports/design-master';
   static const String qcChecking = '/reports/qc-checking';
   static const String timingReport = '/reports/timing';
   static const String artistProduction = '/reports/artist-production';

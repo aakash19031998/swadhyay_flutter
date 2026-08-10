@@ -71,7 +71,11 @@ class BagListView extends GetView<BagListController> {
                 searchController: controller.searchController,
                 searchSuggestionsBuilder: controller.suggestionsFor,
                 searchBarTrailing: _ScanButton(onScanned: controller.onScanned),
-                itemBuilder: (context, bag) => BagListItem(bag: bag, onDone: controller.onBagDone),
+                itemBuilder: (context, bag) => BagListItem(
+                  bag: bag,
+                  onDone: controller.onBagDone,
+                  onViewMedia: controller.openMediaGallery,
+                ),
               );
             });
           },
@@ -96,7 +100,7 @@ class _BagListCounters extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _CounterPill(
-            icon: Icons.shopping_bag_outlined,
+            leading: Icon(Icons.shopping_bag_outlined, size: AppDimensions.iconSm, color: AppColors.info),
             value: bagCount,
             label: AppStrings.totalBags,
             color: AppColors.info,
@@ -104,7 +108,10 @@ class _BagListCounters extends StatelessWidget {
           ),
           const SizedBox(width: AppDimensions.spacingSm),
           _CounterPill(
-            icon: Icons.diamond_outlined,
+            // No jewelry-ring glyph exists in Flutter's built-in Material
+            // Icons font, so a "finger ring with diamond" is rendered as
+            // its emoji instead of an Icon(IconData).
+            leading: Text('💍', style: TextStyle(fontSize: AppDimensions.iconSm)),
             value: pcsCount,
             label: AppStrings.totalPcs,
             color: AppColors.warning,
@@ -118,14 +125,14 @@ class _BagListCounters extends StatelessWidget {
 
 class _CounterPill extends StatelessWidget {
   const _CounterPill({
-    required this.icon,
+    required this.leading,
     required this.value,
     required this.label,
     required this.color,
     required this.backgroundColor,
   });
 
-  final IconData icon;
+  final Widget leading;
   final int value;
   final String label;
   final Color color;
@@ -145,7 +152,7 @@ class _CounterPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: AppDimensions.iconSm, color: color),
+          leading,
           const SizedBox(width: AppDimensions.spacingXxs),
           Text(
             '$value',

@@ -62,17 +62,17 @@ class BagMockDataSourceImpl implements BagDataSource {
       DiamondDetailModel(
         srNo: 1,
         itemCode: 'DIA-${1200 + index}',
-        size: 1.50,
+        size: '1.50 RND',
         pcs: 12,
-        weight: 0.18,
+        weight: '0.18',
         setting: 'Prong',
       ),
       DiamondDetailModel(
         srNo: 2,
         itemCode: 'DIA-${1300 + index}',
-        size: 2.00,
+        size: '2.00 RND',
         pcs: 6,
-        weight: 0.24,
+        weight: '0.24',
         setting: 'Pave',
       ),
     ];
@@ -85,6 +85,7 @@ class BagMockDataSourceImpl implements BagDataSource {
         itemCode: 'RM-${10023 + index}',
         size: '7.0 US',
         issuedQty: '9.00 grm',
+        wt: '3.36 grm',
       ),
     ];
   }
@@ -103,7 +104,6 @@ class BagMockDataSourceImpl implements BagDataSource {
       bagQty: (index % 3) + 1,
       designPoints: _designPoints[index % _designPoints.length],
       assignedDate: DateTime.now().subtract(Duration(days: index)),
-      media: media,
       metal: _metals[index % _metals.length],
       designGrossWt: _grossWeights[index % _grossWeights.length],
       designNetWt: _netWeights[index % _netWeights.length],

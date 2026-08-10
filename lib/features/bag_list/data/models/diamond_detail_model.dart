@@ -10,13 +10,18 @@ class DiamondDetailModel extends DiamondDetailEntity {
     required super.setting,
   });
 
-  factory DiamondDetailModel.fromJson(Map<String, dynamic> json) {
+  /// Parses one entry of `BagDetailsNew`'s `data.diamondDetails` array.
+  /// [rawWeight] is the exact digit text pulled from the raw response body
+  /// (see `RawJsonNumbers`) — used instead of `json['weight']` whenever
+  /// available, since decoding that field as a number would drop trailing
+  /// zeros the API sent (e.g. "1.4000" becoming "1.4").
+  factory DiamondDetailModel.fromApiJson(Map<String, dynamic> json, {String? rawWeight}) {
     return DiamondDetailModel(
       srNo: (json['srNo'] as num).toInt(),
       itemCode: json['itemCode'] as String,
-      size: (json['size'] as num).toDouble(),
+      size: json['size'] as String,
       pcs: (json['pcs'] as num).toInt(),
-      weight: (json['weight'] as num).toDouble(),
+      weight: rawWeight ?? '${json['weight']}',
       setting: json['setting'] as String,
     );
   }

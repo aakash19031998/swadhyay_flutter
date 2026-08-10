@@ -18,6 +18,7 @@ class AppStrings {
   static const String save = 'Save';
   static const String submit = 'Submit';
   static const String somethingWentWrong = 'Something went wrong';
+  static const String success = 'Success';
   static const String noInternetConnection = 'No internet connection';
   static const String noDataFound = 'No data found';
   static const String loading = 'Loading...';
@@ -45,8 +46,37 @@ class AppStrings {
   static const String changePassword = 'Change Password';
   static const String reports = 'Reports';
   static const String designImage = 'Design Image';
-  static const String designImageSearchHint = 'Search by design no. or category';
-  static const String noDesignsFound = 'No designs found matching your search.';
+  static const String designImageSearchHint = 'Search Design Code, EMR Style...';
+  static const String designMasterSubtitle = 'Product Specification & Catalog Record';
+  static const String designMasterSearchPrompt = 'Enter a style number and tap Search to view design details.';
+  static const String designMasterNotFound = 'No design found for this style number.';
+  static const String designMasterEnterStyleNo = 'Please enter a style number to search';
+  static const String activeRecord = 'Active Record';
+  static const String viewGallery = 'View Gallery';
+  static const String generalTab = 'General';
+  static const String billOfMaterialTab = 'BOM';
+  static const String labDetailsTab = 'Lab';
+  static const String historyTab = 'History';
+  static const String designCode = 'Design Code';
+  static const String designCtg = 'Design Ctg';
+  static const String designSctg = 'Design SCtg';
+  static const String parts = 'Parts';
+  static const String emrStyle = 'EMR Style';
+  static const String designDate = 'Design Date';
+  static const String totalDiaWt = 'Total Dia Wt';
+  static const String defRingSize = 'Def. Ring Size';
+  static const String cadWt = 'CAD Wt';
+  static const String modelWt = 'Model Wt';
+  static const String cadVol = 'CAD VOL';
+  static const String metalWt = 'Metal Wt';
+  static const String rmType = 'RmType';
+  static const String rmCode = 'RmCode';
+  static const String sizeName = 'SizeName';
+  static const String rmWeight = 'RmWeight';
+  static const String setCode = 'SetCode';
+  static const String stonePosition = 'Stone Position';
+  static const String labourCd = 'LabourCd';
+  static const String labourNm = 'LabourNm';
   static const String qcChecking = 'Qc Checking';
   static const String timingReport = 'Timing Report';
   static const String artistProduction = 'Artist Production';
@@ -68,6 +98,8 @@ class AppStrings {
   static const String done = 'Done';
   static const String completed = 'Completed';
   static const String scanBag = 'Scan Bag';
+  static const String noMediaFound = 'No images or videos found for this design';
+  static const String videoUnavailable = 'This video could not be loaded';
   static const String cameraPermissionDeniedTitle = 'Camera Permission Needed';
   static const String cameraPermissionDeniedMessage =
       'Camera access was denied. Please allow camera permission from app settings to scan.';
@@ -75,7 +107,6 @@ class AppStrings {
   static const String openSettings = 'Open Settings';
   static const String pauseReasonTitle = 'Pause Reason';
   static const String pauseReasonMessage = 'Please let us know why you are pausing this task.';
-  static const String pauseReasonHint = 'Select reason for pause';
   static const String pauseReasonRequired = 'Reason is required';
 
   // Bag detail.
@@ -105,12 +136,13 @@ class AppStrings {
   static const String pcs = 'Pcs';
   static const String weight = 'Weight';
   static const String materialType = 'Material Type';
-  static const String issuedQty = 'Issued Qty';
+  static const String currentQty = 'Current Qty';
+  static const String wt = 'WT';
   static const String bagSummary = 'Bag Summary';
 
   // Bag completion.
   static const String firstReceived = 'First Received';
-  static const String addNewWorkEntry = 'Add New Work Entry';
+  static const String addNewWorkEntry = 'Add Dummy Work Entry';
   static const String bagNoShort = 'Bag No.';
   static const String designNoLabel = 'Design No.';
   static const String orderNo = 'Order No';
@@ -118,12 +150,13 @@ class AppStrings {
   static const String work = 'Work';
   static const String pieceStone = 'Piece/Stone';
   static const String add = 'ADD';
+  static const String transactionId = 'Transaction Id';
+  static const String setId = 'SET ID';
   static const String setting = 'Setting';
   static const String pieces = 'Pieces';
-  static const String select = 'Select';
-  static const String pleaseSelectPndPredData = 'Please select Pnd/Pred data';
-  static const String recordedSettings = 'Recorded Settings';
-  static const String pendingSettings = 'Pending Settings';
+  static const String piecesStones = 'Pieces/Stones';
+  static const String completedWork = 'Completed Work';
+  static const String pendingWork = 'Pending Work';
   static const String addSettingBeforeSubmit = 'Add at least one setting before submitting';
   static const String bagCompletedSuccess = 'Bag completed successfully';
   static const String submitConfirmTitle = 'Submit Entry';
