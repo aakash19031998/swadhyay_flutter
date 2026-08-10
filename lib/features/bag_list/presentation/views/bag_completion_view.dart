@@ -5,9 +5,11 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_dropdown.dart';
+import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/flex_table.dart';
 import '../../../../core/widgets/section_card.dart';
+import '../../domain/entities/comp_pred_entity.dart';
 import '../controllers/bag_completion_controller.dart';
 
 /// The "Done" completion form opened from both the bag list and the bag
@@ -25,20 +27,24 @@ class BagCompletionView extends GetView<BagCompletionController> {
           children: [
             _TopBar(controller: controller),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppDimensions.spacingMd),
-                child: Column(
-                  children: [
-                    _MetaPillsRow(controller: controller),
-                    const SizedBox(height: AppDimensions.spacingMd),
-                    _WorkFormCard(controller: controller),
-                    const SizedBox(height: AppDimensions.spacingMd),
-                    const _PendingSettingsCard(),
-                    const SizedBox(height: AppDimensions.spacingMd),
-                    _RecordedSettingsCard(controller: controller),
-                  ],
-                ),
-              ),
+              child: Obx(() {
+                if (controller.isLoading.value) return const AppLoader();
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppDimensions.spacingMd),
+                  child: Column(
+                    children: [
+                      _MetaPillsRow(controller: controller),
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      _WorkFormCard(controller: controller),
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      _PendingWorkCard(controller: controller),
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      _CompletedWorkCard(controller: controller),
+                    ],
+                  ),
+                );
+              }),
             ),
             _BottomActions(controller: controller),
           ],
@@ -168,14 +174,18 @@ class _MetaPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.spacingMd),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withValues(alpha: 0.12), color.withValues(alpha: 0.03)],
+        ),
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(color: color.withValues(alpha: 0.24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.03),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+            color: color.withValues(alpha: 0.10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -184,7 +194,15 @@ class _MetaPill extends StatelessWidget {
           Container(
             width: AppDimensions.avatarSm,
             height: AppDimensions.avatarSm,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [color, Color.lerp(color, Colors.black, 0.22)!],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 6, offset: const Offset(0, 2))],
+            ),
             child: Icon(icon, color: AppColors.onPrimary, size: AppDimensions.iconMd),
           ),
           const SizedBox(width: AppDimensions.spacingMd),
@@ -228,6 +246,7 @@ class _WorkFormCard extends StatelessWidget {
     return SectionCard(
       title: AppStrings.addNewWorkEntry,
       icon: Icons.edit_note_outlined,
+      accentColor: AppColors.primary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -242,21 +261,31 @@ class _WorkFormCard extends StatelessWidget {
               final bool isWide = constraints.maxWidth >= AppDimensions.breakpointPhone;
 
               return Obx(() {
-                final Widget workTypeField = AppDropdown<String>(
+                final bool enabled = controller.addDummyWork.value;
+                // Read as a plain list *here*, inside the Obx builder —
+                // `_ModernDropdown` iterates `options` one level down, in
+                // its own build(), which Obx can't see into: passing the
+                // RxList reference straight through would leave this Obx
+                // subscribed to nothing, so a later `workOptions.value = [
+                // ...]` (once `SubWorkType` resolves) would never trigger a
+                // rebuild and the dropdown would stay stuck on whatever it
+                // had (often empty) the moment Work Type was picked.
+                final List<String> workTypeOpts = controller.workTypeOptions.toList();
+                final List<String> workOpts = controller.workOptions.toList();
+
+                final Widget workTypeField = _ModernDropdown(
                   label: AppStrings.workType,
                   icon: Icons.category_outlined,
-                  items: BagCompletionController.workTypeOptions,
-                  itemLabel: (item) => item,
+                  options: workTypeOpts,
                   value: controller.workType.value,
-                  onChanged: controller.onWorkTypeChanged,
+                  onChanged: enabled ? controller.onWorkTypeChanged : null,
                 );
-                final Widget workField = AppDropdown<String>(
+                final Widget workField = _ModernDropdown(
                   label: AppStrings.work,
                   icon: Icons.construction_outlined,
-                  items: BagCompletionController.workOptions,
-                  itemLabel: (item) => item,
+                  options: workOpts,
                   value: controller.work.value,
-                  onChanged: controller.onWorkChanged,
+                  onChanged: enabled ? controller.onWorkChanged : null,
                 );
 
                 if (!isWide) {
@@ -287,7 +316,9 @@ class _WorkFormCard extends StatelessWidget {
               return Obx(() {
                 final Widget pieceField = AppTextField(
                   label: AppStrings.pieceStone,
+                  controller: controller.pieceController,
                   keyboardType: TextInputType.number,
+                  enabled: controller.addDummyWork.value,
                   onChanged: controller.onPieceChanged,
                 );
                 final Widget addButton = AppButton(
@@ -324,163 +355,115 @@ class _WorkFormCard extends StatelessWidget {
   }
 }
 
-/// Header + rows inside one bordered, rounded box — a real table look
-/// instead of a separate dark header pill floating above plain rows.
-class _TableContainer extends StatelessWidget {
-  const _TableContainer({required this.headers, required this.rows});
+/// Work Type / Work — [DropdownMenu] instead of the shared [AppDropdown]
+/// ([DropdownButtonFormField]) so the popup list always opens anchored
+/// directly below the field (Material's stock dropdown instead aligns the
+/// menu around whichever item is currently selected, which read as
+/// "ugly"/misplaced), with tight per-item padding and no leading
+/// selection-indicator icon. The field itself still picks up the app's
+/// shared form-field border/padding via the global `dropdownMenuTheme`, so
+/// it reads as the same field style as every other input on this screen —
+/// only the list is different.
+class _ModernDropdown extends StatelessWidget {
+  const _ModernDropdown({
+    required this.label,
+    required this.icon,
+    required this.options,
+    required this.value,
+    required this.onChanged,
+  });
 
-  final List<String> headers;
-  final List<Widget> rows;
+  final String label;
+  final IconData icon;
+  final List<String> options;
+  final String? value;
+  final ValueChanged<String?>? onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+    return DropdownMenu<String>(
+      // Rebuilds fresh whenever `value` changes so `initialSelection` (only
+      // ever applied on first build, otherwise) always reflects it.
+      key: ValueKey(value),
+      initialSelection: value,
+      enabled: onChanged != null,
+      expandedInsets: EdgeInsets.zero,
+      requestFocusOnTap: false,
+      label: Text(label),
+      leadingIcon: Icon(icon),
+      onSelected: onChanged,
+      menuStyle: MenuStyle(
+        backgroundColor: const WidgetStatePropertyAll(AppColors.surface),
+        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        elevation: const WidgetStatePropertyAll(6),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            side: const BorderSide(color: AppColors.border),
+          ),
         ),
-        child: Column(
-          children: [
-            ColoredBox(
-              color: AppColors.surfaceVariant,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingMd,
-                  vertical: AppDimensions.spacingSm,
-                ),
-                child: Row(
-                  children: [
-                    for (final label in headers)
-                      Expanded(
-                        child: Text(
-                          label.toUpperCase(),
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: AppColors.textSecondary,
-                                letterSpacing: 0.4,
-                              ),
-                        ),
-                      ),
-                  ],
-                ),
+        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: AppDimensions.spacingXxs)),
+      ),
+      dropdownMenuEntries: [
+        for (final option in options)
+          DropdownMenuEntry<String>(
+            value: option,
+            label: option,
+            style: MenuItemButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacingMd,
+                vertical: AppDimensions.spacingXs,
               ),
             ),
-            for (final row in rows)
-              DecoratedBox(
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: AppColors.divider)),
-                ),
-                child: row,
-              ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 }
 
-class _PendingSettingsCard extends StatelessWidget {
-  const _PendingSettingsCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionCard(
-      title: AppStrings.pendingSettings,
-      icon: Icons.hourglass_empty_rounded,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _TableContainer(
-            headers: [AppStrings.setting, AppStrings.pieces, AppStrings.select],
-            rows: [],
-          ),
-          const SizedBox(height: AppDimensions.spacingMd),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingMd,
-              vertical: AppDimensions.spacingMd,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.warningContainer,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-              border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.info_outline_rounded, size: AppDimensions.iconSm, color: AppColors.warning),
-                const SizedBox(width: AppDimensions.spacingXs),
-                Flexible(
-                  child: Text(
-                    AppStrings.pleaseSelectPndPredData,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.warning,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecordedSettingsCard extends StatelessWidget {
-  const _RecordedSettingsCard({required this.controller});
+/// The "Pending Work" card — bound to `BagDoneDetail`'s `PndPred` array,
+/// with the Add/Delete mechanism operating on the same
+/// `controller.recordedSettings` list. Table styled with the same
+/// [FlexTable] used by the Bag Detail screen's Diamond Details/Bag RM
+/// Summary tables, so every data table in the app reads the same way.
+class _PendingWorkCard extends StatelessWidget {
+  const _PendingWorkCard({required this.controller});
 
   final BagCompletionController controller;
 
   @override
   Widget build(BuildContext context) {
     return SectionCard(
-      title: AppStrings.recordedSettings,
-      icon: Icons.fact_check_outlined,
+      title: AppStrings.pendingWork,
+      icon: Icons.pending_actions_rounded,
+      accentColor: AppColors.warning,
+      padding: EdgeInsets.zero,
       child: Obx(() {
-        return _TableContainer(
-          headers: const [AppStrings.setting, AppStrings.pieces, ''],
-          rows: [
-            for (int i = 0; i < controller.recordedSettings.length; i++)
-              _RecordedSettingRow(
-                entry: controller.recordedSettings[i],
-                onRemove: () => controller.removeEntry(i),
-              ),
+        final List<SettingEntry> entries = controller.recordedSettings;
+
+        return FlexTable(
+          isEmpty: entries.isEmpty,
+          columns: const [
+            FlexColumn(label: AppStrings.transactionId, flex: 1),
+            FlexColumn(label: AppStrings.setId, flex: 1),
+            FlexColumn(label: AppStrings.setting, flex: 1),
+            FlexColumn(label: AppStrings.pieces, flex: 1),
           ],
+          rows: [
+            for (final entry in entries)
+              [
+                (entry.trnId?.isNotEmpty ?? false) ? entry.trnId! : '—',
+                entry.setId?.toString() ?? '—',
+                entry.setting,
+                '${entry.pieces}',
+              ],
+          ],
+          rowTrailing: (rowIndex) => _DangerIconButton(
+            icon: Icons.delete_outline_rounded,
+            onTap: () => controller.removeEntry(rowIndex),
+          ),
         );
       }),
-    );
-  }
-}
-
-class _RecordedSettingRow extends StatelessWidget {
-  const _RecordedSettingRow({required this.entry, required this.onRemove});
-
-  final SettingEntry entry;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingMd,
-        vertical: AppDimensions.spacingSm,
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Text(entry.setting, style: Theme.of(context).textTheme.bodyMedium)),
-          Expanded(child: Text('${entry.pieces}', style: Theme.of(context).textTheme.bodyMedium)),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: _DangerIconButton(icon: Icons.delete_outline_rounded, onTap: onRemove),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -495,20 +478,54 @@ class _DangerIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.errorContainer,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+      shape: const CircleBorder(),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+        customBorder: const CircleBorder(),
         onTap: onTap,
         child: Container(
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+            shape: BoxShape.circle,
             border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
           ),
           child: Icon(icon, size: AppDimensions.iconSm, color: AppColors.error),
         ),
       ),
+    );
+  }
+}
+
+/// The "Completed Work" card — bound to `BagDoneDetail`'s `CompPred` array
+/// (`Prediction` -> Setting, `Stone` -> Pieces/Stones); the same [FlexTable]
+/// style as the Bag Detail screen's tables, including its own built-in
+/// empty state.
+class _CompletedWorkCard extends StatelessWidget {
+  const _CompletedWorkCard({required this.controller});
+
+  final BagCompletionController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      title: AppStrings.completedWork,
+      icon: Icons.task_alt_rounded,
+      accentColor: AppColors.success,
+      padding: EdgeInsets.zero,
+      child: Obx(() {
+        final List<CompPredEntity> entries = controller.completedWork;
+
+        return FlexTable(
+          isEmpty: entries.isEmpty,
+          columns: const [
+            FlexColumn(label: AppStrings.setting, flex: 1),
+            FlexColumn(label: AppStrings.piecesStones, flex: 1),
+          ],
+          rows: [
+            for (final entry in entries) [entry.prediction, '${entry.stone}'],
+          ],
+        );
+      }),
     );
   }
 }
@@ -523,7 +540,9 @@ class _BottomActions extends StatelessWidget {
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        boxShadow: [
+          BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, -4)),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppDimensions.spacingMd),
@@ -538,7 +557,11 @@ class _BottomActions extends StatelessWidget {
             ),
             const SizedBox(width: AppDimensions.spacingMd),
             Expanded(
-              child: AppButton(label: AppStrings.submit, onPressed: controller.submit),
+              child: AppButton(
+                label: AppStrings.submit,
+                icon: Icons.check_circle_outline_rounded,
+                onPressed: controller.submit,
+              ),
             ),
           ],
         ),

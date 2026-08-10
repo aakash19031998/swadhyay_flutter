@@ -21,14 +21,30 @@ class BagMediaViewerController extends GetxController {
   final RxBool isVideoReady = false.obs;
   final RxBool isVideoPlaying = false.obs;
 
+  /// Set when `initialize()` throws or times out — e.g. the server not
+  /// supporting the byte-range requests video streaming needs. Previously
+  /// this had no error handling at all: a failed `initialize()` left
+  /// [isVideoReady] `false` forever with nothing to show but the loading
+  /// spinner, indistinguishable from "still loading".
+  final RxBool hasVideoError = false.obs;
+
+  /// True while the current image page is pinch/double-tap zoomed in past
+  /// 1x — the [PageView] disables its own swipe physics while this is true
+  /// (see `BagMediaViewerView`), so panning around a zoomed-in image never
+  /// fights the gesture arena against swiping to the next/previous page.
+  final RxBool isZoomed = false.obs;
+
   @override
   void onInit() {
     super.onInit();
     _loadVideoIfNeeded(currentIndex.value);
   }
 
+  void setZoomed(bool value) => isZoomed.value = value;
+
   void onPageChanged(int index) {
     currentIndex.value = index;
+    isZoomed.value = false;
     _disposeVideo();
     _loadVideoIfNeeded(index);
   }
@@ -51,6 +67,14 @@ class BagMediaViewerController extends GetxController {
     }
   }
 
+  /// Retries loading the current page's video after [hasVideoError] — the
+  /// error state doesn't clear itself, so the view offers an explicit retry
+  /// action instead of being stuck.
+  void retryVideo() {
+    _disposeVideo();
+    _loadVideoIfNeeded(currentIndex.value);
+  }
+
   Future<void> _loadVideoIfNeeded(int index) async {
     final BagMediaEntity item = media[index];
     if (item.type != BagMediaType.video) return;
@@ -59,12 +83,18 @@ class BagMediaViewerController extends GetxController {
     videoController.value = player;
     isVideoReady.value = false;
     isVideoPlaying.value = false;
+    hasVideoError.value = false;
     player.addListener(_onVideoTick);
 
-    await player.initialize();
-    if (videoController.value != player) return;
-    isVideoReady.value = true;
-    await player.play();
+    try {
+      await player.initialize().timeout(const Duration(seconds: 20));
+      if (videoController.value != player) return;
+      isVideoReady.value = true;
+      await player.play();
+    } catch (_) {
+      if (videoController.value != player) return;
+      hasVideoError.value = true;
+    }
   }
 
   void _onVideoTick() {
@@ -80,6 +110,7 @@ class BagMediaViewerController extends GetxController {
     videoController.value = null;
     isVideoReady.value = false;
     isVideoPlaying.value = false;
+    hasVideoError.value = false;
   }
 
   @override

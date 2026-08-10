@@ -9,22 +9,27 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../domain/entities/bag_entity.dart';
-import '../controllers/bag_media_viewer_args.dart';
 import '../controllers/bag_timer_controller.dart';
 import 'bag_action_button.dart';
-import 'pause_reason_dialog.dart';
 
 /// One Bag List grid card: image with a floating quality badge, a fixed
 /// 2x2 info grid (Bag ID / Order No. on top, Department / Qty below), a
 /// points summary, and the productivity clock/Start-Pause-Resume-Done
 /// actions driven by this bag's [BagTimerController].
 class BagListItem extends StatelessWidget {
-  const BagListItem({required this.bag, super.key, this.onDone});
+  const BagListItem({required this.bag, required this.onViewMedia, super.key, this.onDone});
 
   final BagEntity bag;
   final ValueChanged<BagEntity>? onDone;
 
-  BagTimerController get _timer => BagTimerController.of(bag.id);
+  /// Fetches and opens this bag's image/video gallery — a fresh
+  /// `ImageAndVideoUrls` call per tap (see `BagListController
+  /// .openMediaGallery`), not a pre-loaded list, so tapping the thumbnail
+  /// is never disabled up front the way an empty `bag.media` used to gate
+  /// it.
+  final ValueChanged<BagEntity> onViewMedia;
+
+  BagTimerController get _timer => BagTimerController.of(bag);
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +38,7 @@ class BagListItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _BagImageHeader(bag: bag),
+          _BagImageHeader(bag: bag, onViewMedia: onViewMedia),
           const SizedBox(height: AppDimensions.spacingMd),
           _BagInfoGrid(bag: bag),
           const SizedBox(height: AppDimensions.spacingMd),
@@ -47,9 +52,10 @@ class BagListItem extends StatelessWidget {
 }
 
 class _BagImageHeader extends StatelessWidget {
-  const _BagImageHeader({required this.bag});
+  const _BagImageHeader({required this.bag, required this.onViewMedia});
 
   final BagEntity bag;
+  final ValueChanged<BagEntity> onViewMedia;
 
   @override
   Widget build(BuildContext context) {
@@ -58,12 +64,7 @@ class _BagImageHeader extends StatelessWidget {
     return Stack(
       children: [
         GestureDetector(
-          onTap: bag.media.isEmpty
-              ? null
-              : () => Get.toNamed(
-                    AppRoutes.bagMediaViewer,
-                    arguments: BagMediaViewerArgs(media: bag.media),
-                  ),
+          onTap: () => onViewMedia(bag),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
@@ -377,14 +378,14 @@ class _StatusRow extends StatelessWidget {
   final BagEntity bag;
   final ValueChanged<BagEntity>? onDone;
 
-  Future<void> _handlePause() async {
-    final String? reason = await PauseReasonDialog.show();
-    if (reason != null) timer.pause(reason: reason);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      // Disables the action buttons while a Start/Pause/Resume call is in
+      // flight (read here, inside this Obx, so it's tracked the same way
+      // as timer.status.value below) — prevents a slow response from being
+      // triggered twice.
+      final bool busy = timer.isProcessing.value;
       Widget? left;
       Widget? right;
 
@@ -394,39 +395,33 @@ class _StatusRow extends StatelessWidget {
             label: AppStrings.start,
             icon: Icons.play_arrow_rounded,
             color: AppColors.primary,
-            onTap: timer.start,
+            onTap: busy ? null : () => timer.start(bag),
           );
         case BagWorkStatus.running:
           left = BagActionButton(
             label: AppStrings.pause,
             icon: Icons.pause_rounded,
             color: AppColors.warning,
-            onTap: _handlePause,
+            onTap: busy ? null : () => timer.pause(bag),
           );
           right = BagActionButton(
             label: AppStrings.done,
             icon: Icons.check_rounded,
             color: AppColors.success,
-            onTap: () {
-              timer.done();
-              onDone?.call(bag);
-            },
+            onTap: () => onDone?.call(bag),
           );
         case BagWorkStatus.paused:
           left = BagActionButton(
             label: AppStrings.resume,
             icon: Icons.play_arrow_rounded,
             color: AppColors.info,
-            onTap: timer.resume,
+            onTap: busy ? null : () => timer.resume(bag),
           );
           right = BagActionButton(
             label: AppStrings.done,
             icon: Icons.check_rounded,
             color: AppColors.success,
-            onTap: () {
-              timer.done();
-              onDone?.call(bag);
-            },
+            onTap: () => onDone?.call(bag),
           );
         case BagWorkStatus.done:
           right = BagActionButton(

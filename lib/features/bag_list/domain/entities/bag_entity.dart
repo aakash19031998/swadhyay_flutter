@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import 'bag_media_entity.dart';
 import 'bag_rm_summary_entity.dart';
 import 'diamond_detail_entity.dart';
 
@@ -16,7 +15,6 @@ class BagEntity extends Equatable {
     required this.designPoints,
     required this.assignedDate,
     this.imageUrl,
-    this.media = const [],
     this.metal,
     this.designGrossWt,
     this.designNetWt,
@@ -34,6 +32,12 @@ class BagEntity extends Equatable {
     this.pieceQty,
     this.styleNo,
     this.designCategory,
+    this.byy,
+    this.bchr,
+    this.bno,
+    this.bagCmpCd,
+    this.spStatus,
+    this.seconds,
     this.diamondDetails = const [],
     this.rmSummary = const [],
   });
@@ -52,7 +56,6 @@ class BagEntity extends Equatable {
   final int bagQty;
   final double designPoints;
   final DateTime assignedDate;
-  final List<BagMediaEntity> media;
 
   // Manufacturing instructions (Bag Detail screen). All optional since a
   // bag may not have every field filled in yet.
@@ -75,6 +78,27 @@ class BagEntity extends Equatable {
   final int? pieceQty;
   final String? styleNo;
   final String? designCategory;
+
+  // Raw bag-barcode components (e.g. "26/I1/55623" -> byy/bchr/bno) — kept
+  // as separate fields rather than pre-joined, since the API sends them
+  // separately and it's not yet specified how (or whether) they should be
+  // displayed together.
+  final String? byy;
+  final String? bchr;
+  final int? bno;
+
+  /// Company/branch code (e.g. "IJ") — sent as `bCoCo` in `BagTimeTracking`.
+  final String? bagCmpCd;
+
+  // Seed the productivity timer's initial Start/Pause/Resume state and
+  // elapsed time — read only once, the first time `BagTimerController.of`
+  // creates that bag's timer (see there); every load after that (a
+  // pull-to-refresh, revisiting the screen, ...) leaves an already-running
+  // timer alone rather than resetting it back to whatever the list API
+  // says right now. `spStatus` names the bag's current state directly:
+  // "S" not started, "P" paused, "R" running.
+  final String? spStatus;
+  final int? seconds;
 
   final List<DiamondDetailEntity> diamondDetails;
   final List<BagRmSummaryEntity> rmSummary;
@@ -105,19 +129,26 @@ class BagEntity extends Equatable {
     String? styleNo,
     String? designCategory,
     String? locationCode,
+    String? byy,
+    String? bchr,
+    int? bno,
+    String? bagCmpCd,
+    List<DiamondDetailEntity>? diamondDetails,
+    List<BagRmSummaryEntity>? rmSummary,
   }) {
     return BagEntity(
       id: id,
       bagNo: bagNo,
       designNo: designNo,
       imageUrl: imageUrl,
+      spStatus: spStatus,
+      seconds: seconds,
       locationCode: locationCode ?? this.locationCode,
       department: department,
       filling: filling,
       bagQty: bagQty ?? this.bagQty,
       designPoints: designPoints,
       assignedDate: assignedDate,
-      media: media,
       metal: metal ?? this.metal,
       designGrossWt: designGrossWt ?? this.designGrossWt,
       designNetWt: designNetWt ?? this.designNetWt,
@@ -135,8 +166,12 @@ class BagEntity extends Equatable {
       pieceQty: pieceQty ?? this.pieceQty,
       styleNo: styleNo ?? this.styleNo,
       designCategory: designCategory ?? this.designCategory,
-      diamondDetails: diamondDetails,
-      rmSummary: rmSummary,
+      byy: byy ?? this.byy,
+      bchr: bchr ?? this.bchr,
+      bno: bno ?? this.bno,
+      bagCmpCd: bagCmpCd ?? this.bagCmpCd,
+      diamondDetails: diamondDetails ?? this.diamondDetails,
+      rmSummary: rmSummary ?? this.rmSummary,
     );
   }
 
@@ -152,7 +187,6 @@ class BagEntity extends Equatable {
         bagQty,
         designPoints,
         assignedDate,
-        media,
         metal,
         designGrossWt,
         designNetWt,
@@ -170,6 +204,12 @@ class BagEntity extends Equatable {
         pieceQty,
         styleNo,
         designCategory,
+        byy,
+        bchr,
+        bno,
+        bagCmpCd,
+        spStatus,
+        seconds,
         diamondDetails,
         rmSummary,
       ];

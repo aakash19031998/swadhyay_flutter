@@ -42,6 +42,14 @@ class AppConfig {
     defaultValue: false,
   );
 
+  /// Separate from [useMockData]: the Bag List thumbnail's image/video
+  /// gallery is wired to the live `ImageAndVideoUrls` backend by default,
+  /// independent of other still-mocked features.
+  static const bool useMockBagMediaGallery = bool.fromEnvironment(
+    'USE_MOCK_BAG_MEDIA_GALLERY',
+    defaultValue: false,
+  );
+
   /// Sent as `appVersion` in the login request body.
   static const int appVersion = 0;
 

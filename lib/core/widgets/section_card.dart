@@ -15,6 +15,7 @@ class SectionCard extends StatelessWidget {
     this.title,
     this.icon,
     this.padding,
+    this.accentColor,
   });
 
   final Widget child;
@@ -22,11 +23,19 @@ class SectionCard extends StatelessWidget {
   final IconData? icon;
   final EdgeInsetsGeometry? padding;
 
+  /// Overrides the title row's icon-badge/text color (defaults to
+  /// [AppColors.primary]) — lets a screen color-code several section cards
+  /// (e.g. a "pending" vs. "completed" pairing) without every other
+  /// [SectionCard] call site needing to opt in.
+  final Color? accentColor;
+
   @override
   Widget build(BuildContext context) {
     if (title == null) {
       return AppCard(padding: padding ?? const EdgeInsets.all(AppDimensions.spacingMd), child: child);
     }
+
+    final Color accent = accentColor ?? AppColors.primary;
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -45,15 +54,18 @@ class SectionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppDimensions.spacingXs),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer,
+                    color: accent.withValues(alpha: 0.14),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: AppDimensions.iconSm, color: AppColors.primary),
+                  child: Icon(icon, size: AppDimensions.iconSm, color: accent),
                 ),
                 const SizedBox(width: AppDimensions.spacingSm),
                 Text(
                   title!,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: AppColors.primary),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),

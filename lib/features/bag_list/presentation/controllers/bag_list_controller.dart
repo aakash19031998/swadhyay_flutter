@@ -3,17 +3,22 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/base/list_state_controller.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../domain/entities/bag_entity.dart';
+import '../../domain/usecases/get_bag_media_usecase.dart';
 import '../../domain/usecases/get_bags_usecase.dart';
+import 'bag_media_viewer_args.dart';
 
 class BagListController extends ListStateController<BagEntity> {
-  BagListController(this._getBagsUseCase, this._getCurrentEmployeeUseCase);
+  BagListController(this._getBagsUseCase, this._getCurrentEmployeeUseCase, this._getBagMediaUseCase);
 
   final GetBagsUseCase _getBagsUseCase;
   final GetCurrentEmployeeUseCase _getCurrentEmployeeUseCase;
+  final GetBagMediaUseCase _getBagMediaUseCase;
 
   /// Backs the search field so a scanned barcode/QR value can be shown in
   /// the field itself (not just applied as a silent filter).
@@ -100,6 +105,31 @@ class BagListController extends ListStateController<BagEntity> {
 
   void onBagDone(BagEntity bag) {
     Get.toNamed(AppRoutes.bagCompletion, arguments: bag);
+  }
+
+  /// Fetches this bag's image/video gallery from `ImageAndVideoUrls` (using
+  /// its design/style number as `styleCd` — the list screen has no other
+  /// design identifier available yet) and opens the shared media viewer,
+  /// same screen the Design Master screen also opens. Unlike the old
+  /// mock-only `bag.media` list, this is a fresh network call per tap, so a
+  /// blocking loader covers the wait.
+  Future<void> openMediaGallery(BagEntity bag) async {
+    _empCd ??= (await _getCurrentEmployeeUseCase())?.empCode;
+
+    AppDialog.loading();
+    final result = await _getBagMediaUseCase(empCd: _empCd ?? '', styleCd: bag.designNo);
+    AppDialog.dismiss();
+
+    result.fold(
+      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (media) {
+        if (media.isEmpty) {
+          Get.snackbar(AppStrings.somethingWentWrong, AppStrings.noMediaFound);
+          return;
+        }
+        Get.toNamed(AppRoutes.bagMediaViewer, arguments: BagMediaViewerArgs(media: media));
+      },
+    );
   }
 
   void onScanned(String value) {

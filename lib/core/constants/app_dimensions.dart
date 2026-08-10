@@ -83,8 +83,9 @@ class AppDimensions {
   // Change password. Filled, larger boxes than the login PIN field.
   static const double changePinBoxSize = 64;
 
-  // Design image gallery card.
-  static const double designCardRadius = radiusXl;
+  // Design Master (single-record lookup screen).
+  static const double designMasterImageSize = 240;
+  static const double designMasterChipBadgeSize = 28;
 
   // Drawer. Two fractions so width actually scales with screen size at both
   // ends instead of sitting pinned at drawerMinWidth for every phone.
