@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/design_master_entity.dart';
 import '../../domain/usecases/get_design_master_usecase.dart';
 
@@ -21,7 +22,11 @@ class DesignImageController extends GetxController with GetSingleTickerProviderS
 
   Future<void> search(String styleNo) async {
     if (styleNo.trim().isEmpty) {
-      Get.snackbar(AppStrings.somethingWentWrong, AppStrings.designMasterEnterStyleNo);
+      AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: AppStrings.designMasterEnterStyleNo,
+        isSuccess: false,
+      );
       return;
     }
 
@@ -32,7 +37,11 @@ class DesignImageController extends GetxController with GetSingleTickerProviderS
 
     final outcome = await _getDesignMasterUseCase(styleNo: styleNo.trim());
     outcome.fold(
-      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
       (design) => result.value = design,
     );
     isLoading.value = false;

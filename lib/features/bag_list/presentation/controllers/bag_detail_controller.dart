@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/app_dialog.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/usecases/get_bag_detail_usecase.dart';
@@ -54,7 +55,11 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
       final String? empCd = (await _getCurrentEmployeeUseCase())?.empCode;
       final result = await _getBagDetailUseCase(bagNo: bag.value.bagNo, empCd: empCd ?? '');
       result.fold(
-        (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+        (failure) => AppSnackbar.show(
+          title: AppStrings.alertWarning,
+          message: failure.message,
+          isSuccess: false,
+        ),
         (detail) {
           bag.value = bag.value.copyWith(
             delDate: detail.delDate,
@@ -102,10 +107,18 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
     AppDialog.dismiss();
 
     result.fold(
-      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
       (media) {
         if (media.isEmpty) {
-          Get.snackbar(AppStrings.somethingWentWrong, AppStrings.noMediaFound);
+          AppSnackbar.show(
+            title: AppStrings.alertWarning,
+            message: AppStrings.noMediaFound,
+            isSuccess: false,
+          );
           return;
         }
         Get.toNamed(AppRoutes.bagMediaViewer, arguments: BagMediaViewerArgs(media: media));

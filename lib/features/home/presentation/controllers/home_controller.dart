@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../authentication/domain/entities/employee_entity.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../../authentication/domain/usecases/logout_usecase.dart';
@@ -83,7 +84,11 @@ class HomeController extends GetxController {
 
     final result = await _getDrawerMenuUseCase(employee.value?.empCode ?? '');
     result.fold(
-      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
       (items) => menuItems.assignAll([...items, _logoutMenuItem]),
     );
     isMenuLoading.value = false;
@@ -119,7 +124,11 @@ class HomeController extends GetxController {
     isLoggingOut.value = false;
 
     result.fold(
-      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
       (_) => Get.offAllNamed(AppRoutes.login),
     );
   }

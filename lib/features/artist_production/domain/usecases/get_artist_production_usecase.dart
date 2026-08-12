@@ -9,10 +9,11 @@ class GetArtistProductionUseCase {
 
   final ArtistProductionRepository _repository;
 
-  Future<Either<Failure, List<ArtistProductionEntity>>> call({
+  Future<Either<Failure, ArtistProductionReportEntity>> call({
     required DateTime fromDate,
     required DateTime toDate,
+    required String empCd,
   }) {
-    return _repository.getProduction(fromDate: fromDate, toDate: toDate);
+    return _repository.getProduction(fromDate: fromDate, toDate: toDate, empCd: empCd);
   }
 }

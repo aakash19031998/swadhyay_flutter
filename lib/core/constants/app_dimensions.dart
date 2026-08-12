@@ -83,8 +83,11 @@ class AppDimensions {
   // Change password. Filled, larger boxes than the login PIN field.
   static const double changePinBoxSize = 64;
 
-  // Design Master (single-record lookup screen).
-  static const double designMasterImageSize = 240;
+  // Design Master (single-record lookup screen). designMasterImageSize is
+  // the image's max size (it shares its row with the Style No. text, so
+  // the actual size is derived from available width and capped at this).
+  static const double designMasterImageSize = 290;
+  static const double designMasterImageMinSize = 120;
   static const double designMasterChipBadgeSize = 28;
 
   // Drawer. Two fractions so width actually scales with screen size at both

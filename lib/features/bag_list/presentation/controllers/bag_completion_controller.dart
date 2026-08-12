@@ -10,8 +10,10 @@ import '../../domain/entities/comp_pred_entity.dart';
 import '../../domain/entities/sub_work_type_entity.dart';
 import '../../domain/usecases/get_bag_completion_master_usecase.dart';
 import '../../domain/usecases/get_sub_work_types_usecase.dart';
+import '../../domain/usecases/submit_bag_done_usecase.dart';
 import '../../domain/usecases/validate_add_btn_usecase.dart';
 import '../widgets/submit_confirmation_dialog.dart';
+import 'bag_list_controller.dart';
 import 'bag_timer_controller.dart';
 
 class SettingEntry {
@@ -35,6 +37,7 @@ class BagCompletionController extends GetxController {
     this._getBagCompletionMaster,
     this._getSubWorkTypes,
     this._validateAddBtn,
+    this._submitBagDone,
   );
 
   final BagEntity bag;
@@ -42,6 +45,7 @@ class BagCompletionController extends GetxController {
   final GetBagCompletionMasterUseCase _getBagCompletionMaster;
   final GetSubWorkTypesUseCase _getSubWorkTypes;
   final ValidateAddBtnUseCase _validateAddBtn;
+  final SubmitBagDoneUseCase _submitBagDone;
 
   /// `BagSchr` from `BagDoneDetail` — sent as `schr` when fetching
   /// `SubWorkType` options for whichever Work Type the user selects.
@@ -111,7 +115,7 @@ class BagCompletionController extends GetxController {
 
       result.fold(
         (failure) => AppSnackbar.show(
-          title: AppStrings.somethingWentWrong,
+          title: AppStrings.alertWarning,
           message: failure.message,
           isSuccess: false,
         ),
@@ -150,7 +154,7 @@ class BagCompletionController extends GetxController {
 
     result.fold(
       (failure) => AppSnackbar.show(
-        title: AppStrings.somethingWentWrong,
+        title: AppStrings.alertWarning,
         message: failure.message,
         isSuccess: false,
       ),
@@ -194,14 +198,14 @@ class BagCompletionController extends GetxController {
 
     result.fold(
       (failure) => AppSnackbar.show(
-        title: AppStrings.somethingWentWrong,
+        title: AppStrings.alertWarning,
         message: failure.message,
         isSuccess: false,
       ),
       (validation) {
         if (!validation.success) {
           AppSnackbar.show(
-            title: AppStrings.somethingWentWrong,
+            title: AppStrings.alertWarning,
             message: validation.message,
             isSuccess: false,
           );
@@ -243,20 +247,60 @@ class BagCompletionController extends GetxController {
 
   Future<void> submit() async {
     if (recordedSettings.isEmpty) {
-      Get.snackbar(AppStrings.somethingWentWrong, AppStrings.addSettingBeforeSubmit);
+      AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: AppStrings.addSettingBeforeSubmit,
+        isSuccess: false,
+      );
       return;
     }
 
     final bool confirmed = await SubmitConfirmationDialog.show();
     if (!confirmed) return;
 
-    // Only now — once the work entry is actually submitted, not merely on
-    // navigating to this screen — does the bag's Done button on the Bag
-    // List/Bag Detail screens flip to "Completed".
-    BagTimerController.of(bag).done();
+    final String proId = recordedSettings.map((entry) => '${entry.setId}~${entry.pieces}').join(',');
+    final String? empCode = (await _getCurrentEmployee())?.empCode;
+    final result = await _submitBagDone(trnId: bag.id, proId: proId, empCd: empCode ?? '');
 
-    Get.snackbar(AppStrings.bagList, AppStrings.bagCompletedSuccess);
-    Get.until((route) => route.settings.name == AppRoutes.bagList);
+    result.fold(
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
+      (response) {
+        if (!response.success) {
+          // Stays on this screen — a `false` status is a rejection (e.g.
+          // an invalid proId), not something a retry-elsewhere fixes.
+          AppSnackbar.show(
+            title: AppStrings.alertWarning,
+            message: response.message,
+            isSuccess: false,
+          );
+          return;
+        }
+
+        AppSnackbar.show(
+          title: AppStrings.success,
+          message: response.message,
+          isSuccess: true,
+        );
+
+        // Only now — once the work entry is actually submitted, not merely
+        // on navigating to this screen — does the bag's Done button on the
+        // Bag List/Bag Detail screens flip to "Completed".
+        BagTimerController.of(bag).done();
+
+        // Back to the Bag List screen either way — whether Done was opened
+        // directly from Bag List or via Bag Detail, this always lands on
+        // Bag List (removing Bag Detail from the stack too, in the latter
+        // case), refreshed.
+        Get.until((route) => route.settings.name == AppRoutes.bagList);
+        if (Get.isRegistered<BagListController>()) {
+          Get.find<BagListController>().refreshData();
+        }
+      },
+    );
   }
 
   void cancel() => Get.back();

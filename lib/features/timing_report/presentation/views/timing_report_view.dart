@@ -8,9 +8,9 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_dropdown.dart';
 import '../../../../core/widgets/app_error_widget.dart';
-import '../../../../core/widgets/app_loader.dart';
+import '../../../../core/widgets/app_modern_dropdown.dart';
+import '../../../../core/widgets/hk_loader_card.dart';
 import '../../domain/entities/timing_report_entity.dart';
 import '../controllers/timing_report_controller.dart';
 
@@ -34,7 +34,7 @@ class TimingReportView extends GetView<TimingReportController> {
             const _TopBar(),
             Expanded(
               child: Obx(() {
-                if (controller.isLoading.value) return const AppLoader();
+                if (controller.isLoading.value) return const HkLoaderCard();
                 if (controller.errorMessage.value != null) {
                   return AppErrorWidget(message: controller.errorMessage.value!, onRetry: controller.load);
                 }
@@ -49,6 +49,7 @@ class TimingReportView extends GetView<TimingReportController> {
                       _TillDateSummaryCard(
                         usedMinutes: controller.totalUsedMinutes,
                         unusedMinutes: controller.totalUnusedMinutes,
+                        totalMinutes: controller.totalPunchedMinutes,
                       ),
                       const SizedBox(height: AppDimensions.spacingMd),
                       SizedBox(
@@ -180,8 +181,9 @@ class _MonthFilterCard extends StatelessWidget {
           const _SectionIcon(icon: Icons.calendar_month_rounded, color: AppColors.primary),
           const SizedBox(width: AppDimensions.spacingMd),
           Expanded(
-            child: AppDropdown<DateTime>(
+            child: AppModernDropdown<DateTime>(
               label: AppStrings.selectMonth,
+              icon: Icons.calendar_today_outlined,
               value: controller.selectedMonth.value,
               items: controller.pastYearMonths,
               itemLabel: DateTimeHelper.formatMonthYear,
@@ -223,14 +225,23 @@ class _LegendChip extends StatelessWidget {
 /// day-by-day bar chart, which shows the same two series broken out per
 /// day instead of totalled.
 class _TillDateSummaryCard extends StatelessWidget {
-  const _TillDateSummaryCard({required this.usedMinutes, required this.unusedMinutes});
+  const _TillDateSummaryCard({
+    required this.usedMinutes,
+    required this.unusedMinutes,
+    required this.totalMinutes,
+  });
 
-  final int usedMinutes;
-  final int unusedMinutes;
+  final double usedMinutes;
+  final double unusedMinutes;
+
+  /// Summed `PunchedMinutes` — not necessarily exactly `usedMinutes +
+  /// unusedMinutes`, so kept and shown as its own figure rather than
+  /// derived from the other two.
+  final double totalMinutes;
 
   @override
   Widget build(BuildContext context) {
-    final int total = usedMinutes + unusedMinutes;
+    final double total = usedMinutes + unusedMinutes;
     final double usedFraction = total == 0 ? 0 : usedMinutes / total;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -289,21 +300,33 @@ class _TillDateSummaryCard extends StatelessWidget {
               ),
               const SizedBox(width: AppDimensions.spacingLg),
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
                   children: [
-                    _SummaryLegendChip(
-                      icon: Icons.check_circle_outline_rounded,
-                      color: AppColors.success,
-                      label: AppStrings.usedMinutes,
-                      value: usedMinutes,
+                    Expanded(
+                      child: _SummaryLegendChip(
+                        icon: Icons.check_circle_outline_rounded,
+                        color: AppColors.success,
+                        label: AppStrings.usedMinutes,
+                        value: usedMinutes,
+                      ),
                     ),
-                    const SizedBox(height: AppDimensions.spacingSm),
-                    _SummaryLegendChip(
-                      icon: Icons.hourglass_empty_rounded,
-                      color: AppColors.chartAmber,
-                      label: AppStrings.unusedMinutes,
-                      value: unusedMinutes,
+                    const SizedBox(width: AppDimensions.spacingSm),
+                    Expanded(
+                      child: _SummaryLegendChip(
+                        icon: Icons.hourglass_empty_rounded,
+                        color: AppColors.chartAmber,
+                        label: AppStrings.unusedMinutes,
+                        value: unusedMinutes,
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.spacingSm),
+                    Expanded(
+                      child: _SummaryLegendChip(
+                        icon: Icons.timelapse_rounded,
+                        color: AppColors.primary,
+                        label: AppStrings.totalMinutes,
+                        value: totalMinutes,
+                      ),
                     ),
                   ],
                 ),
@@ -330,7 +353,7 @@ class _SummaryLegendChip extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String label;
-  final int value;
+  final double value;
 
   @override
   Widget build(BuildContext context) {
@@ -364,7 +387,7 @@ class _SummaryLegendChip extends StatelessWidget {
                   style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary, letterSpacing: 0.4),
                 ),
                 Text(
-                  '$value min',
+                  '${_formatMinutes(value)} min',
                   style: textTheme.titleSmall?.copyWith(color: color, fontWeight: FontWeight.w800),
                 ),
               ],
@@ -374,6 +397,13 @@ class _SummaryLegendChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Whole numbers print without a trailing `.00` (matches how most days'
+/// minutes come back from the API); genuinely fractional values print with
+/// 2 decimal places instead of being rounded away.
+String _formatMinutes(double value) {
+  return value == value.roundToDouble() ? value.toInt().toString() : value.toStringAsFixed(2);
 }
 
 class _DonutChartPainter extends CustomPainter {
@@ -391,6 +421,14 @@ class _DonutChartPainter extends CustomPainter {
 
   static const double _strokeWidth = 14;
 
+  /// Whichever side (used or unused) is nonzero but tiny relative to the
+  /// other — the till-date split is very often ~3% used / ~97% unused —
+  /// still gets drawn at least this wide a slice, so both colors stay
+  /// legible instead of one shrinking down to an invisible sliver. Purely a
+  /// rendering floor: the "used %" label above still shows the real,
+  /// unclamped percentage.
+  static const double _minVisibleFraction = 0.04;
+
   @override
   void paint(Canvas canvas, Size size) {
     final Offset center = Offset(size.width / 2, size.height / 2);
@@ -403,13 +441,20 @@ class _DonutChartPainter extends CustomPainter {
       ..strokeWidth = _strokeWidth;
     canvas.drawCircle(center, radius, trackPaint);
 
-    final double usedSweep = 2 * math.pi * usedFraction;
+    double drawnUsedFraction = usedFraction;
+    if (usedFraction > 0 && usedFraction < _minVisibleFraction) {
+      drawnUsedFraction = _minVisibleFraction;
+    } else if (usedFraction < 1 && usedFraction > 1 - _minVisibleFraction) {
+      drawnUsedFraction = 1 - _minVisibleFraction;
+    }
+
+    final double usedSweep = 2 * math.pi * drawnUsedFraction;
     if (usedFraction > 0) {
       final Paint usedPaint = Paint()
         ..color = usedColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = _strokeWidth
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.butt;
       canvas.drawArc(rect, -math.pi / 2, usedSweep, false, usedPaint);
     }
 
@@ -418,7 +463,7 @@ class _DonutChartPainter extends CustomPainter {
         ..color = unusedColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = _strokeWidth
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.butt;
       canvas.drawArc(rect, -math.pi / 2 + usedSweep, (2 * math.pi) - usedSweep, false, unusedPaint);
     }
   }
@@ -441,7 +486,7 @@ class _Chart extends StatelessWidget {
       AppDimensions.timingChartDayColumnGap;
 
   int get _axisMax {
-    int maxValue = 0;
+    double maxValue = 0;
     for (final entry in entries) {
       if (entry.usedMinutes > maxValue) maxValue = entry.usedMinutes;
       if (entry.unusedMinutes > maxValue) maxValue = entry.unusedMinutes;
@@ -626,7 +671,7 @@ class _Bar extends StatelessWidget {
     required this.usableHeight,
   });
 
-  final int value;
+  final double value;
   final int axisMax;
   final Color color;
   final double plotHeight;
@@ -644,7 +689,7 @@ class _Bar extends StatelessWidget {
         children: [
           if (value > 0) ...[
             Text(
-              '$value',
+              _formatMinutes(value),
               softWrap: false,
               overflow: TextOverflow.visible,
               textAlign: TextAlign.center,
@@ -656,13 +701,7 @@ class _Bar extends StatelessWidget {
             ),
             const SizedBox(height: 2),
           ],
-          Container(
-            height: barHeight,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-            ),
-          ),
+          Container(height: barHeight, color: color),
         ],
       ),
     );

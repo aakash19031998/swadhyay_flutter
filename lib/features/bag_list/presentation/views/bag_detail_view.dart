@@ -6,8 +6,8 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/flex_table.dart';
+import '../../../../core/widgets/hk_loader_card.dart';
 import '../../../../core/widgets/section_card.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/entities/bag_rm_summary_entity.dart';
@@ -45,7 +45,7 @@ class BagDetailView extends GetView<BagDetailController> {
               _TopBar(controller: controller, bag: bag),
               Expanded(
                 child: isLoading
-                    ? const AppLoader()
+                    ? const HkLoaderCard()
                     : SingleChildScrollView(
                         padding: const EdgeInsets.all(AppDimensions.spacingMd),
                         child: Column(

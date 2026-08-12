@@ -14,7 +14,12 @@ import '../theme/app_colors.dart';
 class AppSnackbar {
   const AppSnackbar._();
 
-  static void show({required String title, required String message, required bool isSuccess}) {
+  static void show({
+    required String title,
+    required String message,
+    required bool isSuccess,
+    IconData? icon,
+  }) {
     final Color color = isSuccess ? AppColors.success : AppColors.error;
     Get.snackbar(
       title,
@@ -23,7 +28,7 @@ class AppSnackbar {
       backgroundColor: color,
       colorText: AppColors.onPrimary,
       icon: Icon(
-        isSuccess ? Icons.check_circle_outline : Icons.error_outline,
+        icon ?? (isSuccess ? Icons.check_circle_outline : Icons.error_outline),
         color: AppColors.onPrimary,
       ),
       shouldIconPulse: false,

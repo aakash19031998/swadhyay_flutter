@@ -5,9 +5,10 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_loader.dart';
+import '../../../../core/widgets/app_modern_dropdown.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/flex_table.dart';
+import '../../../../core/widgets/hk_loader_card.dart';
 import '../../../../core/widgets/section_card.dart';
 import '../../domain/entities/comp_pred_entity.dart';
 import '../controllers/bag_completion_controller.dart';
@@ -28,7 +29,7 @@ class BagCompletionView extends GetView<BagCompletionController> {
             _TopBar(controller: controller),
             Expanded(
               child: Obx(() {
-                if (controller.isLoading.value) return const AppLoader();
+                if (controller.isLoading.value) return const HkLoaderCard();
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(AppDimensions.spacingMd),
@@ -273,17 +274,19 @@ class _WorkFormCard extends StatelessWidget {
                 final List<String> workTypeOpts = controller.workTypeOptions.toList();
                 final List<String> workOpts = controller.workOptions.toList();
 
-                final Widget workTypeField = _ModernDropdown(
+                final Widget workTypeField = AppModernDropdown<String>(
                   label: AppStrings.workType,
                   icon: Icons.category_outlined,
-                  options: workTypeOpts,
+                  items: workTypeOpts,
+                  itemLabel: (item) => item,
                   value: controller.workType.value,
                   onChanged: enabled ? controller.onWorkTypeChanged : null,
                 );
-                final Widget workField = _ModernDropdown(
+                final Widget workField = AppModernDropdown<String>(
                   label: AppStrings.work,
                   icon: Icons.construction_outlined,
-                  options: workOpts,
+                  items: workOpts,
+                  itemLabel: (item) => item,
                   value: controller.work.value,
                   onChanged: enabled ? controller.onWorkChanged : null,
                 );
@@ -351,72 +354,6 @@ class _WorkFormCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Work Type / Work — [DropdownMenu] instead of the shared [AppDropdown]
-/// ([DropdownButtonFormField]) so the popup list always opens anchored
-/// directly below the field (Material's stock dropdown instead aligns the
-/// menu around whichever item is currently selected, which read as
-/// "ugly"/misplaced), with tight per-item padding and no leading
-/// selection-indicator icon. The field itself still picks up the app's
-/// shared form-field border/padding via the global `dropdownMenuTheme`, so
-/// it reads as the same field style as every other input on this screen —
-/// only the list is different.
-class _ModernDropdown extends StatelessWidget {
-  const _ModernDropdown({
-    required this.label,
-    required this.icon,
-    required this.options,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final IconData icon;
-  final List<String> options;
-  final String? value;
-  final ValueChanged<String?>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownMenu<String>(
-      // Rebuilds fresh whenever `value` changes so `initialSelection` (only
-      // ever applied on first build, otherwise) always reflects it.
-      key: ValueKey(value),
-      initialSelection: value,
-      enabled: onChanged != null,
-      expandedInsets: EdgeInsets.zero,
-      requestFocusOnTap: false,
-      label: Text(label),
-      leadingIcon: Icon(icon),
-      onSelected: onChanged,
-      menuStyle: MenuStyle(
-        backgroundColor: const WidgetStatePropertyAll(AppColors.surface),
-        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
-        elevation: const WidgetStatePropertyAll(6),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            side: const BorderSide(color: AppColors.border),
-          ),
-        ),
-        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: AppDimensions.spacingXxs)),
-      ),
-      dropdownMenuEntries: [
-        for (final option in options)
-          DropdownMenuEntry<String>(
-            value: option,
-            label: option,
-            style: MenuItemButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacingMd,
-                vertical: AppDimensions.spacingXs,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

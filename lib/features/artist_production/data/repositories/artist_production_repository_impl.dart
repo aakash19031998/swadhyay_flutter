@@ -12,13 +12,14 @@ class ArtistProductionRepositoryImpl implements ArtistProductionRepository {
   final ArtistProductionDataSource _dataSource;
 
   @override
-  Future<Either<Failure, List<ArtistProductionEntity>>> getProduction({
+  Future<Either<Failure, ArtistProductionReportEntity>> getProduction({
     required DateTime fromDate,
     required DateTime toDate,
+    required String empCd,
   }) async {
     try {
-      final entries = await _dataSource.getProduction(fromDate: fromDate, toDate: toDate);
-      return Right(entries);
+      final report = await _dataSource.getProduction(fromDate: fromDate, toDate: toDate, empCd: empCd);
+      return Right(report);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {

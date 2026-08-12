@@ -6,6 +6,6 @@ class AppAssets {
 
   static const String appIcon = '$_images/app_icon.png';
   static const String splashGif = '$_images/splash.gif';
-  static const String logoHk = '$_images/logo_hk.png';
-  static const String homeBackground = '$_images/home_screen_background.png';
+  static const String logoHk = '$_images/logo_hk.svg';
+  static const String homeBackground = '$_images/home_screen_background.svg';
 }

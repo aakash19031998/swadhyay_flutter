@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/constants/app_assets.dart';
@@ -139,7 +140,7 @@ class _LogoBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Image.asset(AppAssets.logoHk, fit: BoxFit.contain),
+      child: SvgPicture.asset(AppAssets.logoHk, fit: BoxFit.contain),
     );
   }
 }

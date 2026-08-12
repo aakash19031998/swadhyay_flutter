@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hk_loader_card.dart';
 import '../../domain/entities/bag_media_entity.dart';
 import '../controllers/bag_media_viewer_controller.dart';
 
@@ -302,7 +303,7 @@ class _VideoPage extends StatelessWidget {
 
       final VideoPlayerController? player = controller.videoController.value;
       if (!controller.isVideoReady.value || player == null) {
-        return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+        return const HkLoaderCard();
       }
 
       return Center(

@@ -19,10 +19,11 @@ class ApiEndpoints {
   static const String bagDoneDetail = '/BagDoneDetail';
   static const String subWorkType = '/SubWorkType';
   static const String dummyAddBtnValidation = '/DummyAddBtnValidation';
+  static const String bagDoneWithFirstReceive = '/BagDoneWithFirstReceive';
   static const String skipBag = '/bags/skip';
-  static const String designMaster = '/reports/design-master';
+  static const String designMaster = '/DesignMaster';
   static const String qcChecking = '/reports/qc-checking';
-  static const String timingReport = '/reports/timing';
-  static const String artistProduction = '/reports/artist-production';
+  static const String timingReport = '/ArtistTimeUtilizationReport';
+  static const String artistProduction = '/ArtistProductionRpt';
   static const String folloperReport = '/reports/folloper';
 }

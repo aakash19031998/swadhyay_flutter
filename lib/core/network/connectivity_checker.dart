@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../constants/app_dimensions.dart';
 import '../constants/app_strings.dart';
-import '../theme/app_colors.dart';
+import '../widgets/app_snackbar.dart';
 import 'network_info.dart';
 
 /// Single reusable connectivity gate for the whole app.
@@ -30,18 +29,11 @@ class ConnectivityChecker {
 
   void _showOfflineSnackbar() {
     if (Get.isSnackbarOpen) return;
-    Get.snackbar(
-      AppStrings.somethingWentWrong,
-      AppStrings.noInternetConnection,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: AppColors.error,
-      colorText: AppColors.onPrimary,
-      icon: const Icon(Icons.wifi_off_rounded, color: AppColors.onPrimary),
-      shouldIconPulse: false,
-      margin: const EdgeInsets.all(AppDimensions.spacingMd),
-      borderRadius: AppDimensions.radiusMd,
-      duration: const Duration(seconds: 3),
-      snackStyle: SnackStyle.FLOATING,
+    AppSnackbar.show(
+      title: AppStrings.alertWarning,
+      message: AppStrings.noInternetConnection,
+      isSuccess: false,
+      icon: Icons.wifi_off_rounded,
     );
   }
 }

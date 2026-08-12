@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../constants/app_dimensions.dart';
 import 'app_empty_widget.dart';
 import 'app_error_widget.dart';
-import 'app_loader.dart';
 import 'app_search_field.dart';
+import 'hk_loader_card.dart';
 
 /// Shared body for every search + list/report screen: search field up top,
 /// then loading / error / empty / data states below, wrapped in a
@@ -97,7 +97,7 @@ class ReportListScaffold<T> extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
-    if (isLoading && items.isEmpty) return const AppLoader();
+    if (isLoading && items.isEmpty) return const HkLoaderCard();
     if (errorMessage != null && items.isEmpty) {
       return AppErrorWidget(message: errorMessage!, onRetry: onRefresh);
     }
