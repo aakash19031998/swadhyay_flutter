@@ -8,7 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_empty_widget.dart';
 import '../../../../core/widgets/app_error_widget.dart';
-import '../../../../core/widgets/app_loader.dart';
+import '../../../../core/widgets/hk_loader_card.dart';
 import '../../../../core/widgets/section_card.dart';
 import '../controllers/artist_production_controller.dart';
 
@@ -35,7 +35,7 @@ class ArtistProductionView extends GetView<ArtistProductionController> {
                     _FilterCard(controller: controller),
                     const SizedBox(height: AppDimensions.spacingMd),
                     Obx(() {
-                      if (controller.isLoading.value) return const AppLoader();
+                      if (controller.isLoading.value) return const HkLoaderCard();
                       if (controller.errorMessage.value != null) {
                         return AppErrorWidget(message: controller.errorMessage.value!, onRetry: controller.show);
                       }
@@ -55,7 +55,7 @@ class ArtistProductionView extends GetView<ArtistProductionController> {
                           child: _ReportTable(
                             columns: const [
                               AppStrings.workType,
-                              AppStrings.prediction,
+                              AppStrings.work,
                               AppStrings.actualPcsStone,
                               AppStrings.totalPoints,
                             ],
@@ -63,7 +63,7 @@ class ArtistProductionView extends GetView<ArtistProductionController> {
                               for (final entry in controller.items)
                                 [
                                   entry.workType,
-                                  entry.prediction.toStringAsFixed(2),
+                                  entry.work,
                                   '${entry.actualQty}',
                                   entry.totalPoints.toStringAsFixed(2),
                                 ],
@@ -114,19 +114,17 @@ class ArtistProductionView extends GetView<ArtistProductionController> {
                                 );
                               }
 
-                              // Production Detail (4 columns) gets more width than
-                              // Work Type Summary (3 columns), roughly matching
-                              // their column-count ratio. Deliberately
-                              // CrossAxisAlignment.start (not .stretch/
-                              // IntrinsicHeight) — each table's height should
-                              // come from its own row count, not be forced to
-                              // match the other's.
+                              // Production Detail and Work Type Summary split the
+                              // row equally. Deliberately CrossAxisAlignment.start
+                              // (not .stretch/IntrinsicHeight) — each table's
+                              // height should come from its own row count, not be
+                              // forced to match the other's.
                               return Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(flex: 4, child: productionDetail),
+                                  Expanded(child: productionDetail),
                                   const SizedBox(width: AppDimensions.spacingMd),
-                                  Expanded(flex: 3, child: workTypeSummary),
+                                  Expanded(child: workTypeSummary),
                                 ],
                               );
                             },
@@ -264,7 +262,10 @@ class _DateField extends StatelessWidget {
   const _DateField({required this.label, required this.date, required this.onTap});
 
   final String label;
-  final DateTime date;
+
+  /// Null when To date has been cleared after a From date change — the
+  /// user must tap through and pick a new one before Show will run.
+  final DateTime? date;
   final VoidCallback onTap;
 
   @override
@@ -277,7 +278,10 @@ class _DateField extends StatelessWidget {
           labelText: label,
           suffixIcon: const Icon(Icons.calendar_today_outlined, size: AppDimensions.iconSm),
         ),
-        child: Text(DateTimeHelper.formatDate(date)),
+        child: Text(
+          date != null ? DateTimeHelper.formatDate(date!) : AppStrings.selectDate,
+          style: date == null ? TextStyle(color: Theme.of(context).hintColor) : null,
+        ),
       ),
     );
   }
@@ -299,21 +303,21 @@ class _KpiRow extends StatelessWidget {
         _KpiCard(
           icon: Icons.inventory_2_outlined,
           title: AppStrings.actualBagPieces,
-          value: controller.totalPrediction.toStringAsFixed(2),
+          value: '${controller.totalPieces}',
           color: AppColors.info,
           containerColor: AppColors.infoContainer,
         ),
         _KpiCard(
           icon: Icons.insights_outlined,
           title: AppStrings.prediction,
-          value: '${controller.totalActualQty}',
+          value: '${controller.totalParts}',
           color: AppColors.warning,
           containerColor: AppColors.warningContainer,
         ),
         _KpiCard(
           icon: Icons.star_border_rounded,
           title: AppStrings.totalPoints,
-          value: controller.totalPoints.toStringAsFixed(2),
+          value: controller.totalPointsValue.toStringAsFixed(2),
           color: AppColors.success,
           containerColor: AppColors.successContainer,
         ),
@@ -455,7 +459,6 @@ class _ReportTable extends StatelessWidget {
                 Expanded(
                   child: _ReportCell(
                     text: columns[i],
-                    alignEnd: i != 0,
                     style: textTheme.labelLarge?.copyWith(
                       color: AppColors.onPrimary,
                       fontWeight: FontWeight.w700,
@@ -490,7 +493,6 @@ class _ReportTable extends StatelessWidget {
                       Expanded(
                         child: _ReportCell(
                           text: rows[i][c],
-                          alignEnd: c != 0,
                           style: c == 0
                               ? textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)
                               : textTheme.bodyMedium,
@@ -509,19 +511,19 @@ class _ReportTable extends StatelessWidget {
 /// same widget (same [Align], same lack of extra padding) so a column's
 /// header and its values are guaranteed to line up pixel-for-pixel — unlike
 /// before, when the work-type value was wrapped in a padded pill that the
-/// plain header text didn't account for.
+/// plain header text didn't account for. Always centered so each equally
+/// wide column reads as a clean, evenly divided grid.
 class _ReportCell extends StatelessWidget {
-  const _ReportCell({required this.text, required this.alignEnd, this.style});
+  const _ReportCell({required this.text, this.style});
 
   final String text;
-  final bool alignEnd;
   final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
-      child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+      alignment: Alignment.center,
+      child: Text(text, maxLines: 1, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: style),
     );
   }
 }

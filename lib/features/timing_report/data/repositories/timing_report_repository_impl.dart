@@ -12,12 +12,9 @@ class TimingReportRepositoryImpl implements TimingReportRepository {
   final TimingReportDataSource _dataSource;
 
   @override
-  Future<Either<Failure, List<TimingReportEntity>>> getReport({
-    required int year,
-    required int month,
-  }) async {
+  Future<Either<Failure, List<TimingReportEntity>>> getReport({required String empCd}) async {
     try {
-      final entries = await _dataSource.getReport(year: year, month: month);
+      final entries = await _dataSource.getReport(empCd: empCd);
       return Right(entries);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));

@@ -5,6 +5,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_pin_field.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../authentication/domain/usecases/change_password_usecase.dart';
 
 /// Weak/repeated/sequential 4-digit PINs the strength meter flags —
@@ -117,9 +118,17 @@ class ChangePasswordController extends GetxController {
     isLoading.value = false;
 
     result.fold(
-      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
       (_) {
-        Get.snackbar(AppStrings.changePassword, AppStrings.passwordUpdated);
+        AppSnackbar.show(
+          title: AppStrings.changePassword,
+          message: AppStrings.passwordUpdated,
+          isSuccess: true,
+        );
         currentPasswordFieldController.clear();
         newPasswordFieldController.clear();
         confirmPasswordFieldController.clear();

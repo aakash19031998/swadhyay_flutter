@@ -28,6 +28,7 @@ class DesignMasterEntity extends Equatable {
     required this.modelWt,
     required this.cadVol,
     required this.metalWt,
+    required this.grossWt,
     required this.bomItems,
     required this.labDetails,
     required this.history,
@@ -47,6 +48,7 @@ class DesignMasterEntity extends Equatable {
   final String modelWt;
   final String cadVol;
   final String metalWt;
+  final String grossWt;
   final List<DesignBomItemEntity> bomItems;
   final List<DesignLabDetailEntity> labDetails;
   final String history;
@@ -67,6 +69,7 @@ class DesignMasterEntity extends Equatable {
         modelWt,
         cadVol,
         metalWt,
+        grossWt,
         bomItems,
         labDetails,
         history,

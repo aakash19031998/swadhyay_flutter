@@ -49,7 +49,7 @@ class LoginController extends GetxController {
         pinFieldController.clear();
         pinErrorText.value = failure.message;
         AppSnackbar.show(
-          title: AppStrings.somethingWentWrong,
+          title: AppStrings.alertWarning,
           message: failure.message,
           isSuccess: false,
         );

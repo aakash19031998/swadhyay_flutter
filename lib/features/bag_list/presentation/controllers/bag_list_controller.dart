@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/app_dialog.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/usecases/get_bag_media_usecase.dart';
@@ -121,10 +122,18 @@ class BagListController extends ListStateController<BagEntity> {
     AppDialog.dismiss();
 
     result.fold(
-      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
       (media) {
         if (media.isEmpty) {
-          Get.snackbar(AppStrings.somethingWentWrong, AppStrings.noMediaFound);
+          AppSnackbar.show(
+            title: AppStrings.alertWarning,
+            message: AppStrings.noMediaFound,
+            isSuccess: false,
+          );
           return;
         }
         Get.toNamed(AppRoutes.bagMediaViewer, arguments: BagMediaViewerArgs(media: media));

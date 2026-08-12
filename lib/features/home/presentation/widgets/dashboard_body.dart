@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/constants/app_assets.dart';
-import '../../../../core/constants/app_dimensions.dart';
 
 /// Default landing content behind the drawer — the branded dashboard
-/// banner, centered and capped to a sensible max width on large tablets.
+/// background, filling the entire screen edge-to-edge.
 class DashboardBody extends StatelessWidget {
   const DashboardBody({super.key});
 
@@ -12,11 +12,13 @@ class DashboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.all(AppDimensions.spacingLg),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppDimensions.maxContentWidth * 1.5),
-        child: Image.asset(AppAssets.homeBackground, fit: BoxFit.contain),
+      width: double.infinity,
+      height: double.infinity,
+      child: SvgPicture.asset(
+        AppAssets.homeBackground,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
       ),
     );
   }

@@ -9,7 +9,10 @@
       "Read(//c/Users/ADMIN/AppData/Local/Temp/claude/**)",
       "Bash(find / -path \"*mobile_scanner-7.4.0/lib/src/mobile_scanner_controller.dart\" 2>/dev/null | head -5)",
       "Bash(xargs grep -l \"getBags\")",
-      "Read(//c/Users/interventor1/Desktop/Swadhyay_master/lib/features/bag_list/presentation/views/**)"
+      "Read(//c/Users/interventor1/Desktop/Swadhyay_master/lib/features/bag_list/presentation/views/**)",
+      "Bash(flutter pub *)",
+      "Bash(flutter devices *)",
+      "Bash(adb devices *)"
     ]
   }
 }

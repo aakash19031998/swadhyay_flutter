@@ -9,10 +9,7 @@ class GetTimingReportUseCase {
 
   final TimingReportRepository _repository;
 
-  Future<Either<Failure, List<TimingReportEntity>>> call({
-    required int year,
-    required int month,
-  }) {
-    return _repository.getReport(year: year, month: month);
+  Future<Either<Failure, List<TimingReportEntity>>> call({required String empCd}) {
+    return _repository.getReport(empCd: empCd);
   }
 }

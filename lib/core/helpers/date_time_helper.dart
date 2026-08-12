@@ -7,11 +7,16 @@ class DateTimeHelper {
 
   static final DateFormat _date = DateFormat('dd/MM/yyyy');
   static final DateFormat _dateDashed = DateFormat('dd-MM-yyyy');
+  static final DateFormat _apiDate = DateFormat('yyyy-MM-dd');
   static final DateFormat _time = DateFormat('HH:mm');
   static final DateFormat _dateTime = DateFormat('dd/MM/yyyy HH:mm');
   static final DateFormat _monthYear = DateFormat('MMMM yyyy');
 
   static String formatDate(DateTime value) => _date.format(value);
+
+  /// `YYYY-MM-DD` — the request-body date format expected by report
+  /// endpoints like `ArtistProductionRpt` (`frDt`/`toDt`).
+  static String formatApiDate(DateTime value) => _apiDate.format(value);
 
   /// `DD-MM-YYYY` (dashed) — distinct from [formatDate]'s `dd/MM/yyyy`
   /// because some fields (currently Bag Detail's delivery date) are

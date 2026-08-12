@@ -18,6 +18,11 @@ class AppStrings {
   static const String save = 'Save';
   static const String submit = 'Submit';
   static const String somethingWentWrong = 'Something went wrong';
+
+  /// Error/failure snackbar title app-wide — distinct from
+  /// [somethingWentWrong], which is still used as [AppErrorWidget]'s
+  /// default body message and other non-snackbar body text.
+  static const String alertWarning = 'Alert/Warning';
   static const String success = 'Success';
   static const String noInternetConnection = 'No internet connection';
   static const String noDataFound = 'No data found';
@@ -47,11 +52,9 @@ class AppStrings {
   static const String reports = 'Reports';
   static const String designImage = 'Design Image';
   static const String designImageSearchHint = 'Search Design Code, EMR Style...';
-  static const String designMasterSubtitle = 'Product Specification & Catalog Record';
   static const String designMasterSearchPrompt = 'Enter a style number and tap Search to view design details.';
   static const String designMasterNotFound = 'No design found for this style number.';
   static const String designMasterEnterStyleNo = 'Please enter a style number to search';
-  static const String activeRecord = 'Active Record';
   static const String viewGallery = 'View Gallery';
   static const String generalTab = 'General';
   static const String billOfMaterialTab = 'BOM';
@@ -64,11 +67,12 @@ class AppStrings {
   static const String emrStyle = 'EMR Style';
   static const String designDate = 'Design Date';
   static const String totalDiaWt = 'Total Dia Wt';
-  static const String defRingSize = 'Def. Ring Size';
+  static const String defRingSize = 'Def. Size';
   static const String cadWt = 'CAD Wt';
   static const String modelWt = 'Model Wt';
   static const String cadVol = 'CAD VOL';
   static const String metalWt = 'Metal Wt';
+  static const String grossWt = 'Gross Wt';
   static const String rmType = 'RmType';
   static const String rmCode = 'RmCode';
   static const String sizeName = 'SizeName';
@@ -158,7 +162,6 @@ class AppStrings {
   static const String completedWork = 'Completed Work';
   static const String pendingWork = 'Pending Work';
   static const String addSettingBeforeSubmit = 'Add at least one setting before submitting';
-  static const String bagCompletedSuccess = 'Bag completed successfully';
   static const String submitConfirmTitle = 'Submit Entry';
   static const String submitConfirmMessage =
       'Are you sure you want to save this work entry? Once submitted, the bag will be marked as completed.';
@@ -185,10 +188,13 @@ class AppStrings {
   static const String productionDetail = 'Production Detail';
   static const String selectDateRangeAndShow = 'Select a date range and tap Show to load the report';
   static const String invalidDateRange = 'From date must be before or equal to To date';
+  static const String selectDate = 'Select Date';
+  static const String toDateRequired = 'Please select a To date';
 
   // Timing report.
   static const String usedMinutes = 'Used Minutes';
-  static const String unusedMinutes = 'Unused';
+  static const String unusedMinutes = 'Unused Minutes';
+  static const String totalMinutes = 'Total Minutes';
   static const String noTimingData = 'No timing data for this month yet';
   static const String selectMonth = 'Select Month';
   static const String tillDateSummary = 'Till Date Summary';

@@ -8,9 +8,9 @@ import '../../../../core/network/connectivity_checker.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_empty_widget.dart';
-import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/common_app_bar.dart';
 import '../../../../core/widgets/flex_table.dart';
+import '../../../../core/widgets/hk_loader_card.dart';
 import '../../../../core/widgets/section_card.dart';
 import '../../../bag_list/presentation/controllers/bag_media_viewer_args.dart';
 import '../../domain/entities/design_bom_item_entity.dart';
@@ -47,7 +47,7 @@ class DesignImageView extends GetView<DesignImageController> {
     if (!controller.hasSearched.value) {
       return const AppEmptyWidget(message: AppStrings.designMasterSearchPrompt, icon: Icons.search_rounded);
     }
-    if (controller.isLoading.value) return const AppLoader();
+    if (controller.isLoading.value) return const HkLoaderCard();
 
     final DesignMasterEntity? design = controller.result.value;
     if (design == null) {
@@ -203,10 +203,10 @@ class _SearchButton extends StatelessWidget {
   }
 }
 
-/// The single design record: title/"Active Record" header, the image
-/// (tap opens the full image/video gallery — same `BagMediaViewerView` the
-/// Bag List screen uses) with its preview chip, then the General/Bill Of
-/// Material/Lab Details/History tabs.
+/// The single design record: Style No. beside the image (tap opens the full
+/// image/video gallery — same `BagMediaViewerView` the Bag List screen
+/// uses) with its preview chip, then the General/Bill Of Material/Lab
+/// Details/History tabs.
 class _DesignMasterDetail extends StatelessWidget {
   const _DesignMasterDetail({required this.design, required this.tabController});
 
@@ -230,9 +230,7 @@ class _DesignMasterDetail extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _DesignHeader(design: design),
-          const SizedBox(height: AppDimensions.spacingMd),
-          _DesignImageCard(design: design, onTap: _openMediaGallery),
+          _DesignImageSection(design: design, onTap: _openMediaGallery),
           const SizedBox(height: AppDimensions.spacingMd),
           SectionCard(
             padding: EdgeInsets.zero,
@@ -334,52 +332,62 @@ class _TabData {
   final String label;
 }
 
-class _DesignHeader extends StatelessWidget {
-  const _DesignHeader({required this.design});
+/// Style No. beside the image instead of a separate header row above it,
+/// the pair centered together as one group. The image's size is derived
+/// from whatever width is left after the (short, style-code-sized) text
+/// column — always fits exactly, and grows well past the old fixed size on
+/// anything wider than a narrow phone, capped at
+/// [AppDimensions.designMasterImageSize].
+class _DesignImageSection extends StatelessWidget {
+  const _DesignImageSection({required this.design, required this.onTap});
 
   final DesignMasterEntity design;
+  final VoidCallback onTap;
+
+  static const double _reservedTextWidth = 130;
 
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                design.designCode.toUpperCase(),
-                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: AppDimensions.spacingXxs),
-              Text(AppStrings.designMasterSubtitle, style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppDimensions.spacingSm),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingSm, vertical: AppDimensions.spacingXxs),
-          decoration: BoxDecoration(
-            color: AppColors.successContainer,
-            border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double imageSize = (constraints.maxWidth - _reservedTextWidth - AppDimensions.spacingMd).clamp(
+          AppDimensions.designMasterImageMinSize,
+          AppDimensions.designMasterImageSize,
+        );
+
+        return Center(
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.circle, color: AppColors.success, size: 8),
-              const SizedBox(width: AppDimensions.spacingXxs),
-              Text(
-                AppStrings.activeRecord,
-                style: textTheme.labelMedium?.copyWith(color: AppColors.success, fontWeight: FontWeight.w700),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      AppStrings.styleNo.toUpperCase(),
+                      style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary, letterSpacing: 0.6),
+                    ),
+                    const SizedBox(height: AppDimensions.spacingXxs),
+                    Text(
+                      design.designCode.toUpperCase(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: AppDimensions.spacingMd),
+              _DesignImageCard(design: design, onTap: onTap, size: imageSize),
             ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -387,96 +395,95 @@ class _DesignHeader extends StatelessWidget {
 /// Just the image, in a plain white card — nothing overlaid on top of it.
 /// The "tap to view" hint sits below the card instead.
 class _DesignImageCard extends StatelessWidget {
-  const _DesignImageCard({required this.design, required this.onTap});
+  const _DesignImageCard({required this.design, required this.onTap, required this.size});
 
   final DesignMasterEntity design;
   final VoidCallback onTap;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: AppDimensions.designMasterImageSize,
-              height: AppDimensions.designMasterImageSize,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                child: CachedNetworkImage(
-                  imageUrl: design.imageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  errorWidget: (context, url, error) => const ColoredBox(
-                    color: AppColors.surfaceVariant,
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      color: AppColors.textHint,
-                      size: AppDimensions.iconXl,
-                    ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.textPrimary.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+              child: CachedNetworkImage(
+                imageUrl: design.imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                errorWidget: (context, url, error) => const ColoredBox(
+                  color: AppColors.surfaceVariant,
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: AppColors.textHint,
+                    size: AppDimensions.iconXl,
                   ),
                 ),
               ),
             ),
           ),
-          if (design.media.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.spacingSm),
-            GestureDetector(
-              onTap: onTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingMd,
-                  vertical: AppDimensions.spacingXs,
+        ),
+        if (design.media.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.spacingSm),
+          GestureDetector(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacingMd,
+                vertical: AppDimensions.spacingXs,
+              ),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
                 ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
+                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.photo_library_outlined, size: AppDimensions.iconSm, color: AppColors.onPrimary),
-                    const SizedBox(width: AppDimensions.spacingXs),
-                    Text(
-                      '${AppStrings.viewGallery} · ${design.media.length}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.onPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                  ],
-                ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.photo_library_outlined, size: AppDimensions.iconSm, color: AppColors.onPrimary),
+                  const SizedBox(width: AppDimensions.spacingXs),
+                  Text(
+                    '${AppStrings.viewGallery} · ${design.media.length}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.onPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -492,17 +499,24 @@ class _GeneralTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<_FieldData> fields = [
+      // Row 1 — unchanged.
       _FieldData(Icons.qr_code_2_outlined, AppStrings.designCode, design.designCode),
       _FieldData(Icons.category_outlined, AppStrings.designCtg, design.designCtg),
       _FieldData(Icons.bookmark_outline, AppStrings.designSctg, design.designSctg),
       _FieldData(Icons.extension_outlined, AppStrings.parts, design.parts),
+      // Row 2.
       _FieldData(Icons.style_outlined, AppStrings.emrStyle, design.emrStyle),
       _FieldData(Icons.event_outlined, AppStrings.designDate, design.designDate),
-      _FieldData(Icons.diamond_outlined, AppStrings.totalDiaWt, design.totalDiaWt),
       _FieldData(Icons.straighten_outlined, AppStrings.defRingSize, design.defRingSize),
-      _FieldData(Icons.view_in_ar_outlined, AppStrings.cadWt, design.cadWt),
       _FieldData(Icons.scale_outlined, AppStrings.modelWt, design.modelWt),
-      _FieldData(Icons.aspect_ratio_outlined, AppStrings.cadVol, design.cadVol),
+      // Row 3 — Cad Wt/Cad Vol combined into a single chip.
+      _FieldData(
+        Icons.view_in_ar_outlined,
+        '${AppStrings.cadWt} / ${AppStrings.cadVol}',
+        '${design.cadWt} / ${design.cadVol}',
+      ),
+      _FieldData(Icons.fitness_center_outlined, AppStrings.grossWt, design.grossWt),
+      _FieldData(Icons.diamond_outlined, AppStrings.totalDiaWt, design.totalDiaWt),
       _FieldData(Icons.monitor_weight_outlined, AppStrings.metalWt, design.metalWt),
     ];
 

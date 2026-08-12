@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/base/list_state_controller.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../domain/entities/skipped_bag_entity.dart';
 import '../../domain/usecases/get_skipped_bags_usecase.dart';
 import '../../domain/usecases/skip_bag_usecase.dart';
@@ -40,9 +41,17 @@ class SkipBagController extends ListStateController<SkippedBagEntity> {
     isSubmitting.value = false;
 
     result.fold(
-      (failure) => Get.snackbar(AppStrings.somethingWentWrong, failure.message),
+      (failure) => AppSnackbar.show(
+        title: AppStrings.alertWarning,
+        message: failure.message,
+        isSuccess: false,
+      ),
       (_) {
-        Get.snackbar(AppStrings.skipBagAction, AppStrings.bagSkippedSuccess);
+        AppSnackbar.show(
+          title: AppStrings.skipBagAction,
+          message: AppStrings.bagSkippedSuccess,
+          isSuccess: true,
+        );
         bagNumberController.clear();
         load();
       },
