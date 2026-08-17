@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
 import '../error/exceptions.dart';
+import 'force_update_guard.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'network_info.dart';
@@ -62,12 +64,25 @@ class ApiClient {
 
   Future<Response<T>> _send<T>(Future<Response<T>> Function() request) async {
     await _ensureConnected();
+    late final Response<T> response;
     try {
-      return await request();
+      response = await request();
     } on DioException catch (e) {
       if (!_isStaleConnectionError(e)) rethrow;
-      return await request();
+      response = await request();
     }
+
+    // A response carrying the backend's force-update signal is handed to
+    // ForceUpdateGuard instead of the calling data source — the update
+    // dialog takes over and this call is left permanently pending rather
+    // than resolving into whatever that data source would normally have
+    // done with a "False" status (an error snackbar, or a silent
+    // (success: false, ...) outcome). Every other response is returned
+    // completely unchanged.
+    if (ForceUpdateGuard.intercept(response.data)) {
+      return Completer<Response<T>>().future;
+    }
+    return response;
   }
 
   Future<Response<T>> get<T>(String path, {Map<String, dynamic>? queryParameters}) {

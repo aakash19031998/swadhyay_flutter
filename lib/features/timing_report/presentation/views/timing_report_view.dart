@@ -679,7 +679,11 @@ class _Bar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double barHeight = axisMax == 0 ? 0 : (value / axisMax) * usableHeight;
+    // Clamped to usableHeight so a single outlier/bad-data value (far past
+    // axisMax) can never blow the bar past its allotted plot space and
+    // overflow the surrounding Column — it just renders as a maxed-out bar
+    // instead.
+    final double barHeight = axisMax == 0 ? 0 : ((value / axisMax) * usableHeight).clamp(0, usableHeight);
 
     return SizedBox(
       width: AppDimensions.timingChartBarWidth,

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/helpers/raw_json_numbers.dart';
@@ -37,8 +38,7 @@ class BagDetailRemoteDataSourceImpl implements BagDetailDataSource {
         data: {
           'bno': bagNo,
           'empCd': empCd,
-          // Fixed literal per this endpoint's contract, not a real version.
-          'appVersion': '1',
+          'appVersion': AppVersion.versionName,
         },
         options: Options(responseType: ResponseType.plain),
       );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import 'core/config/app_version.dart';
 import 'core/constants/app_strings.dart';
 import 'core/di/initial_binding.dart';
 import 'core/routes/app_pages.dart';
@@ -10,6 +12,14 @@ import 'core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Locks the app to landscape (either orientation) even with the device's
+  // auto-rotate on — portrait is never an allowed orientation, not just the
+  // one the app happens to launch in.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+  await AppVersion.init();
   await LocalStorageService.init();
   runApp(const SwadhyayApp());
 }

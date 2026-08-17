@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/helpers/date_time_helper.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_loader.dart';
 import '../../../../core/widgets/drawer_expansion_tile.dart';
 import '../../../../core/widgets/drawer_tile.dart';
@@ -52,6 +54,21 @@ class AppDrawer extends GetView<HomeController> {
                   children: controller.menuItems.map(_buildItem).toList(),
                 );
               }),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.spacingMd,
+                AppDimensions.spacingXs,
+                AppDimensions.spacingMd,
+                AppDimensions.spacingSm,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'v${AppVersion.versionName}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textHint),
+                ),
+              ),
             ),
           ],
         ),

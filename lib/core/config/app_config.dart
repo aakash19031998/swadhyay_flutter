@@ -18,14 +18,6 @@ class AppConfig {
     defaultValue: true,
   );
 
-  /// Separate from [useMockData]: authentication is wired to the live
-  /// backend by default while every other feature still ships on mock data,
-  /// so this is its own switch rather than reusing the shared one.
-  static const bool useMockAuth = bool.fromEnvironment(
-    'USE_MOCK_AUTH',
-    defaultValue: false,
-  );
-
   /// Separate from [useMockData]: the navigation drawer is wired to the live
   /// `MenuListNew` backend by default, independent of other still-mocked
   /// features.
@@ -49,9 +41,6 @@ class AppConfig {
     'USE_MOCK_BAG_MEDIA_GALLERY',
     defaultValue: false,
   );
-
-  /// Sent as `appVersion` in the login request body.
-  static const int appVersion = 0;
 
   static const Duration connectTimeout = Duration(minutes: 2);
   static const Duration receiveTimeout = Duration(minutes: 2);

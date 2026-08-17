@@ -43,27 +43,37 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> logout() async {
+  Future<Either<Failure, ({bool success, String message})>> logout({required String empCd}) async {
     try {
-      await _dataSource.logout();
-    } catch (_) {
-      // Best-effort: the local session is cleared regardless so the user
-      // is never stuck signed in on-device if the server call fails.
+      final result = await _dataSource.logout(empCd: empCd);
+      // Only drop the session once the backend actually confirms the
+      // logout — a "False" status means the user stays signed in on this
+      // same screen, so the local session must stay intact too.
+      if (result.success) {
+        await _secureStorage.clear();
+        await _localStorage.clear();
+      }
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     }
-    await _secureStorage.clear();
-    await _localStorage.remove(StorageKeys.loggedInEmployee);
-    await _localStorage.setLoggedIn(false);
-    return const Right(unit);
   }
 
   @override
-  Future<Either<Failure, Unit>> changePassword({
+  Future<Either<Failure, ({bool success, String message})>> changePassword({
+    required String empCd,
     required String currentPassword,
     required String newPassword,
   }) async {
     try {
-      await _dataSource.changePassword(currentPassword: currentPassword, newPassword: newPassword);
-      return const Right(unit);
+      final result = await _dataSource.changePassword(
+        empCd: empCd,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {

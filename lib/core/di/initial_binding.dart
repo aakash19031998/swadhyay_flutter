@@ -7,6 +7,7 @@ import '../network/api_client.dart';
 import '../network/connectivity_checker.dart';
 import '../network/interceptors/auth_interceptor.dart';
 import '../network/network_info.dart';
+import '../services/app_update_controller.dart';
 import '../storage/local_storage_service.dart';
 import '../storage/secure_storage_service.dart';
 
@@ -51,5 +52,7 @@ class InitialBinding extends Bindings {
       ApiClient(ApiClient.buildDio(authInterceptor: authInterceptor), Get.find<NetworkInfo>()),
       permanent: true,
     );
+
+    Get.put<AppUpdateController>(AppUpdateController(), permanent: true);
   }
 }

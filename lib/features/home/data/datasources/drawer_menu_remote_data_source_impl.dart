@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
@@ -24,9 +25,7 @@ class DrawerMenuRemoteDataSourceImpl implements DrawerMenuDataSource {
         ApiEndpoints.menuListNew,
         data: {
           'empCd': empCd,
-          // Unlike other endpoints' numeric appVersion, MenuListNew's
-          // contract sends this field as a string.
-          'appVersion': '1',
+          'appVersion': AppVersion.versionName,
         },
       );
 

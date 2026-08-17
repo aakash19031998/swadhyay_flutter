@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
@@ -31,8 +32,7 @@ class SubWorkTypeRemoteDataSourceImpl implements SubWorkTypeDataSource {
           'schr': schr,
           'workType': workType,
           'empCode': empCd,
-          // Fixed literal per this endpoint's contract, not a real version.
-          'appVersion': '1',
+          'appVersion': AppVersion.versionName,
         },
       );
 

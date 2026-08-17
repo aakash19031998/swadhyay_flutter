@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_pin_field.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../authentication/domain/usecases/change_password_usecase.dart';
+import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 
 /// Weak/repeated/sequential 4-digit PINs the strength meter flags —
 /// mirrors the reference Change PIN screen's rule set.
@@ -23,9 +25,10 @@ enum PinStrength { empty, weak, moderate, strong }
 /// [ChangePasswordUseCase]/`AuthRepository`; this controller only wires the
 /// three PIN fields to that use case.
 class ChangePasswordController extends GetxController {
-  ChangePasswordController(this._changePasswordUseCase);
+  ChangePasswordController(this._changePasswordUseCase, this._getCurrentEmployeeUseCase);
 
   final ChangePasswordUseCase _changePasswordUseCase;
+  final GetCurrentEmployeeUseCase _getCurrentEmployeeUseCase;
 
   final currentPasswordFieldController = AppPinFieldController();
   final newPasswordFieldController = AppPinFieldController();
@@ -112,8 +115,13 @@ class ChangePasswordController extends GetxController {
     if (!isValid) return;
 
     isLoading.value = true;
+    final String? empCode = (await _getCurrentEmployeeUseCase())?.empCode;
     final result = await _changePasswordUseCase(
-      ChangePasswordParams(currentPassword: _currentPassword, newPassword: _newPassword),
+      ChangePasswordParams(
+        empCd: empCode ?? '',
+        currentPassword: _currentPassword,
+        newPassword: _newPassword,
+      ),
     );
     isLoading.value = false;
 
@@ -123,17 +131,22 @@ class ChangePasswordController extends GetxController {
         message: failure.message,
         isSuccess: false,
       ),
-      (_) {
+      (response) {
         AppSnackbar.show(
-          title: AppStrings.changePassword,
-          message: AppStrings.passwordUpdated,
-          isSuccess: true,
+          title: response.success ? AppStrings.changePassword : AppStrings.alertWarning,
+          message: response.message,
+          isSuccess: response.success,
         );
+        // A "False" status is a normal rejection (e.g. wrong current
+        // password) that the user needs to correct on this same screen,
+        // not a hard failure — only navigate away on success.
+        if (!response.success) return;
+
         currentPasswordFieldController.clear();
         newPasswordFieldController.clear();
         confirmPasswordFieldController.clear();
         newPasswordStrength.value = PinStrength.empty;
-        Get.back<void>();
+        Get.offAllNamed(AppRoutes.home);
       },
     );
   }

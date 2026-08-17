@@ -120,7 +120,7 @@ class HomeController extends GetxController {
     if (!confirmed) return;
 
     isLoggingOut.value = true;
-    final result = await _logoutUseCase();
+    final result = await _logoutUseCase(empCd: employee.value?.empCode ?? '');
     isLoggingOut.value = false;
 
     result.fold(
@@ -129,7 +129,16 @@ class HomeController extends GetxController {
         message: failure.message,
         isSuccess: false,
       ),
-      (_) => Get.offAllNamed(AppRoutes.login),
+      (response) {
+        AppSnackbar.show(
+          title: response.success ? AppStrings.success : AppStrings.alertWarning,
+          message: response.message,
+          isSuccess: response.success,
+        );
+        // A "False" status means the user stays signed in on this same
+        // screen, not a hard failure — only navigate away on success.
+        if (response.success) Get.offAllNamed(AppRoutes.login);
+      },
     );
   }
 }
