@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
@@ -27,8 +28,7 @@ class BagRemoteDataSourceImpl implements BagDataSource {
         ApiEndpoints.issuedBagListNew,
         data: {
           'empCd': empCd,
-          // Fixed literal per this endpoint's contract, not a real token.
-          'appToken': 'Q',
+          'appVersion': AppVersion.versionName,
         },
       );
 

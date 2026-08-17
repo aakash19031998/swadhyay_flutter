@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
@@ -22,7 +23,7 @@ class DesignMasterRemoteDataSourceImpl implements DesignMasterDataSource {
     try {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.designMaster,
-        data: {'dscd': styleNo},
+        data: {'dscd': styleNo, 'appVersion': AppVersion.versionName},
       );
 
       final Map<String, dynamic> body = response.data ?? const <String, dynamic>{};

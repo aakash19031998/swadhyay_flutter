@@ -8,5 +8,7 @@ class LogoutUseCase {
 
   final AuthRepository _repository;
 
-  Future<Either<Failure, Unit>> call() => _repository.logout();
+  Future<Either<Failure, ({bool success, String message})>> call({required String empCd}) {
+    return _repository.logout(empCd: empCd);
+  }
 }

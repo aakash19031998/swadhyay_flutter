@@ -10,7 +10,20 @@ abstract class AuthDataSource {
     required String pin,
   });
 
-  Future<void> logout();
+  /// `Logout`'s response has no separate error case for a rejected logout —
+  /// it is a normal `"False"` status with its own message, so the result is
+  /// returned as `(success, message)` instead of thrown, the same
+  /// convention as [changePassword].
+  Future<({bool success, String message})> logout({required String empCd});
 
-  Future<void> changePassword({required String currentPassword, required String newPassword});
+  /// `ChangePasswordNew`'s response has no separate error/exception case for
+  /// a wrong current password — it is a normal `"False"` status with its own
+  /// message, so the result is returned as `(success, message)` instead of
+  /// thrown, the same convention as `DummyAddBtnValidation`/
+  /// `BagDoneWithFirstReceive`.
+  Future<({bool success, String message})> changePassword({
+    required String empCd,
+    required String currentPassword,
+    required String newPassword,
+  });
 }

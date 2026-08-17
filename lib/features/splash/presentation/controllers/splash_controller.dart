@@ -6,12 +6,12 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/storage/local_storage_service.dart';
 
 /// Drives the splash screen's single responsibility: stay on screen for
-/// exactly 3 seconds, then route to Login or Home depending on whether a
+/// exactly 2 seconds, then route to Login or Home depending on whether a
 /// session already exists.
 class SplashController extends GetxController {
   SplashController(this._localStorageService);
 
-  static const Duration _splashDuration = Duration(seconds: 3);
+  static const Duration _splashDuration = Duration(seconds: 2);
 
   final LocalStorageService _localStorageService;
 

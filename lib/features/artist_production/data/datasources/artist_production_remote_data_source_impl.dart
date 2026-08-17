@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/helpers/date_time_helper.dart';
@@ -28,8 +29,7 @@ class ArtistProductionRemoteDataSourceImpl implements ArtistProductionDataSource
           'frDt': DateTimeHelper.formatApiDate(fromDate),
           'toDt': DateTimeHelper.formatApiDate(toDate),
           'empCd': empCd,
-          // Fixed literal per this endpoint's contract, not a real version.
-          'appVersion': '1',
+          'appVersion': AppVersion.versionName,
         },
       );
 

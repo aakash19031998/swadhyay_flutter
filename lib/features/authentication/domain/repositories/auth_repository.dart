@@ -12,9 +12,10 @@ abstract class AuthRepository {
     required String pin,
   });
 
-  Future<Either<Failure, Unit>> logout();
+  Future<Either<Failure, ({bool success, String message})>> logout({required String empCd});
 
-  Future<Either<Failure, Unit>> changePassword({
+  Future<Either<Failure, ({bool success, String message})>> changePassword({
+    required String empCd,
     required String currentPassword,
     required String newPassword,
   });
