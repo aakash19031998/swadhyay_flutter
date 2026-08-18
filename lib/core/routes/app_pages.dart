@@ -3,6 +3,10 @@ import 'package:get/get.dart';
 import '../../features/artist_production/presentation/bindings/artist_production_binding.dart';
 import '../../features/artist_production/presentation/views/artist_production_view.dart';
 import '../../features/authentication/presentation/bindings/login_binding.dart';
+import '../../features/brand_specification/presentation/bindings/brand_pdf_viewer_binding.dart';
+import '../../features/brand_specification/presentation/bindings/brand_specification_binding.dart';
+import '../../features/brand_specification/presentation/views/brand_pdf_viewer_view.dart';
+import '../../features/brand_specification/presentation/views/brand_specification_view.dart';
 import '../../features/authentication/presentation/views/login_view.dart';
 import '../../features/bag_list/presentation/bindings/bag_completion_binding.dart';
 import '../../features/bag_list/presentation/bindings/bag_detail_binding.dart';
@@ -120,6 +124,16 @@ class AppPages {
       name: AppRoutes.folloperReport,
       page: () => const FolloperReportView(),
       binding: FolloperReportBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.brandSpecification,
+      page: () => const BrandSpecificationView(),
+      binding: BrandSpecificationBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.brandSpecificationPdfViewer,
+      page: () => const BrandPdfViewerView(),
+      binding: BrandPdfViewerBinding(),
     ),
   ];
 }

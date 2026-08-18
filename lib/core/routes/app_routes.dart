@@ -19,4 +19,6 @@ class AppRoutes {
   static const String timingReport = '/reports/timing-report';
   static const String artistProduction = '/reports/artist-production';
   static const String folloperReport = '/reports/folloper-report';
+  static const String brandSpecification = '/brand-specification';
+  static const String brandSpecificationPdfViewer = '/brand-specification/pdf-viewer';
 }
