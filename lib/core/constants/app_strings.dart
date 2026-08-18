@@ -85,6 +85,7 @@ class AppStrings {
   static const String timingReport = 'Timing Report';
   static const String artistProduction = 'Artist Production';
   static const String folloperReport = 'Folloper Report';
+  static const String brandSpecification = 'Brand Specification';
   static const String logout = 'Logout';
   static const String logoutConfirmTitle = 'Logout';
   static const String logoutConfirmMessage =
@@ -221,4 +222,22 @@ class AppStrings {
   static const String pinStrengthWeak = 'Weak PIN';
   static const String pinStrengthModerate = 'Moderate';
   static const String pinStrengthStrong = 'Strong PIN';
+
+  // Brand specification.
+  static const String brandNameLabel = 'Brand Name';
+  static const String filterSectionTitle = 'Filter';
+  static const String specificationsSectionTitle = 'Specifications';
+  static const String selectBrand = 'Select Brand';
+  static const String selectBrandRequired = 'Please select a brand';
+  static const String noMatchingSpecifications = 'No matching specifications found';
+  static const String searchSpecificationsHint = 'Search in specifications...';
+  static const String pdfUnavailable = 'No specification sheet is available for this row';
+  static const String pdfOpenFailed = 'Unable to download or open this specification sheet';
+  static const String productId = 'Product Id';
+  static const String specHkStyle = 'SpecHKStyle';
+  static const String custMaterial = 'CustMaterial';
+  static const String specStyleKt = 'SpecStyleKT';
+  static const String specStyleCol = 'SpecStyleCol';
+  static const String specCustomer = 'Spec Customer';
+  static const String shortCode = 'Short Code';
 }
