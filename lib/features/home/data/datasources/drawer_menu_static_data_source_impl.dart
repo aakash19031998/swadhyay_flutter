@@ -7,9 +7,12 @@ import '../../domain/entities/drawer_menu_item_entity.dart';
 import '../models/drawer_menu_item_model.dart';
 import 'drawer_menu_data_source.dart';
 
-/// V1 hardcoded menu tree, matching the approved reference design exactly:
-/// Bag List, Skip Bag, Change Password, Reports (Design Image, Qc Checking,
-/// Timing Report, Artist Production, Folloper Report), Logout.
+/// V1 hardcoded menu tree: Bag List, Change Password, Brand Specification,
+/// QC Pending Dashboard, QC Checker, Reports (Design Image, Timing Report,
+/// Artist Production), Logout. Brand Specification, QC Pending Dashboard and
+/// QC Checker are top-level items (not nested under Reports) — plain
+/// standalone tiles, the same as Logout, rather than reachable only by
+/// expanding that group.
 class DrawerMenuStaticDataSourceImpl implements DrawerMenuDataSource {
   @override
   Future<List<DrawerMenuItemModel>> getMenu(String empCd) async {
@@ -24,18 +27,32 @@ class DrawerMenuStaticDataSourceImpl implements DrawerMenuDataSource {
         route: AppRoutes.bagList,
       ),
       DrawerMenuItemModel(
-        id: 'skip_bag',
-        label: AppStrings.skipBag,
-        icon: Icons.skip_next_outlined,
-        type: DrawerMenuItemType.link,
-        route: AppRoutes.skipBag,
-      ),
-      DrawerMenuItemModel(
         id: 'change_password',
         label: AppStrings.changePassword,
         icon: Icons.lock_outline,
         type: DrawerMenuItemType.link,
         route: AppRoutes.changePassword,
+      ),
+      DrawerMenuItemModel(
+        id: 'brand_specification',
+        label: AppStrings.brandSpecification,
+        icon: Icons.storefront_outlined,
+        type: DrawerMenuItemType.link,
+        route: AppRoutes.brandSpecification,
+      ),
+      DrawerMenuItemModel(
+        id: 'qc_pending_dashboard',
+        label: AppStrings.qcPendingDashboard,
+        icon: Icons.fact_check_outlined,
+        type: DrawerMenuItemType.link,
+        route: AppRoutes.qcPendingDashboard,
+      ),
+      DrawerMenuItemModel(
+        id: 'qc_checker',
+        label: AppStrings.qcChecker,
+        icon: Icons.qr_code_scanner_outlined,
+        type: DrawerMenuItemType.link,
+        route: AppRoutes.qcChecker,
       ),
       DrawerMenuItemModel(
         id: 'reports',
@@ -51,13 +68,6 @@ class DrawerMenuStaticDataSourceImpl implements DrawerMenuDataSource {
             route: AppRoutes.designImage,
           ),
           DrawerMenuItemModel(
-            id: 'qc_checking',
-            label: AppStrings.qcChecking,
-            icon: Icons.fact_check_outlined,
-            type: DrawerMenuItemType.link,
-            route: AppRoutes.qcChecking,
-          ),
-          DrawerMenuItemModel(
             id: 'timing_report',
             label: AppStrings.timingReport,
             icon: Icons.timer_outlined,
@@ -70,13 +80,6 @@ class DrawerMenuStaticDataSourceImpl implements DrawerMenuDataSource {
             icon: Icons.brush_outlined,
             type: DrawerMenuItemType.link,
             route: AppRoutes.artistProduction,
-          ),
-          DrawerMenuItemModel(
-            id: 'folloper_report',
-            label: AppStrings.folloperReport,
-            icon: Icons.groups_outlined,
-            type: DrawerMenuItemType.link,
-            route: AppRoutes.folloperReport,
           ),
         ],
       ),

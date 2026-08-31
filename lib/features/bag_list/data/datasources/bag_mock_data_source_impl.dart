@@ -126,12 +126,16 @@ class BagMockDataSourceImpl implements BagDataSource {
   });
 
   @override
-  Future<({int bagCount, int pcsCount, List<BagModel> bags})> getBags({required String empCd}) async {
+  Future<({int bagCount, int pcsCount, String noWorkStatus, String noWorkRunning, List<BagModel> bags})> getBags({
+    required String empCd,
+  }) async {
     await Future.delayed(AppConfig.mockLatency);
 
     return (
       bagCount: _bags.length,
       pcsCount: _bags.fold(0, (sum, bag) => sum + bag.bagQty),
+      noWorkStatus: 'N',
+      noWorkRunning: '',
       bags: _bags,
     );
   }

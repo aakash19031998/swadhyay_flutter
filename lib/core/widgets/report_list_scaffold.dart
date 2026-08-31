@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInputFormatter;
 
 import '../constants/app_dimensions.dart';
 import 'app_empty_widget.dart';
@@ -23,9 +24,16 @@ class ReportListScaffold<T> extends StatelessWidget {
     this.searchHint,
     this.gridDelegate,
     this.masonryColumnCount,
+    this.masonrySpacing,
+    this.searchBarLeading,
     this.searchBarTrailing,
     this.searchController,
     this.searchSuggestionsBuilder,
+    this.searchPadding,
+    this.contentPadding,
+    this.searchKeyboardType,
+    this.searchInputFormatters,
+    this.searchFillColor,
   });
 
   final bool isLoading;
@@ -41,6 +49,11 @@ class ReportListScaffold<T> extends StatelessWidget {
   /// search field. Only the screens that pass one get it — every other
   /// caller's search bar is unchanged.
   final Widget? searchBarTrailing;
+
+  /// An optional widget (e.g. a filter dropdown) placed to the left of the
+  /// search field, in the same row. Only the screens that pass one get it —
+  /// every other caller's search bar is unchanged.
+  final Widget? searchBarLeading;
 
   /// Optional external controller for the search field — e.g. so a scanned
   /// barcode/QR value can be shown in the field itself, not just applied as
@@ -63,31 +76,70 @@ class ReportListScaffold<T> extends StatelessWidget {
   /// [GridView]'s uniform row height.
   final int? masonryColumnCount;
 
+  /// Gap between masonry columns/cards — defaults to [AppDimensions.spacingLg]
+  /// (every caller but QC Checking, which wants a tighter grid). Not used
+  /// outside masonry mode.
+  final double? masonrySpacing;
+
+  /// Overrides the search field's wrapping padding — defaults to
+  /// `EdgeInsets.all(spacingMd)` on every other caller. Only affects the
+  /// space around the search field itself, e.g. to tighten the gap above a
+  /// grid.
+  final EdgeInsetsGeometry? searchPadding;
+
+  /// Overrides the [GridView]'s own padding — defaults to
+  /// `EdgeInsets.all(spacingMd)` on every other caller. Not used by the
+  /// masonry/list body modes.
+  final EdgeInsetsGeometry? contentPadding;
+
+  /// Restricts the search field's keyboard/allowed characters — e.g.
+  /// numeric-only for a search-by-code field. Omitted by every other
+  /// caller, which gets the same free-text field as before.
+  final TextInputType? searchKeyboardType;
+  final List<TextInputFormatter>? searchInputFormatters;
+
+  /// Overrides the search field's background — see [AppSearchField.fillColor].
+  /// Omitted by every other caller, which gets the same unfilled look as
+  /// before.
+  final Color? searchFillColor;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(AppDimensions.spacingMd),
-          child: searchBarTrailing == null
+          padding: searchPadding ?? const EdgeInsets.all(AppDimensions.spacingMd),
+          child: searchBarLeading == null && searchBarTrailing == null
               ? AppSearchField(
                   onChanged: onSearchChanged,
                   hint: searchHint ?? 'Search',
                   controller: searchController,
                   suggestionsBuilder: searchSuggestionsBuilder,
+                  keyboardType: searchKeyboardType,
+                  inputFormatters: searchInputFormatters,
+                  fillColor: searchFillColor,
                 )
               : Row(
                   children: [
+                    if (searchBarLeading != null) ...[
+                      searchBarLeading!,
+                      const SizedBox(width: AppDimensions.spacingSm),
+                    ],
                     Expanded(
                       child: AppSearchField(
                         onChanged: onSearchChanged,
                         hint: searchHint ?? 'Search',
                         controller: searchController,
                         suggestionsBuilder: searchSuggestionsBuilder,
+                        keyboardType: searchKeyboardType,
+                        inputFormatters: searchInputFormatters,
+                        fillColor: searchFillColor,
                       ),
                     ),
-                    const SizedBox(width: AppDimensions.spacingSm),
-                    searchBarTrailing!,
+                    if (searchBarTrailing != null) ...[
+                      const SizedBox(width: AppDimensions.spacingSm),
+                      searchBarTrailing!,
+                    ],
                   ],
                 ),
         ),
@@ -107,7 +159,7 @@ class ReportListScaffold<T> extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: GridView.builder(
-          padding: const EdgeInsets.all(AppDimensions.spacingMd),
+          padding: contentPadding ?? const EdgeInsets.all(AppDimensions.spacingMd),
           gridDelegate: gridDelegate!,
           itemCount: items.length,
           itemBuilder: (context, index) => itemBuilder(context, items[index]),
@@ -120,6 +172,7 @@ class ReportListScaffold<T> extends StatelessWidget {
         onRefresh: onRefresh,
         child: _MasonryList(
           columnCount: masonryColumnCount!,
+          spacing: masonrySpacing ?? AppDimensions.spacingLg,
           items: items,
           itemBuilder: itemBuilder,
         ),
@@ -147,11 +200,13 @@ class ReportListScaffold<T> extends StatelessWidget {
 class _MasonryList<T> extends StatelessWidget {
   const _MasonryList({
     required this.columnCount,
+    required this.spacing,
     required this.items,
     required this.itemBuilder,
   });
 
   final int columnCount;
+  final double spacing;
   final List<T> items;
   final Widget Function(BuildContext context, T item) itemBuilder;
 
@@ -169,13 +224,13 @@ class _MasonryList<T> extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (int c = 0; c < columnCount; c++) ...[
-            if (c > 0) const SizedBox(width: AppDimensions.spacingLg),
+            if (c > 0) SizedBox(width: spacing),
             Expanded(
               child: Column(
                 children: [
                   for (final item in columns[c]) ...[
                     itemBuilder(context, item),
-                    const SizedBox(height: AppDimensions.spacingLg),
+                    SizedBox(height: spacing),
                   ],
                 ],
               ),

@@ -22,16 +22,18 @@ import '../../features/change_password/presentation/bindings/change_password_bin
 import '../../features/change_password/presentation/views/change_password_view.dart';
 import '../../features/design_image/presentation/bindings/design_image_binding.dart';
 import '../../features/design_image/presentation/views/design_image_view.dart';
-import '../../features/folloper_report/presentation/bindings/folloper_report_binding.dart';
-import '../../features/folloper_report/presentation/views/folloper_report_view.dart';
 import '../../features/home/presentation/bindings/home_binding.dart';
 import '../../features/home/presentation/views/home_view.dart';
 import '../../features/profile/presentation/bindings/profile_binding.dart';
 import '../../features/profile/presentation/views/profile_view.dart';
-import '../../features/qc_checking/presentation/bindings/qc_checking_binding.dart';
-import '../../features/qc_checking/presentation/views/qc_checking_view.dart';
-import '../../features/skip_bag/presentation/bindings/skip_bag_binding.dart';
-import '../../features/skip_bag/presentation/views/skip_bag_view.dart';
+import '../../features/qc_checker/presentation/bindings/qc_checker_bag_detail_binding.dart';
+import '../../features/qc_checker/presentation/bindings/qc_checker_binding.dart';
+import '../../features/qc_checker/presentation/views/qc_checker_bag_detail_view.dart';
+import '../../features/qc_checker/presentation/views/qc_checker_view.dart';
+import '../../features/qc_pending_dashboard/presentation/bindings/qc_bag_list_binding.dart';
+import '../../features/qc_pending_dashboard/presentation/bindings/qc_pending_dashboard_binding.dart';
+import '../../features/qc_pending_dashboard/presentation/views/qc_bag_list_view.dart';
+import '../../features/qc_pending_dashboard/presentation/views/qc_pending_dashboard_view.dart';
 import '../../features/splash/presentation/bindings/splash_binding.dart';
 import '../../features/splash/presentation/views/splash_view.dart';
 import '../../features/timing_report/presentation/bindings/timing_report_binding.dart';
@@ -91,11 +93,6 @@ class AppPages {
       binding: BagScannerBinding(),
     ),
     GetPage(
-      name: AppRoutes.skipBag,
-      page: () => const SkipBagView(),
-      binding: SkipBagBinding(),
-    ),
-    GetPage(
       name: AppRoutes.changePassword,
       page: () => const ChangePasswordView(),
       binding: ChangePasswordBinding(),
@@ -106,9 +103,24 @@ class AppPages {
       binding: DesignImageBinding(),
     ),
     GetPage(
-      name: AppRoutes.qcChecking,
-      page: () => const QcCheckingView(),
-      binding: QcCheckingBinding(),
+      name: AppRoutes.qcPendingDashboard,
+      page: () => const QcPendingDashboardView(),
+      binding: QcPendingDashboardBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.qcChecker,
+      page: () => const QcCheckerView(),
+      binding: QcCheckerBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.qcCheckerBagDetail,
+      page: () => const QcCheckerBagDetailView(),
+      binding: QcCheckerBagDetailBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.qcBagList,
+      page: () => const QcBagListView(),
+      binding: QcBagListBinding(),
     ),
     GetPage(
       name: AppRoutes.timingReport,
@@ -119,11 +131,6 @@ class AppPages {
       name: AppRoutes.artistProduction,
       page: () => const ArtistProductionView(),
       binding: ArtistProductionBinding(),
-    ),
-    GetPage(
-      name: AppRoutes.folloperReport,
-      page: () => const FolloperReportView(),
-      binding: FolloperReportBinding(),
     ),
     GetPage(
       name: AppRoutes.brandSpecification,

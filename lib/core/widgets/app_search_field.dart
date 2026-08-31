@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInputFormatter;
 import 'package:get/get.dart';
 
 import '../constants/app_dimensions.dart';
@@ -25,11 +26,26 @@ class AppSearchField extends StatefulWidget {
     this.debounce = const Duration(milliseconds: 400),
     this.controller,
     this.suggestionsBuilder,
+    this.keyboardType,
+    this.inputFormatters,
+    this.fillColor,
   });
 
   final ValueChanged<String> onChanged;
   final String hint;
   final Duration debounce;
+
+  /// Overrides the field's background — the shared theme otherwise leaves
+  /// it unfilled/transparent. Omitted by every caller except where a white
+  /// background is explicitly needed (e.g. sitting next to another filled
+  /// field in the same row), which gets the same unfilled look as before.
+  final Color? fillColor;
+
+  /// Restricts the on-screen keyboard/allowed characters — e.g. numeric-
+  /// only for a search-by-code field. Omitted by every caller except where
+  /// explicitly needed, which gets the same free-text field as before.
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   /// Optional external controller — e.g. so the Bag List's scan button can
   /// show a scanned value in this same field instead of only filtering
@@ -99,6 +115,8 @@ class _AppSearchFieldState extends State<AppSearchField> {
           ? null
           : IconButton(icon: const Icon(Icons.close), onPressed: _clear),
       contentPadding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingSm),
+      filled: widget.fillColor != null,
+      fillColor: widget.fillColor,
     );
   }
 
@@ -110,6 +128,8 @@ class _AppSearchFieldState extends State<AppSearchField> {
         controller: _controller,
         onChanged: _handleChanged,
         textInputAction: TextInputAction.search,
+        keyboardType: widget.keyboardType,
+        inputFormatters: widget.inputFormatters,
         decoration: _decoration(),
       );
     }
@@ -125,6 +145,8 @@ class _AppSearchFieldState extends State<AppSearchField> {
           focusNode: focusNode,
           onChanged: _handleChanged,
           textInputAction: TextInputAction.search,
+          keyboardType: widget.keyboardType,
+          inputFormatters: widget.inputFormatters,
           decoration: _decoration(),
         );
       },

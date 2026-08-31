@@ -4,10 +4,9 @@ import 'package:get/get.dart';
 import '../error/failures.dart';
 
 /// Template-method base for every "search + list" screen (Bag List, QC
-/// Checking, Timing Report, Artist Production, Folloper Report, Design
-/// Image, Skip Bag history). Subclasses implement [fetch]; this base owns
-/// the loading/empty/error/search state so it isn't re-implemented six
-/// times.
+/// Checking, Timing Report, Artist Production, Design Image). Subclasses
+/// implement [fetch]; this base owns the loading/empty/error/search state
+/// so it isn't re-implemented six times.
 abstract class ListStateController<T> extends GetxController {
   final RxList<T> items = <T>[].obs;
   final RxBool isLoading = true.obs;

@@ -29,4 +29,15 @@ class LocalStorageService {
   Future<void> remove(String key) => _box.remove(key);
 
   Future<void> clear() => _box.erase();
+
+  /// `{qcCode, qcName}` of the centrally-selected "Diamond QC Checker" —
+  /// `null` until one is picked on the QC Checking screen (see
+  /// `QcPendingDashboardController`), or after it's cleared on a department switch
+  /// or on leaving the QC Checking screen.
+  Map<String, dynamic>? get selectedDiaQcChecker => readJson(StorageKeys.selectedDiaQcChecker);
+
+  Future<void> saveSelectedDiaQcChecker(Map<String, dynamic> value) =>
+      saveJson(StorageKeys.selectedDiaQcChecker, value);
+
+  Future<void> clearSelectedDiaQcChecker() => remove(StorageKeys.selectedDiaQcChecker);
 }

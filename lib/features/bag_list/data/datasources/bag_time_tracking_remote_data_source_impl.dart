@@ -36,19 +36,39 @@ class BagTimeTrackingRemoteDataSourceImpl implements BagTimeTrackingDataSource {
         },
       );
 
-      final Map<String, dynamic> body = response.data ?? const <String, dynamic>{};
-      // Accepts either a JSON boolean (like `PauseReasonMaster`) or the
-      // string `"True"`/`"False"` (like `IssuedBagListNew`/`BagDetailsNew`)
-      // for `status` — this endpoint's exact convention wasn't confirmed,
-      // so both of this app's existing conventions are handled rather than
-      // guessing one and breaking silently on the other.
-      final dynamic rawStatus = body['status'];
-      final bool success = rawStatus is bool ? rawStatus : (rawStatus as String? ?? '').toLowerCase() == 'true';
-      final String message = body['message'] as String? ?? '';
-
-      return (success: success, message: message);
+      return _parseResponse(response.data);
     } on DioException catch (e) {
       throw ServerException(message: 'Unable to update bag status', statusCode: e.response?.statusCode);
     }
+  }
+
+  @override
+  Future<({bool success, String message})> trackNoWork({required int empCd}) async {
+    try {
+      final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
+        ApiEndpoints.bagTimeTracking,
+        data: {
+          'action': 'N',
+          'empCd': empCd,
+        },
+      );
+
+      return _parseResponse(response.data);
+    } on DioException catch (e) {
+      throw ServerException(message: 'Unable to update bag status', statusCode: e.response?.statusCode);
+    }
+  }
+
+  // Accepts either a JSON boolean (like `PauseReasonMaster`) or the string
+  // `"True"`/`"False"` (like `IssuedBagListNew`/`BagDetailsNew`) for
+  // `status` — this endpoint's exact convention wasn't confirmed, so both
+  // of this app's existing conventions are handled rather than guessing
+  // one and breaking silently on the other.
+  ({bool success, String message}) _parseResponse(Map<String, dynamic>? data) {
+    final Map<String, dynamic> body = data ?? const <String, dynamic>{};
+    final dynamic rawStatus = body['status'];
+    final bool success = rawStatus is bool ? rawStatus : (rawStatus as String? ?? '').toLowerCase() == 'true';
+    final String message = body['message'] as String? ?? '';
+    return (success: success, message: message);
   }
 }

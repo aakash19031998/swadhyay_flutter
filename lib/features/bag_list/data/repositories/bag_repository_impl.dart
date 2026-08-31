@@ -12,12 +12,19 @@ class BagRepositoryImpl implements BagRepository {
   final BagDataSource _dataSource;
 
   @override
-  Future<Either<Failure, ({int bagCount, int pcsCount, List<BagEntity> bags})>> getBags({
+  Future<Either<Failure, ({int bagCount, int pcsCount, String noWorkStatus, String noWorkRunning, List<BagEntity> bags})>>
+      getBags({
     required String empCd,
   }) async {
     try {
       final result = await _dataSource.getBags(empCd: empCd);
-      return Right((bagCount: result.bagCount, pcsCount: result.pcsCount, bags: result.bags.cast<BagEntity>()));
+      return Right((
+        bagCount: result.bagCount,
+        pcsCount: result.pcsCount,
+        noWorkStatus: result.noWorkStatus,
+        noWorkRunning: result.noWorkRunning,
+        bags: result.bags.cast<BagEntity>(),
+      ));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {

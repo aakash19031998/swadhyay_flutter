@@ -47,7 +47,8 @@ class AppStrings {
   static const String empCode = 'Emp Code';
   static const String inTime = 'InTime';
   static const String bagList = 'Bag List';
-  static const String skipBag = 'Skip Bag';
+  static const String noWork = 'No Work';
+  static const String noWorkTimeStarted = 'Your No Work Time is started';
   static const String changePassword = 'Change Password';
   static const String reports = 'Reports';
   static const String designImage = 'Design Image';
@@ -81,10 +82,23 @@ class AppStrings {
   static const String stonePosition = 'Stone Position';
   static const String labourCd = 'LabourCd';
   static const String labourNm = 'LabourNm';
-  static const String qcChecking = 'Qc Checking';
+  static const String qcPendingDashboard = 'QC Pending Dashboard';
+  static const String qcChecker = 'QC Checker';
+  static const String selectDepartment = 'Select Department';
+  static const String selectDepartmentPrompt = 'Please select Department';
+  static const String qcBagListTitle = 'QC Bag List';
+  static const String repairQtyRequired = 'Please enter a quantity for at least one repair item';
+  static const String repairIdColumn = 'Repair ID';
+  static const String repairColumn = 'Repair';
+  static const String qtyColumn = 'Qty';
+  static const String diamondQcStatus = 'Diamond QC Checker';
+  static const String selectDiamondQcChecker = 'Select Diamond QC Checker';
+  static const String submitQc = 'Submit QC';
+  static const String activeQcQueueSubtitle = 'Active QC Queue';
+  static const String qcTotalBags = 'Total Bags';
+  static const String totalPieces = 'Total Pieces';
   static const String timingReport = 'Timing Report';
   static const String artistProduction = 'Artist Production';
-  static const String folloperReport = 'Folloper Report';
   static const String brandSpecification = 'Brand Specification';
   static const String logout = 'Logout';
   static const String logoutConfirmTitle = 'Logout';
@@ -201,14 +215,6 @@ class AppStrings {
   static const String tillDateSummary = 'Till Date Summary';
   static const String dailyBreakdown = 'Daily Breakdown';
 
-  // Skip bag.
-  static const String bagNumber = 'Bag Number';
-  static const String bagNumberHint = 'Enter or scan bag number';
-  static const String reason = 'Reason';
-  static const String skipBagAction = 'Skip Bag';
-  static const String bagSkippedSuccess = 'Bag skipped successfully';
-  static const String skipHistory = 'Skip History';
-
   // Change password.
   static const String currentPassword = 'Current Password';
   static const String newPassword = 'New Password';
@@ -224,11 +230,9 @@ class AppStrings {
   static const String pinStrengthStrong = 'Strong PIN';
 
   // Brand specification.
-  static const String brandNameLabel = 'Brand Name';
-  static const String filterSectionTitle = 'Filter';
-  static const String specificationsSectionTitle = 'Specifications';
   static const String selectBrand = 'Select Brand';
   static const String selectBrandRequired = 'Please select a brand';
+  static const String selectBrandFromList = 'Select a brand from the list to view its specifications';
   static const String noMatchingSpecifications = 'No matching specifications found';
   static const String searchSpecificationsHint = 'Search in specifications...';
   static const String pdfUnavailable = 'No specification sheet is available for this row';

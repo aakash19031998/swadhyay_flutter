@@ -12,14 +12,21 @@ import '../../../authentication/domain/usecases/get_current_employee_usecase.dar
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/usecases/get_bag_media_usecase.dart';
 import '../../domain/usecases/get_bags_usecase.dart';
+import '../../domain/usecases/track_no_work_usecase.dart';
 import 'bag_media_viewer_args.dart';
 
 class BagListController extends ListStateController<BagEntity> {
-  BagListController(this._getBagsUseCase, this._getCurrentEmployeeUseCase, this._getBagMediaUseCase);
+  BagListController(
+    this._getBagsUseCase,
+    this._getCurrentEmployeeUseCase,
+    this._getBagMediaUseCase,
+    this._trackNoWorkUseCase,
+  );
 
   final GetBagsUseCase _getBagsUseCase;
   final GetCurrentEmployeeUseCase _getCurrentEmployeeUseCase;
   final GetBagMediaUseCase _getBagMediaUseCase;
+  final TrackNoWorkUseCase _trackNoWorkUseCase;
 
   /// Backs the search field so a scanned barcode/QR value can be shown in
   /// the field itself (not just applied as a silent filter).
@@ -30,6 +37,18 @@ class BagListController extends ListStateController<BagEntity> {
   /// load, straight from the server response.
   final RxInt bagCount = 0.obs;
   final RxInt pcsCount = 0.obs;
+
+  /// Drives the "No Work" button: hidden until the first successful load,
+  /// then follows `data.no_work_status` on every subsequent load. Always
+  /// enabled when shown — no disabled/faded state.
+  final RxBool noWorkVisible = false.obs;
+
+  /// True when `data.no_work_status == "Y"` and `data.no_work_running ==
+  /// "S"` — a no-work session is currently running (either already, from
+  /// the server's own state, or because this session's own tap just
+  /// started one). Drives the "Your No Work Time is started" indicator
+  /// shown to the left of the bag count.
+  final RxBool noWorkRunning = false.obs;
 
   String? _empCd;
 
@@ -55,6 +74,8 @@ class BagListController extends ListStateController<BagEntity> {
       (data) {
         bagCount.value = data.bagCount;
         pcsCount.value = data.pcsCount;
+        noWorkVisible.value = data.noWorkStatus == 'Y';
+        noWorkRunning.value = data.noWorkStatus == 'Y' && data.noWorkRunning == 'S';
         _allBags = data.bags;
         // Filters by the *current* query.value, not the searchQuery this
         // call started with — this network fetch can take a while (see
@@ -144,6 +165,32 @@ class BagListController extends ListStateController<BagEntity> {
   void onScanned(String value) {
     searchController.text = value;
     onQueryChanged(value);
+  }
+
+  /// Calls `BagTimeTracking` with `action: "N"` — the same endpoint
+  /// Start/Pause/Resume use (see `TrackBagTimeUseCase`), but via the
+  /// dedicated [TrackNoWorkUseCase] call shape, which sends only `action`
+  /// and `empCd` (none of that endpoint's other fields apply here).
+  Future<void> onNoWorkTap() async {
+    _empCd ??= (await _getCurrentEmployeeUseCase())?.empCode;
+
+    AppDialog.loading();
+    final result = await _trackNoWorkUseCase(empCd: int.tryParse(_empCd ?? '') ?? 0);
+    AppDialog.dismiss();
+
+    result.fold(
+      (failure) => AppSnackbar.show(title: AppStrings.alertWarning, message: failure.message, isSuccess: false),
+      (response) {
+        if (response.success) noWorkRunning.value = true;
+        if (response.message.isNotEmpty) {
+          AppSnackbar.show(
+            title: response.success ? AppStrings.success : AppStrings.alertWarning,
+            message: response.message,
+            isSuccess: response.success,
+          );
+        }
+      },
+    );
   }
 
   @override

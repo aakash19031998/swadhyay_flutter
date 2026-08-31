@@ -22,7 +22,9 @@ class BagRemoteDataSourceImpl implements BagDataSource {
   final ApiClient _apiClient;
 
   @override
-  Future<({int bagCount, int pcsCount, List<BagModel> bags})> getBags({required String empCd}) async {
+  Future<({int bagCount, int pcsCount, String noWorkStatus, String noWorkRunning, List<BagModel> bags})> getBags({
+    required String empCd,
+  }) async {
     try {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.issuedBagListNew,
@@ -41,13 +43,21 @@ class BagRemoteDataSourceImpl implements BagDataSource {
       final Map<String, dynamic> data = body['data'] as Map<String, dynamic>? ?? const {};
       final int bagCount = (data['bag_count'] as num?)?.toInt() ?? 0;
       final int pcsCount = (data['pcs_count'] as num?)?.toInt() ?? 0;
+      final String noWorkStatus = data['no_work_status'] as String? ?? '';
+      final String noWorkRunning = data['no_work_running'] as String? ?? '';
       final List<dynamic> bagListJson = data['bag_list'] as List<dynamic>? ?? const [];
 
       final List<BagModel> bags = bagListJson
           .map((json) => BagModel.fromApiJson(json as Map<String, dynamic>))
           .toList(growable: false);
 
-      return (bagCount: bagCount, pcsCount: pcsCount, bags: bags);
+      return (
+        bagCount: bagCount,
+        pcsCount: pcsCount,
+        noWorkStatus: noWorkStatus,
+        noWorkRunning: noWorkRunning,
+        bags: bags,
+      );
     } on DioException catch (e) {
       throw ServerException(message: 'Unable to load bag list', statusCode: e.response?.statusCode);
     }
