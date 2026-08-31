@@ -10,6 +10,7 @@ class DateTimeHelper {
   static final DateFormat _apiDate = DateFormat('yyyy-MM-dd');
   static final DateFormat _time = DateFormat('HH:mm');
   static final DateFormat _dateTime = DateFormat('dd/MM/yyyy HH:mm');
+  static final DateFormat _dateTimeColonSeconds = DateFormat('dd:MM:yyyy HH:mm:ss');
   static final DateFormat _monthYear = DateFormat('MMMM yyyy');
 
   static String formatDate(DateTime value) => _date.format(value);
@@ -29,6 +30,9 @@ class DateTimeHelper {
   static String formatTime(DateTime value) => _time.format(value);
 
   static String formatDateTime(DateTime value) => _dateTime.format(value);
+
+  /// `DD:MM:YYYY HH:mm:ss` — QC Bag List's "First Received" timestamp.
+  static String formatDateTimeColonSeconds(DateTime value) => _dateTimeColonSeconds.format(value);
 
   static String formatDuration(Duration value) {
     final int hours = value.inHours;

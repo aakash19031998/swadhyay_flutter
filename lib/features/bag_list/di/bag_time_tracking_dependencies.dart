@@ -6,6 +6,7 @@ import '../data/datasources/bag_time_tracking_remote_data_source_impl.dart';
 import '../data/repositories/bag_time_tracking_repository_impl.dart';
 import '../domain/repositories/bag_time_tracking_repository.dart';
 import '../domain/usecases/track_bag_time_usecase.dart';
+import '../domain/usecases/track_no_work_usecase.dart';
 
 /// Registers [TrackBagTimeUseCase] as an app-lifetime singleton.
 ///
@@ -34,6 +35,11 @@ class BagTimeTrackingDependencies {
 
     Get.put<TrackBagTimeUseCase>(
       TrackBagTimeUseCase(Get.find<BagTimeTrackingRepository>()),
+      permanent: true,
+    );
+
+    Get.put<TrackNoWorkUseCase>(
+      TrackNoWorkUseCase(Get.find<BagTimeTrackingRepository>()),
       permanent: true,
     );
   }

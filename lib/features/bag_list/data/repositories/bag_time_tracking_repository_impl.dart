@@ -39,4 +39,16 @@ class BagTimeTrackingRepositoryImpl implements BagTimeTrackingRepository {
       return Left(NetworkFailure(e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, ({bool success, String message})>> trackNoWork({required int empCd}) async {
+    try {
+      final result = await _dataSource.trackNoWork(empCd: empCd);
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    }
+  }
 }

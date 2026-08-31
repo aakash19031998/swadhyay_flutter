@@ -9,7 +9,8 @@ class GetBagsUseCase {
 
   final BagRepository _repository;
 
-  Future<Either<Failure, ({int bagCount, int pcsCount, List<BagEntity> bags})>> call({required String empCd}) {
+  Future<Either<Failure, ({int bagCount, int pcsCount, String noWorkStatus, String noWorkRunning, List<BagEntity> bags})>>
+      call({required String empCd}) {
     return _repository.getBags(empCd: empCd);
   }
 }

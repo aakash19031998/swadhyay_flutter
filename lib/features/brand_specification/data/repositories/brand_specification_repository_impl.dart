@@ -33,4 +33,21 @@ class BrandSpecificationRepositoryImpl implements BrandSpecificationRepository {
       return Left(NetworkFailure(e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, String>> getSpecificationPdfUrl({
+    required String productId,
+    required String styleNo,
+    required String custShortCd,
+  }) async {
+    try {
+      return Right(
+        await _dataSource.getSpecificationPdfUrl(productId: productId, styleNo: styleNo, custShortCd: custShortCd),
+      );
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    }
+  }
 }

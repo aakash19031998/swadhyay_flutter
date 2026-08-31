@@ -5,4 +5,10 @@ abstract class BrandSpecificationDataSource {
   Future<List<BrandModel>> getBrands();
 
   Future<List<BrandSpecificationModel>> getSpecifications({required String brandId});
+
+  Future<String> getSpecificationPdfUrl({
+    required String productId,
+    required String styleNo,
+    required String custShortCd,
+  });
 }

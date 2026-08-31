@@ -8,4 +8,10 @@ abstract class BrandSpecificationRepository {
   Future<Either<Failure, List<BrandEntity>>> getBrands();
 
   Future<Either<Failure, List<BrandSpecificationEntity>>> getSpecifications({required String brandId});
+
+  Future<Either<Failure, String>> getSpecificationPdfUrl({
+    required String productId,
+    required String styleNo,
+    required String custShortCd,
+  });
 }

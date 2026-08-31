@@ -4,22 +4,15 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_error_widget.dart';
-import '../../../../core/widgets/app_modern_dropdown.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
-import '../../../../core/widgets/section_card.dart';
 import '../../domain/entities/brand_entity.dart';
 import '../../domain/entities/brand_specification_entity.dart';
 import '../controllers/brand_specification_controller.dart';
 
-/// Brand Specification: pick a brand, tap Show, then read/search its
-/// specification rows. The brand field reuses [AppModernDropdown] — the
-/// same dropdown Bag Completion's "Done" screen uses for Work Type — and
-/// the results table's chrome (bordered box, `primaryContainer` header,
-/// zebra rows) mirrors the shared `FlexTable` used by that same screen's
-/// Bag/RM Summary table, so this screen reads as part of the same family
-/// instead of a one-off design.
+/// Brand Specification: a persistent brand list on the left (tapping a
+/// brand loads its rows immediately — no dropdown, no separate Show step),
+/// with the selected brand's specification table on the right.
 class BrandSpecificationView extends GetView<BrandSpecificationController> {
   const BrandSpecificationView({super.key});
 
@@ -27,46 +20,25 @@ class BrandSpecificationView extends GetView<BrandSpecificationController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      // The sidebar + table below are a fixed, non-scrolling `Row`, not a
+      // `SingleChildScrollView` — see `_SpecTable`'s `ListView.builder` for
+      // why (lazy row building needs bounded height). `false` keeps the
+      // keyboard from ever squeezing that fixed layout into less height
+      // than it needs; only the table area reserves space for it instead
+      // (see its `MediaQuery.viewInsets.bottom` padding below).
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Column(
           children: [
             const _TopBar(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppDimensions.spacingMd),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _FilterCard(controller: controller),
-                    // Nothing below the filter renders at all until Show has
-                    // actually been tapped — no empty-state placeholder card,
-                    // just the filter alone — so this reads as "pick a
-                    // brand" rather than a results screen with a message in
-                    // it.
-                    Obx(() {
-                      final bool showBody =
-                          controller.isLoading.value || controller.errorMessage.value != null || controller.hasSearched.value;
-                      if (!showBody) return const SizedBox.shrink();
-
-                      final Widget body;
-                      if (controller.isLoading.value) {
-                        body = const HkLoaderCard();
-                      } else if (controller.errorMessage.value != null) {
-                        body = AppErrorWidget(
-                          message: controller.errorMessage.value!,
-                          onRetry: controller.show,
-                        );
-                      } else {
-                        body = _ResultsCard(controller: controller);
-                      }
-
-                      return Padding(
-                        padding: const EdgeInsets.only(top: AppDimensions.spacingMd),
-                        child: body,
-                      );
-                    }),
-                  ],
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _BrandSidebar(controller: controller),
+                  const VerticalDivider(width: 1, thickness: 1, color: AppColors.border),
+                  Expanded(child: _MainContent(controller: controller)),
+                ],
               ),
             ),
           ],
@@ -111,47 +83,69 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-/// Brand dropdown + Show button, styled exactly like Bag Completion's
-/// "Add Dummy Work Entry" section: a [SectionCard] (colored icon badge +
-/// title) wrapping an [AppModernDropdown] — the same field Work Type uses.
-class _FilterCard extends StatelessWidget {
-  const _FilterCard({required this.controller});
+/// Persistent brand list — replaces the dropdown + Show button. Tapping a
+/// brand calls [BrandSpecificationController.selectBrand], which loads its
+/// rows right away.
+class _BrandSidebar extends StatelessWidget {
+  const _BrandSidebar({required this.controller});
 
   final BrandSpecificationController controller;
 
+  static const double _width = 260;
+
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      title: AppStrings.filterSectionTitle,
-      icon: Icons.filter_alt_outlined,
-      accentColor: AppColors.info,
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.spacingMd,
-        AppDimensions.spacingSm,
-        AppDimensions.spacingMd,
-        AppDimensions.spacingSm,
-      ),
-      child: Obx(
-        () => Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+    return SizedBox(
+      width: _width,
+      child: ColoredBox(
+        color: AppColors.surface,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: AppModernDropdown<BrandEntity>(
-                label: controller.isLoadingBrands.value ? AppStrings.loading : AppStrings.brandNameLabel,
-                icon: Icons.storefront_outlined,
-                value: controller.selectedBrand.value,
-                items: controller.brands,
-                itemLabel: (brand) => brand.name,
-                onChanged: controller.isLoadingBrands.value ? null : controller.onBrandChanged,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.spacingMd,
+                AppDimensions.spacingMd,
+                AppDimensions.spacingMd,
+                AppDimensions.spacingSm,
+              ),
+              child: Text(
+                AppStrings.selectBrand.toUpperCase(),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                    ),
               ),
             ),
-            const SizedBox(width: AppDimensions.spacingMd),
-            AppButton(
-              label: AppStrings.show,
-              icon: Icons.filter_alt_outlined,
-              fullWidth: false,
-              isLoading: controller.isLoading.value,
-              onPressed: controller.selectedBrand.value != null ? controller.show : null,
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoadingBrands.value) {
+                  return const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                  );
+                }
+                final List<BrandEntity> brands = controller.brands;
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingSm),
+                  itemCount: brands.length,
+                  itemBuilder: (context, i) {
+                    final BrandEntity brand = brands[i];
+                    return Obx(() {
+                      final bool selected = controller.selectedBrand.value?.id == brand.id;
+                      return _BrandTile(
+                        label: brand.name,
+                        selected: selected,
+                        onTap: () => controller.selectBrand(brand),
+                      );
+                    });
+                  },
+                );
+              }),
             ),
           ],
         ),
@@ -160,64 +154,106 @@ class _FilterCard extends StatelessWidget {
   }
 }
 
-/// Results: a colored "Showing X of Y" badge + search field toolbar, over
-/// the `FlexTable`-styled results table — same composition as Bag
-/// Completion's Pending/Completed Work [SectionCard]s.
-class _ResultsCard extends StatelessWidget {
-  const _ResultsCard({required this.controller});
+class _BrandTile extends StatelessWidget {
+  const _BrandTile({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXxs),
+      child: Material(
+        color: selected ? AppColors.primaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacingMd,
+              vertical: AppDimensions.spacingMd,
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: selected ? AppColors.primary : AppColors.textPrimary,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Right-hand pane: selected brand name + "Showing X of Y" + search in one
+/// header row, then the results table beneath it — matches the reference
+/// design's flat, card-less layout instead of the previous `SectionCard`s.
+class _MainContent extends StatelessWidget {
+  const _MainContent({required this.controller});
 
   final BrandSpecificationController controller;
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      title: AppStrings.specificationsSectionTitle,
-      icon: Icons.diamond_outlined,
-      accentColor: AppColors.primary,
-      padding: EdgeInsets.zero,
-      child: Column(
+    return Obx(() {
+      final BrandEntity? brand = controller.selectedBrand.value;
+      if (brand == null) {
+        return const _EmptyState(
+          message: AppStrings.selectBrandFromList,
+          icon: Icons.storefront_outlined,
+        );
+      }
+
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.spacingMd,
-              AppDimensions.spacingSm,
-              AppDimensions.spacingMd,
-              AppDimensions.spacingSm,
-            ),
+            padding: const EdgeInsets.all(AppDimensions.spacingMd),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
 
-                final Widget countBadge = Obx(
-                  () => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.spacingSm,
-                      vertical: AppDimensions.spacingXxs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.successContainer,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                final Widget heading = Text(
+                  brand.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                );
+
+                final Widget countText = Obx(
+                  () => Text.rich(
+                    TextSpan(
+                      text: 'Showing: ',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
                       children: [
-                        const Icon(Icons.table_rows_rounded, size: 14, color: AppColors.success),
-                        const SizedBox(width: AppDimensions.spacingXxs),
-                        Text(
-                          '${controller.filteredItems.length} of ${controller.items.length} records',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w700,
-                              ),
+                        TextSpan(
+                          text: '${controller.filteredItems.length}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                         ),
+                        const TextSpan(text: ' of '),
+                        TextSpan(
+                          text: '${controller.items.length}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        ),
+                        const TextSpan(text: ' records'),
                       ],
                     ),
                   ),
                 );
 
-                final Widget searchField = Obx(
-                  () => TextField(
+                final Widget searchField = Obx(() {
+                  final bool hasText = controller.searchQuery.value.isNotEmpty;
+                  return TextField(
                     controller: controller.searchController,
                     enabled: controller.hasSearched.value,
                     onChanged: controller.onSearchChanged,
@@ -230,7 +266,7 @@ class _ResultsCard extends StatelessWidget {
                         size: AppDimensions.iconSm,
                         color: AppColors.textSecondary,
                       ),
-                      suffixIcon: controller.searchController.text.isEmpty
+                      suffixIcon: !hasText
                           ? null
                           : IconButton(
                               icon: const Icon(Icons.close_rounded, size: AppDimensions.iconSm),
@@ -240,17 +276,20 @@ class _ResultsCard extends StatelessWidget {
                               },
                             ),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: AppColors.surface,
                     ),
-                  ),
-                );
+                  );
+                });
 
                 if (isTablet) {
                   return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      countBadge,
+                      Expanded(child: heading),
                       const SizedBox(width: AppDimensions.spacingMd),
-                      Expanded(child: searchField),
+                      countText,
+                      const SizedBox(width: AppDimensions.spacingMd),
+                      SizedBox(width: 260, child: searchField),
                     ],
                   );
                 }
@@ -258,7 +297,9 @@ class _ResultsCard extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    countBadge,
+                    heading,
+                    const SizedBox(height: AppDimensions.spacingSm),
+                    countText,
                     const SizedBox(height: AppDimensions.spacingSm),
                     searchField,
                   ],
@@ -266,25 +307,33 @@ class _ResultsCard extends StatelessWidget {
               },
             ),
           ),
-          Obx(() {
-            // This card only ever builds after `show()` has run (see the
-            // gate in `BrandSpecificationView`), so `items` here always
-            // reflects a completed search — an empty result means either no
-            // rows for the brand or the live search filtered them all out.
-            final List<BrandSpecificationEntity> filtered = controller.filteredItems;
-            final bool hasRawItems = controller.items.isNotEmpty;
+          const Divider(height: 1),
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) return const HkLoaderCard();
+              if (controller.errorMessage.value != null) {
+                return AppErrorWidget(message: controller.errorMessage.value!, onRetry: controller.show);
+              }
 
-            if (filtered.isEmpty) {
-              return _EmptyState(
-                message: hasRawItems ? AppStrings.noMatchingSpecifications : AppStrings.noDataFound,
-                icon: Icons.search_off_rounded,
+              final List<BrandSpecificationEntity> filtered = controller.filteredItems;
+              final bool hasRawItems = controller.items.isNotEmpty;
+              if (filtered.isEmpty) {
+                return _EmptyState(
+                  message: hasRawItems ? AppStrings.noMatchingSpecifications : AppStrings.noDataFound,
+                  icon: Icons.search_off_rounded,
+                );
+              }
+
+              final double keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+              return Padding(
+                padding: EdgeInsets.only(bottom: keyboardInset),
+                child: _SpecTable(rows: filtered, controller: controller),
               );
-            }
-            return _SpecTable(rows: filtered, controller: controller);
-          }),
+            }),
+          ),
         ],
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -316,80 +365,69 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-/// Mirrors the shared `FlexTable`'s chrome exactly — `Padding(spacingMd)` +
-/// bordered `ClipRRect` box (`AppColors.primary` at 18% alpha),
-/// `primaryContainer` header, zebra-striped `surface`/`background` rows,
-/// `divider`-colored row borders — the same widget Bag Completion's
-/// Pending/Completed Work tables and Bag Detail's Diamond Details/Bag RM
-/// Summary tables use. Built by hand (not the `FlexTable` widget itself)
-/// because `FlexTable` only renders plain text cells, and this table needs
-/// rich per-column cells (color tags, a monospace badge, a tap-to-open PDF
-/// indicator).
+/// Flat table matching the reference design — plain header (no gradient/tint
+/// fill, just a bottom border), left-aligned wrapping text cells, and a
+/// genuinely lazy `ListView.builder` for the rows (only visible rows built),
+/// same reasoning as before: a brand can return 1000+ rows.
 class _SpecTable extends StatelessWidget {
   const _SpecTable({required this.rows, required this.controller});
 
   final List<BrandSpecificationEntity> rows;
   final BrandSpecificationController controller;
 
-  /// Fixed width reserved for the trailing PDF icon/spinner on every row —
-  /// the header reserves the same blank width so columns still line up,
-  /// same convention as `FlexTable`'s own `rowTrailing`.
+  /// Fixed width reserved for the trailing PDF icon on every row — the
+  /// header reserves the same blank width so columns still line up.
   static const double _trailingWidth = 28;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.spacingMd),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ColoredBox(
-                color: AppColors.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacingSm,
-                    vertical: AppDimensions.spacingSm,
-                  ),
-                  child: const Row(
-                    children: [
-                      Expanded(
-                        child: _GutteredRow(
-                          children: [
-                            _HeaderCell(AppStrings.productId),
-                            _HeaderCell(AppStrings.specHkStyle),
-                            _HeaderCell(AppStrings.custMaterial),
-                            _HeaderCell(AppStrings.specStyleKt),
-                            _HeaderCell(AppStrings.specStyleCol),
-                            _HeaderCell(AppStrings.specCustomer),
-                            _HeaderCell(AppStrings.shortCode),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: AppDimensions.spacingXs),
-                      SizedBox(width: _trailingWidth),
+    return Column(
+      children: [
+        DecoratedBox(
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border))),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacingMd,
+              vertical: AppDimensions.spacingSm,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _GutteredRow(
+                    children: const [
+                      _HeaderCell(AppStrings.productId),
+                      _HeaderCell(AppStrings.specHkStyle),
+                      _HeaderCell(AppStrings.custMaterial),
+                      _HeaderCell(AppStrings.specStyleKt),
+                      _HeaderCell(AppStrings.specStyleCol),
+                      _HeaderCell(AppStrings.specCustomer),
+                      _HeaderCell(AppStrings.shortCode),
                     ],
                   ),
                 ),
-              ),
-              for (int r = 0; r < rows.length; r++)
-                _SpecRow(item: rows[r], isEven: r.isEven, controller: controller, trailingWidth: _trailingWidth),
-            ],
+                const SizedBox(width: AppDimensions.spacingXs),
+                const SizedBox(width: _trailingWidth),
+              ],
+            ),
           ),
         ),
-      ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: rows.length,
+            itemBuilder: (context, r) => _SpecRow(
+              item: rows[r],
+              controller: controller,
+              trailingWidth: _trailingWidth,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
 /// A `Row` with an [AppDimensions.spacingSm] gutter inserted between every
-/// child — same gutter [FlexTable] uses between its columns.
+/// child.
 class _GutteredRow extends StatelessWidget {
   const _GutteredRow({required this.children});
 
@@ -416,51 +454,38 @@ class _HeaderCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Align(
-        alignment: Alignment.center,
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label.toUpperCase(),
-            maxLines: 1,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.primaryDark,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-        ),
+      child: Text(
+        label.toUpperCase(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+            ),
       ),
     );
   }
 }
 
 class _SpecRow extends StatelessWidget {
-  const _SpecRow({
-    required this.item,
-    required this.isEven,
-    required this.controller,
-    required this.trailingWidth,
-  });
+  const _SpecRow({required this.item, required this.controller, required this.trailingWidth});
 
   final BrandSpecificationEntity item;
-  final bool isEven;
   final BrandSpecificationController controller;
   final double trailingWidth;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: isEven ? AppColors.surface : AppColors.background,
-        border: const Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider))),
       child: Material(
-        type: MaterialType.transparency,
+        color: AppColors.surface,
         child: InkWell(
           onTap: () => controller.viewSpecificationPdf(item),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingSm,
+              horizontal: AppDimensions.spacingMd,
               vertical: AppDimensions.spacingSm,
             ),
             child: Row(
@@ -471,14 +496,30 @@ class _SpecRow extends StatelessWidget {
                       _Cell(
                         child: Text(
                           item.productId,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
                       ),
-                      _Cell(child: Text(item.specHkStyle, style: Theme.of(context).textTheme.bodyMedium)),
-                      _Cell(child: Text(item.custMaterial, style: Theme.of(context).textTheme.bodyMedium)),
+                      _Cell(
+                        child: Text(
+                          item.specHkStyle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                      _Cell(
+                        child: Text(
+                          item.custMaterial,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
                       _Cell(
                         child: _Tag(
                           label: item.specStyleKt,
@@ -491,15 +532,21 @@ class _SpecRow extends StatelessWidget {
                           label: item.specStyleCol,
                           background: AppColors.surfaceVariant,
                           foreground: AppColors.textSecondary,
-                          swatch: _swatchFor(item.specStyleCol),
                         ),
                       ),
-                      _Cell(child: Text(item.specCustomer, style: Theme.of(context).textTheme.bodyMedium)),
+                      _Cell(
+                        child: Text(
+                          item.specCustomer,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
                       _Cell(
                         child: _Tag(
                           label: item.shortCode,
-                          background: AppColors.infoContainer,
-                          foreground: AppColors.info,
+                          background: AppColors.surfaceVariant,
+                          foreground: AppColors.textPrimary,
                           monospace: true,
                         ),
                       ),
@@ -520,24 +567,11 @@ class _SpecRow extends StatelessWidget {
       ),
     );
   }
-
-  /// A small color swatch for the actual gold/metal tone a spec names
-  /// (Yellow/White/Rose/Platinum) — a literal material color, not a UI
-  /// token, so it's kept local to this cell rather than added to
-  /// [AppColors].
-  static Color? _swatchFor(String colorName) {
-    final String c = colorName.toLowerCase();
-    if (c.contains('yellow')) return const Color(0xFFE8C547);
-    if (c.contains('rose')) return const Color(0xFFE3AFAE);
-    if (c.contains('white')) return const Color(0xFFD6D8E0);
-    if (c.contains('platinum') || c.contains('pt')) return const Color(0xFFC6C8D2);
-    return null;
-  }
 }
 
-/// One data cell: centered, [FittedBox]-shrunk so a value too wide for its
-/// equally-divided column on a narrow phone scales down instead of
-/// overflowing — same technique as [FlexTable]'s `FlexCell`.
+/// One data cell: left-aligned, wraps up to two lines instead of shrinking
+/// to fit on one — matches the reference design's readable, wrapped text
+/// look (e.g. "SI Clarity Solitaire").
 class _Cell extends StatelessWidget {
   const _Cell({required this.child});
 
@@ -546,12 +580,7 @@ class _Cell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: child,
-        ),
-      ),
+      child: Align(alignment: Alignment.centerLeft, child: child),
     );
   }
 }
@@ -561,14 +590,12 @@ class _Tag extends StatelessWidget {
     required this.label,
     required this.background,
     required this.foreground,
-    this.swatch,
     this.monospace = false,
   });
 
   final String label;
   final Color background;
   final Color foreground;
-  final Color? swatch;
   final bool monospace;
 
   @override
@@ -576,27 +603,15 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingSm, vertical: AppDimensions.spacingXxs),
       decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(AppDimensions.radiusPill)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (swatch != null) ...[
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: swatch, shape: BoxShape.circle),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: foreground,
+              fontWeight: FontWeight.w700,
+              fontFamily: monospace ? 'monospace' : null,
             ),
-            const SizedBox(width: AppDimensions.spacingXxs),
-          ],
-          Text(
-            label,
-            maxLines: 1,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: monospace ? 'monospace' : null,
-                ),
-          ),
-        ],
       ),
     );
   }

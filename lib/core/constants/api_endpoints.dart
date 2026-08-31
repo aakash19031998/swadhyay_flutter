@@ -20,10 +20,17 @@ class ApiEndpoints {
   static const String subWorkType = '/SubWorkType';
   static const String dummyAddBtnValidation = '/DummyAddBtnValidation';
   static const String bagDoneWithFirstReceive = '/BagDoneWithFirstReceive';
-  static const String skipBag = '/bags/skip';
   static const String designMaster = '/DesignMaster';
-  static const String qcChecking = '/reports/qc-checking';
+  static const String deptQcPendingEmpList = '/DeptQCPendingEmpList';
+  static const String qcPendingBagList = '/QcPendingBagList';
+  static const String qcPendingBagSingle = '/QCPendingBagSingle';
+  static const String qcRepairList = '/QCRepairList';
+  static const String bagFinalReceive = '/BagFinalReceive';
   static const String timingReport = '/ArtistTimeUtilizationReport';
   static const String artistProduction = '/ArtistProductionRpt';
-  static const String folloperReport = '/reports/folloper';
+  static const String customerSpec = '/CustomerSpec';
+  static const String qcDeptList = '/QCDeptList';
+  static const String qcCheckerDeptList = '/QCDepartmentN';
+  static const String brandSpecData = '/BrandSpecData';
+  static const String brandSpecPdf = '/BrandSpecPdf';
 }

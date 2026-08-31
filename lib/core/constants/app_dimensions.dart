@@ -51,6 +51,12 @@ class AppDimensions {
   static const double bagThumbnailSize = 76;
   static const double bagCardImageHeight = 170;
 
+  // QC Checking. Card is deliberately small/compact — see
+  // QcCheckCard — so it gets its own avatar/badge sizes rather than reusing
+  // avatarSm/avatarMd/avatarLg (all sized for full-width profile contexts).
+  static const double qcCardAvatarSize = 76;
+  static const double qcCardMaxWidth = 210;
+
   // Bag detail.
   static const double bagDetailSidebarWidth = 200;
   static const double bagDetailSegmentedTabBarHeight = 40;
@@ -102,6 +108,22 @@ class AppDimensions {
 
   // Dialogs.
   static const double dialogMaxWidth = 320;
+
+  // QC action dialog (OK/Repair) — wide enough for its repair checklist
+  // table, unlike the narrow confirm-style dialogMaxWidth above.
+  static const double qcActionDialogMaxWidth = 560;
+  // Wider variant used once the repair checklist is split into two side-
+  // by-side columns (see QcActionDialog's _repairListSplitThreshold) — the
+  // narrow width above would cramp two qty steppers side by side.
+  static const double qcActionDialogWideMaxWidth = 900;
+  static const double qcActionQtyBoxSize = 56;
+  static const double qcActionQtyStepperWidth = 148;
+  static const double qcActionRepairIdColumnWidth = 64;
+  // Applied only to each half once the repair checklist splits into two
+  // columns — keeps the dialog's own height (and its OK/Cancel buttons)
+  // fixed regardless of list length, with each column scrolling
+  // internally instead. The un-split (<=6 items) single table has no cap.
+  static const double qcActionSplitColumnMaxHeight = 320;
 
   // Buttons.
   static const double buttonHeight = 52;

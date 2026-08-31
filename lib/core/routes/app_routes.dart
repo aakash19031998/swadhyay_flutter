@@ -12,13 +12,15 @@ class AppRoutes {
   static const String bagDetail = '/bag-list/detail';
   static const String bagCompletion = '/bag-list/completion';
   static const String bagScanner = '/bag-list/scanner';
-  static const String skipBag = '/skip-bag';
   static const String changePassword = '/change-password';
   static const String designImage = '/reports/design-image';
-  static const String qcChecking = '/reports/qc-checking';
+  static const String qcPendingDashboard = '/reports/qc-pending-dashboard';
+  static const String qcChecker = '/reports/qc-checker';
+  static const String qcCheckerBagDetail = '/reports/qc-checker/bag-detail';
+  static const String qcBagList = '/reports/qc-pending-dashboard/bag-list';
   static const String timingReport = '/reports/timing-report';
   static const String artistProduction = '/reports/artist-production';
-  static const String folloperReport = '/reports/folloper-report';
   static const String brandSpecification = '/brand-specification';
-  static const String brandSpecificationPdfViewer = '/brand-specification/pdf-viewer';
+  static const String brandSpecificationPdfViewer =
+      '/brand-specification/pdf-viewer';
 }

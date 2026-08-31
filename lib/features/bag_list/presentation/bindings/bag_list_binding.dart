@@ -19,6 +19,7 @@ import '../../domain/repositories/bag_media_gallery_repository.dart';
 import '../../domain/repositories/bag_repository.dart';
 import '../../domain/usecases/get_bag_media_usecase.dart';
 import '../../domain/usecases/get_bags_usecase.dart';
+import '../../domain/usecases/track_no_work_usecase.dart';
 import '../controllers/bag_list_controller.dart';
 
 class BagListBinding extends Bindings {
@@ -50,6 +51,7 @@ class BagListBinding extends Bindings {
         Get.find<GetBagsUseCase>(),
         Get.find<GetCurrentEmployeeUseCase>(),
         Get.find<GetBagMediaUseCase>(),
+        Get.find<TrackNoWorkUseCase>(),
       ),
     );
   }

@@ -8,17 +8,24 @@ import '../../domain/entities/brand_entity.dart';
 import '../../domain/entities/brand_specification_entity.dart';
 import '../../domain/usecases/get_brand_specifications_usecase.dart';
 import '../../domain/usecases/get_brands_usecase.dart';
+import '../../domain/usecases/get_specification_pdf_url_usecase.dart';
 import 'brand_pdf_viewer_args.dart';
 
-/// Drives the Brand Specification screen: pick a brand from the dropdown,
-/// tap Show, then read its specification rows in a table. [searchQuery]
-/// filters [items] purely in-memory (no re-fetch) across all seven fields,
-/// the same "load once, filter locally" shape as [BagListController].
+/// Drives the Brand Specification screen: pick a brand from the sidebar list
+/// (loads its rows immediately, no separate submit step), then read its
+/// specification rows in a table. [searchQuery] filters [items] purely
+/// in-memory (no re-fetch) across all seven fields, the same "load once,
+/// filter locally" shape as [BagListController].
 class BrandSpecificationController extends GetxController {
-  BrandSpecificationController(this._getBrandsUseCase, this._getBrandSpecificationsUseCase);
+  BrandSpecificationController(
+    this._getBrandsUseCase,
+    this._getBrandSpecificationsUseCase,
+    this._getSpecificationPdfUrlUseCase,
+  );
 
   final GetBrandsUseCase _getBrandsUseCase;
   final GetBrandSpecificationsUseCase _getBrandSpecificationsUseCase;
+  final GetSpecificationPdfUrlUseCase _getSpecificationPdfUrlUseCase;
 
   final RxList<BrandEntity> brands = <BrandEntity>[].obs;
   final Rxn<BrandEntity> selectedBrand = Rxn<BrandEntity>();
@@ -54,7 +61,14 @@ class BrandSpecificationController extends GetxController {
     isLoadingBrands.value = false;
   }
 
-  void onBrandChanged(BrandEntity? brand) => selectedBrand.value = brand;
+  /// Selecting a brand from the sidebar loads its rows immediately — there's
+  /// no separate dropdown + Show step in this layout. Re-tapping the
+  /// already-selected brand is a no-op rather than re-fetching.
+  void selectBrand(BrandEntity brand) {
+    if (selectedBrand.value?.id == brand.id) return;
+    selectedBrand.value = brand;
+    show();
+  }
 
   void onSearchChanged(String value) => searchQuery.value = value;
 
@@ -101,18 +115,24 @@ class BrandSpecificationController extends GetxController {
     isLoading.value = false;
   }
 
-  /// Opens this row's specification sheet in the in-app PDF viewer (see
+  /// Resolves this row's PDF link via `BrandSpecPdf` (Product Id ->
+  /// `productId`, SpecHKStyle -> `styleNo`, Short Code -> `custShortCd`),
+  /// then opens the resulting `fileUrl` in the in-app PDF viewer (see
   /// [AppRoutes.brandSpecificationPdfViewer]) — never downloaded to a
   /// visible file and never handed off to another app.
-  void viewSpecificationPdf(BrandSpecificationEntity item) {
-    if (item.pdfUrl.isEmpty) {
-      AppSnackbar.show(title: AppStrings.alertWarning, message: AppStrings.pdfUnavailable, isSuccess: false);
-      return;
-    }
+  Future<void> viewSpecificationPdf(BrandSpecificationEntity item) async {
+    final result = await _getSpecificationPdfUrlUseCase(
+      productId: item.productId,
+      styleNo: item.specHkStyle,
+      custShortCd: item.shortCode,
+    );
 
-    Get.toNamed<void>(
-      AppRoutes.brandSpecificationPdfViewer,
-      arguments: BrandPdfViewerArgs(url: item.pdfUrl, title: item.productId),
+    result.fold(
+      (failure) => AppSnackbar.show(title: AppStrings.alertWarning, message: failure.message, isSuccess: false),
+      (fileUrl) => Get.toNamed<void>(
+        AppRoutes.brandSpecificationPdfViewer,
+        arguments: BrandPdfViewerArgs(url: fileUrl, title: item.productId),
+      ),
     );
   }
 }

@@ -21,4 +21,8 @@ abstract class BagTimeTrackingRepository {
     required int empCd,
     int? pauseReasonId,
   });
+
+  /// Same endpoint as [track], for the "No Work" action only — see
+  /// [BagTimeTrackingDataSource.trackNoWork].
+  Future<Either<Failure, ({bool success, String message})>> trackNoWork({required int empCd});
 }

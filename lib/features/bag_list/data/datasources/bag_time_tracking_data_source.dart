@@ -9,4 +9,9 @@ abstract class BagTimeTrackingDataSource {
     required int empCd,
     int? pauseReasonId,
   });
+
+  /// Same endpoint as [track], but for the "No Work" action (`action: "N"`)
+  /// only — that call takes just `action`/`empCd`, none of [track]'s other
+  /// required fields.
+  Future<({bool success, String message})> trackNoWork({required int empCd});
 }

@@ -9,4 +9,9 @@ class StorageKeys {
   static const String refreshToken = 'refresh_token';
   static const String loggedInEmployee = 'logged_in_employee';
   static const String isLoggedIn = 'is_logged_in';
+
+  /// QC Checking's centrally-selected "Diamond QC Checker" — the same
+  /// person applies to every employee/bag under the currently selected
+  /// department until changed; see `QcPendingDashboardController`.
+  static const String selectedDiaQcChecker = 'selected_dia_qc_checker';
 }

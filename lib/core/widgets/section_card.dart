@@ -16,6 +16,7 @@ class SectionCard extends StatelessWidget {
     this.icon,
     this.padding,
     this.accentColor,
+    this.expandChild = false,
   });
 
   final Widget child;
@@ -28,6 +29,14 @@ class SectionCard extends StatelessWidget {
   /// (e.g. a "pending" vs. "completed" pairing) without every other
   /// [SectionCard] call site needing to opt in.
   final Color? accentColor;
+
+  /// When true, [child] is wrapped in an [Expanded] so it fills whatever
+  /// height this card is given by its own ancestor (e.g. a page-level
+  /// `Expanded`) instead of sizing to its natural/intrinsic height. Needed
+  /// when [child] itself contains a bounded-height `ListView.builder` that
+  /// must know how tall it's allowed to be to build lazily. Every existing
+  /// call site leaves this `false` — natural-height behavior is unchanged.
+  final bool expandChild;
 
   @override
   Widget build(BuildContext context) {
@@ -71,10 +80,18 @@ class SectionCard extends StatelessWidget {
             ),
           ),
           const Divider(height: 1),
-          Padding(
-            padding: padding ?? const EdgeInsets.all(AppDimensions.spacingMd),
-            child: child,
-          ),
+          if (expandChild)
+            Expanded(
+              child: Padding(
+                padding: padding ?? const EdgeInsets.all(AppDimensions.spacingMd),
+                child: child,
+              ),
+            )
+          else
+            Padding(
+              padding: padding ?? const EdgeInsets.all(AppDimensions.spacingMd),
+              child: child,
+            ),
         ],
       ),
     );

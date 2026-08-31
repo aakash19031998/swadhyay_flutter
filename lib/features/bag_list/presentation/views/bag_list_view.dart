@@ -21,6 +21,22 @@ class BagListView extends GetView<BagListController> {
         title: AppStrings.bagList,
         showNotification: false,
         actions: [
+          // `noWorkVisible`/`noWorkRunning` read here, inside this Obx's own
+          // builder, for the same dependency-tracking reason as the
+          // counters' Obx below — see that comment. Hidden once a session
+          // is running (`noWorkRunning`), not just disabled.
+          Obx(
+            () => (controller.noWorkVisible.value && !controller.noWorkRunning.value)
+                ? _NoWorkButton(onTap: controller.onNoWorkTap)
+                : const SizedBox.shrink(),
+          ),
+          // Shown to the left of the bag count whenever a "No Work" session
+          // is currently running (`no_work_status == "Y"` and
+          // `no_work_running == "S"`, or this session's own tap just
+          // started one) — read here for the same reason as the Obx above.
+          Obx(
+            () => controller.noWorkRunning.value ? const _NoWorkRunningIndicator() : const SizedBox.shrink(),
+          ),
           // `bagCount`/`pcsCount` are read here, inside the Obx builder, so
           // GetX is actually tracking them as dependencies for this Obx —
           // reading them one level down, inside _BagListCounters' own
@@ -79,6 +95,78 @@ class BagListView extends GetView<BagListController> {
               );
             });
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Sits between the "No Work" button and the bag/pcs counter pills — so
+/// still to the left of the bag count — whenever a "No Work" session is
+/// currently running. Text is capped to a fixed width with ellipsis so it
+/// can't itself blow out the app bar's fixed-height actions row on a
+/// narrow screen.
+class _NoWorkRunningIndicator extends StatelessWidget {
+  const _NoWorkRunningIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppDimensions.spacingSm),
+      child: SizedBox(
+        width: 130,
+        child: Text(
+          AppStrings.noWorkTimeStarted,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: AppColors.onPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: (Theme.of(context).textTheme.labelSmall?.fontSize ?? 11) + 2,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sits to the left of the bag/pcs counter pills in the app bar's trailing
+/// area.
+class _NoWorkButton extends StatelessWidget {
+  const _NoWorkButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppDimensions.spacingSm),
+      child: Material(
+        color: AppColors.error,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacingMd,
+              vertical: AppDimensions.spacingSm,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.work_off_outlined, size: AppDimensions.iconSm, color: AppColors.onPrimary),
+                const SizedBox(width: AppDimensions.spacingXxs),
+                Text(
+                  AppStrings.noWork,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.onPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -9,14 +9,13 @@ import '../../domain/entities/drawer_menu_item_entity.dart';
 /// presentation layers ever knowing icons came from a string.
 const Map<String, IconData> _iconRegistry = {
   'bag': Icons.shopping_bag_outlined,
-  'skip_next': Icons.skip_next_outlined,
   'password': Icons.lock_outline,
   'reports': Icons.assessment_outlined,
   'design_image': Icons.image_outlined,
   'qc_checking': Icons.fact_check_outlined,
+  'qc_checker': Icons.qr_code_scanner_outlined,
   'timing_report': Icons.timer_outlined,
   'artist_production': Icons.brush_outlined,
-  'folloper_report': Icons.groups_outlined,
   'logout': Icons.logout,
   'dashboard': Icons.dashboard_outlined,
 };
@@ -37,14 +36,20 @@ class _MenuMeta {
 /// crashes the app.
 final Map<String, _MenuMeta> _menuMetaByName = {
   'bag list': const _MenuMeta(Icons.shopping_bag_outlined, AppRoutes.bagList),
-  'skip bag': const _MenuMeta(Icons.skip_next_outlined, AppRoutes.skipBag),
   'design image': const _MenuMeta(Icons.image_outlined, AppRoutes.designImage),
-  'qc checking': const _MenuMeta(Icons.fact_check_outlined, AppRoutes.qcChecking),
+  // "Qc Checking" is the current live MenuListNew entry's name — it now
+  // opens the new QC Checker screen, not the renamed QC Pending Dashboard.
+  // "QC Pending Dashboard" is a distinct, not-yet-added menu option (see
+  // AppStrings.qcPendingDashboard) that will route to that screen once the
+  // backend sends it.
+  'qc checking': const _MenuMeta(Icons.qr_code_scanner_outlined, AppRoutes.qcChecker),
+  'qc pending dashboard': const _MenuMeta(Icons.fact_check_outlined, AppRoutes.qcPendingDashboard),
+  'qc checker': const _MenuMeta(Icons.qr_code_scanner_outlined, AppRoutes.qcChecker),
   'reports': const _MenuMeta(Icons.assessment_outlined, null),
   'timing report': const _MenuMeta(Icons.timer_outlined, AppRoutes.timingReport),
   'artist production': const _MenuMeta(Icons.brush_outlined, AppRoutes.artistProduction),
-  'folloper report': const _MenuMeta(Icons.groups_outlined, AppRoutes.folloperReport),
   'change password': const _MenuMeta(Icons.lock_outline, AppRoutes.changePassword),
+  'brand specification': const _MenuMeta(Icons.storefront_outlined, AppRoutes.brandSpecification),
 };
 
 const _MenuMeta _unknownMenuMeta = _MenuMeta(Icons.circle_outlined, null);
