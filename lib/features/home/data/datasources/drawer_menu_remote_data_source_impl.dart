@@ -21,24 +21,28 @@ class DrawerMenuRemoteDataSourceImpl implements DrawerMenuDataSource {
   @override
   Future<List<DrawerMenuItemModel>> getMenu(String empCd) async {
     try {
-      final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
-        ApiEndpoints.menuListNew,
-        data: {
-          'empCd': empCd,
-          'appVersion': AppVersion.versionName,
-        },
-      );
+      final Response<Map<String, dynamic>> response = await _apiClient
+          .post<Map<String, dynamic>>(
+            ApiEndpoints.menuListNew,
+            data: {'empCd': empCd, 'appVersion': AppVersion.versionName},
+          );
 
-      final Map<String, dynamic> body = response.data ?? const <String, dynamic>{};
+      final Map<String, dynamic> body =
+          response.data ?? const <String, dynamic>{};
       final bool status = (body['Status'] as String?)?.toLowerCase() == 'true';
       if (!status) {
-        throw ServerException(message: body['Message'] as String? ?? 'Unable to load menu');
+        throw ServerException(
+          message: body['Message'] as String? ?? 'Unable to load menu',
+        );
       }
 
       final List<dynamic> menuJson = body['data'] as List<dynamic>? ?? const [];
       return DrawerMenuItemModel.fromApiList(menuJson);
     } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load menu', statusCode: e.response?.statusCode);
+      throw ServerException(
+        message: 'Unable to load menu',
+        statusCode: e.response?.statusCode,
+      );
     }
   }
 }

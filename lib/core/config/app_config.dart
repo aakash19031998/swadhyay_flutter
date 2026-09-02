@@ -10,7 +10,7 @@ class AppConfig {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.88.137:99/api',
+    defaultValue: 'http://192.168.200.3:99/api',
   );
 
   static const bool useMockData = bool.fromEnvironment(
