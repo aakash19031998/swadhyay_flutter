@@ -4,6 +4,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/status_pill.dart';
 import '../../../qc_pending_dashboard/domain/entities/qc_assigned_bag_entity.dart';
 
 /// Same masonry layout as the QC Pending Dashboard's own `QcBagListView`
@@ -162,20 +163,20 @@ class _BagCard extends StatelessWidget {
                             spacing: AppDimensions.spacingXs,
                             runSpacing: AppDimensions.spacingXs,
                             children: [
-                              _Pill(
+                              StatusPill(
                                 icon: Icons.verified_outlined,
                                 label: bag.process,
                                 background: AppColors.successContainer,
                                 foreground: AppColors.success,
                               ),
-                              _Pill(
+                              StatusPill(
                                 icon: Icons.layers_outlined,
                                 label: '${bag.pieces} ${AppStrings.totalPcs}',
                                 background: AppColors.warningContainer,
                                 foreground: AppColors.warning,
                               ),
                               if (bag.artistCd != null)
-                                _Pill(
+                                StatusPill(
                                   icon: Icons.badge_outlined,
                                   label: 'Emp: ${bag.artistCd}',
                                   background: AppColors.infoContainer,
@@ -336,49 +337,3 @@ class _BagThumbnail extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.icon,
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingXs,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: foreground),
-          const SizedBox(width: 3),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 12,
-                color: foreground,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/helpers/raw_json_numbers.dart';
 import '../../../../core/network/api_client.dart';
@@ -31,8 +32,8 @@ class BagDetailRemoteDataSourceImpl implements BagDetailDataSource {
   final ApiClient _apiClient;
 
   @override
-  Future<BagDetailModel> getBagDetail({required String bagNo, required String empCd}) async {
-    try {
+  Future<BagDetailModel> getBagDetail({required String bagNo, required String empCd}) {
+    return wrapDioErrors(() async {
       final Response<String> response = await _apiClient.post<String>(
         ApiEndpoints.bagDetailsNew,
         data: {
@@ -66,8 +67,6 @@ class BagDetailRemoteDataSourceImpl implements BagDetailDataSource {
         rawCurrentQty: RawJsonNumbers.extract(raw, 'CurrentQty'),
         rawWt: RawJsonNumbers.extract(raw, 'Wt'),
       );
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load bag details', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load bag details');
   }
 }

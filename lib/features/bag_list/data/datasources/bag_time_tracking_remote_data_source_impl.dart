@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
-import '../../../../core/error/exceptions.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/network/api_client.dart';
 import 'bag_time_tracking_data_source.dart';
 
@@ -20,8 +20,8 @@ class BagTimeTrackingRemoteDataSourceImpl implements BagTimeTrackingDataSource {
     required int bNo,
     required int empCd,
     int? pauseReasonId,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.bagTimeTracking,
         data: {
@@ -37,14 +37,12 @@ class BagTimeTrackingRemoteDataSourceImpl implements BagTimeTrackingDataSource {
       );
 
       return _parseResponse(response.data);
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to update bag status', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to update bag status');
   }
 
   @override
-  Future<({bool success, String message})> trackNoWork({required int empCd}) async {
-    try {
+  Future<({bool success, String message})> trackNoWork({required int empCd}) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.bagTimeTracking,
         data: {
@@ -54,9 +52,7 @@ class BagTimeTrackingRemoteDataSourceImpl implements BagTimeTrackingDataSource {
       );
 
       return _parseResponse(response.data);
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to update bag status', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to update bag status');
   }
 
   // Accepts either a JSON boolean (like `PauseReasonMaster`) or the string

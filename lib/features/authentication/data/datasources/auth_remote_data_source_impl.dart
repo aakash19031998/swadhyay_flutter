@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/employee_model.dart';
@@ -19,8 +20,8 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
   Future<({String message, EmployeeModel employee})> login({
     required String employeeNumber,
     required String pin,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.checkLogInNew,
         data: {
@@ -49,17 +50,12 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
       }
 
       return (message: message, employee: EmployeeModel.fromApiJson(data));
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] as String? ?? 'Login failed',
-        statusCode: e.response?.statusCode,
-      );
-    }
+    }, (e) => e.response?.data?['message'] as String? ?? 'Login failed');
   }
 
   @override
-  Future<({bool success, String message})> logout({required String empCd}) async {
-    try {
+  Future<({bool success, String message})> logout({required String empCd}) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.logout,
         data: {'empCd': empCd},
@@ -70,12 +66,7 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
       final String message = body['message'] as String? ?? '';
 
       return (success: success, message: message);
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] as String? ?? 'Unable to logout',
-        statusCode: e.response?.statusCode,
-      );
-    }
+    }, (e) => e.response?.data?['message'] as String? ?? 'Unable to logout');
   }
 
   @override
@@ -83,8 +74,8 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
     required String empCd,
     required String currentPassword,
     required String newPassword,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.changePassword,
         data: {
@@ -100,11 +91,6 @@ class AuthRemoteDataSourceImpl implements AuthDataSource {
       final String message = body['message'] as String? ?? '';
 
       return (success: success, message: message);
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] as String? ?? 'Unable to change password',
-        statusCode: e.response?.statusCode,
-      );
-    }
+    }, (e) => e.response?.data?['message'] as String? ?? 'Unable to change password');
   }
 }

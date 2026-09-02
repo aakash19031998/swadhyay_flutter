@@ -90,11 +90,7 @@ class QcCheckerController extends GetxController {
     _empCd ??= (await _getCurrentEmployeeUseCase())?.empCode;
     final result = await _getDepartmentsUseCase(empCd: _empCd ?? '');
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (data) {
         departments.assignAll(data.departments);
         diaQcCheckers.assignAll(data.diaQcCheckers);
@@ -200,11 +196,7 @@ class QcCheckerController extends GetxController {
     AppDialog.dismiss();
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (media) {
         if (media.isEmpty) {
           AppSnackbar.show(

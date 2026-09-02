@@ -15,7 +15,6 @@ class HomeBinding extends Bindings {
     AuthDependencies.ensureRegistered();
     DrawerMenuDependencies.ensureRegistered();
 
-    Get.lazyPut<GetCurrentEmployeeUseCase>(() => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()));
     Get.lazyPut<LogoutUseCase>(() => LogoutUseCase(Get.find<AuthRepository>()));
     Get.lazyPut<GetDrawerMenuUseCase>(() => GetDrawerMenuUseCase(Get.find<DrawerMenuRepository>()));
 

@@ -4,13 +4,14 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/helpers/date_time_helper.dart';
-import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_empty_widget.dart';
 import '../../../../core/widgets/app_error_widget.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/common_app_bar.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
+import '../../../../core/widgets/scan_button.dart';
+import '../../../../core/widgets/status_pill.dart';
 import '../../domain/entities/qc_assigned_bag_entity.dart';
 import '../controllers/qc_bag_list_controller.dart';
 
@@ -55,7 +56,7 @@ class QcBagListView extends GetView<QcBagListController> {
                     ),
                   ),
                   const SizedBox(width: AppDimensions.spacingSm),
-                  _ScanButton(onScanned: controller.onScanned),
+                  ScanButton(onScanned: controller.onScanned),
                 ],
               ),
             ),
@@ -398,7 +399,7 @@ class _BagCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: AppDimensions.spacingXxs),
-                          _Pill(
+                          StatusPill(
                             icon: Icons.settings_outlined,
                             label: bag.process,
                             background: AppColors.successContainer,
@@ -419,7 +420,7 @@ class _BagCard extends StatelessWidget {
                                   ),
                             ),
                           ),
-                          _Pill(
+                          StatusPill(
                             icon: Icons.layers_outlined,
                             label: '${bag.pieces} ${AppStrings.totalPcs}',
                             background: AppColors.warningContainer,
@@ -519,84 +520,3 @@ class _BagThumbnail extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.icon,
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingXs,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: foreground),
-          const SizedBox(width: 3),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 12,
-                color: foreground,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Same scanner flow as Bag List's own `_ScanButton` — opens
-/// [AppRoutes.bagScanner] and drops a scanned value straight into the
-/// search field.
-class _ScanButton extends StatelessWidget {
-  const _ScanButton({required this.onScanned});
-
-  final ValueChanged<String> onScanned;
-
-  Future<void> _openScanner() async {
-    final dynamic result = await Get.toNamed(AppRoutes.bagScanner);
-    final String? scanned = result is String ? result : null;
-    if (scanned != null && scanned.isNotEmpty) onScanned(scanned);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.primary,
-      borderRadius: BorderRadius.circular(AppDimensions.formFieldRadius),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppDimensions.formFieldRadius),
-        onTap: _openScanner,
-        child: const SizedBox(
-          width: AppDimensions.formFieldHeight,
-          height: AppDimensions.formFieldHeight,
-          child: Icon(
-            Icons.qr_code_scanner_rounded,
-            color: AppColors.onPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}

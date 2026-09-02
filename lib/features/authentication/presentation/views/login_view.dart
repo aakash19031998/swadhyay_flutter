@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_pin_field.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/gradient_blob_scaffold.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -17,66 +18,20 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
+    return GradientBlobScaffold(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.spacingLg),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double cardWidth = constraints.maxWidth < 480 ? constraints.maxWidth : 440;
+
+              return ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: cardWidth),
+                child: _LoginCard(controller: controller),
+              );
+            },
           ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -80,
-              right: -60,
-              child: _BackgroundBlob(size: 220, opacity: 0.10),
-            ),
-            Positioned(
-              bottom: -100,
-              left: -70,
-              child: _BackgroundBlob(size: 260, opacity: 0.08),
-            ),
-            SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppDimensions.spacingLg),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final double cardWidth = constraints.maxWidth < 480 ? constraints.maxWidth : 440;
-
-                      return ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: cardWidth),
-                        child: _LoginCard(controller: controller),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BackgroundBlob extends StatelessWidget {
-  const _BackgroundBlob({required this.size, required this.opacity});
-
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.onPrimary.withValues(alpha: opacity),
         ),
       ),
     );

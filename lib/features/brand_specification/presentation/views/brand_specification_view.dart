@@ -5,6 +5,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_error_widget.dart';
+import '../../../../core/widgets/gradient_top_bar.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
 import '../../domain/entities/brand_entity.dart';
 import '../../domain/entities/brand_specification_entity.dart';
@@ -30,7 +31,7 @@ class BrandSpecificationView extends GetView<BrandSpecificationController> {
       body: SafeArea(
         child: Column(
           children: [
-            const _TopBar(),
+            const GradientTopBar(title: AppStrings.brandSpecification),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -40,41 +41,6 @@ class BrandSpecificationView extends GetView<BrandSpecificationController> {
                   Expanded(child: _MainContent(controller: controller)),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXs),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onPrimary),
-              onPressed: Get.back,
-            ),
-            Text(
-              AppStrings.brandSpecification,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.onPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
             ),
           ],
         ),

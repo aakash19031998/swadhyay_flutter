@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/flex_table.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
 import '../../../../core/widgets/section_card.dart';
+import '../../../../core/widgets/segmented_tab_bar.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/entities/bag_rm_summary_entity.dart';
 import '../../domain/entities/diamond_detail_entity.dart';
@@ -65,7 +66,13 @@ class BagDetailView extends GetView<BagDetailController> {
                                 borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                                 child: Column(
                                   children: [
-                                    _SegmentedTabBar(tabController: controller.tabController),
+                                    SegmentedTabBar(
+                                      tabController: controller.tabController,
+                                      tabs: const [
+                                        Tab(text: AppStrings.diamondDetails),
+                                        Tab(text: AppStrings.bagRmSummary),
+                                      ],
+                                    ),
                                     // Swaps the visible table directly off the tab index —
                                     // switching only by tapping the segmented tab bar above,
                                     // no left/right swipe gesture — while the section's
@@ -178,13 +185,7 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.spacingMd,
@@ -725,41 +726,6 @@ class _InstructionTile extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SegmentedTabBar extends StatelessWidget {
-  const _SegmentedTabBar({required this.tabController});
-
-  final TabController tabController;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppColors.surfaceVariant,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacingXs),
-        child: SizedBox(
-          height: AppDimensions.bagDetailSegmentedTabBarHeight,
-          child: TabBar(
-            controller: tabController,
-            indicator: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            labelColor: AppColors.onPrimary,
-            unselectedLabelColor: AppColors.textSecondary,
-            labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
-            tabs: const [
-              Tab(text: AppStrings.diamondDetails),
-              Tab(text: AppStrings.bagRmSummary),
-            ],
-          ),
-        ),
       ),
     );
   }

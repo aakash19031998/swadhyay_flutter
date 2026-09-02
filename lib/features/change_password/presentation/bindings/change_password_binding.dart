@@ -12,7 +12,6 @@ class ChangePasswordBinding extends Bindings {
     AuthDependencies.ensureRegistered();
 
     Get.lazyPut<ChangePasswordUseCase>(() => ChangePasswordUseCase(Get.find<AuthRepository>()));
-    Get.lazyPut<GetCurrentEmployeeUseCase>(() => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()));
     Get.lazyPut<ChangePasswordController>(
       () => ChangePasswordController(
         Get.find<ChangePasswordUseCase>(),

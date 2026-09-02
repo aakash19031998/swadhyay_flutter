@@ -84,11 +84,7 @@ class HomeController extends GetxController {
 
     final result = await _getDrawerMenuUseCase(employee.value?.empCode ?? '');
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (items) => menuItems.assignAll([...items, _logoutMenuItem]),
     );
     isMenuLoading.value = false;
@@ -124,11 +120,7 @@ class HomeController extends GetxController {
     isLoggingOut.value = false;
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (response) {
         AppSnackbar.show(
           title: response.success ? AppStrings.success : AppStrings.alertWarning,

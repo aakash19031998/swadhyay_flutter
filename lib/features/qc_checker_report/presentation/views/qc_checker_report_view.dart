@@ -3,13 +3,15 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_empty_widget.dart';
 import '../../../../core/widgets/app_error_widget.dart';
+import '../../../../core/widgets/date_range_filter_card.dart';
+import '../../../../core/widgets/gradient_top_bar.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
+import '../../../../core/widgets/kpi_card.dart';
+import '../../../../core/widgets/report_table.dart';
 import '../../domain/entities/qc_checker_report_entity.dart';
 import '../controllers/qc_checker_report_controller.dart';
 
@@ -28,7 +30,7 @@ class QcCheckerReportView extends GetView<QcCheckerReportController> {
       body: SafeArea(
         child: Column(
           children: [
-            const _TopBar(),
+            const GradientTopBar(title: AppStrings.qcCheckerReportTitle),
             // Fills the rest of the screen (rather than one big
             // `SingleChildScrollView`) so the table cards below can each
             // stretch to fill the remaining height and scroll their own
@@ -40,7 +42,14 @@ class QcCheckerReportView extends GetView<QcCheckerReportController> {
                 padding: const EdgeInsets.all(AppDimensions.spacingMd),
                 child: Column(
                   children: [
-                    _FilterCard(controller: controller),
+                    DateRangeFilterCard(
+                      fromDate: controller.fromDate,
+                      toDate: controller.toDate,
+                      isLoading: controller.isLoading,
+                      onPickFromDate: controller.pickFromDate,
+                      onPickToDate: controller.pickToDate,
+                      onShow: controller.show,
+                    ),
                     const SizedBox(height: AppDimensions.spacingMd),
                     Expanded(
                       child: Obx(() {
@@ -68,7 +77,42 @@ class QcCheckerReportView extends GetView<QcCheckerReportController> {
 
                         return Column(
                           children: [
-                            _SummaryKpiRow(controller: controller),
+                            KpiRow(
+                              cardsBuilder: () => [
+                                KpiCard(
+                                  icon: Icons.military_tech_outlined,
+                                  title: AppStrings.totalPoints,
+                                  value: controller.totalPointsValue.value
+                                      .toStringAsFixed(2),
+                                  color: AppColors.textPrimary,
+                                  containerColor: AppColors.primaryContainer,
+                                ),
+                                KpiCard(
+                                  icon: Icons.inventory_2_outlined,
+                                  title: AppStrings.totalBagsUnits,
+                                  value: '${controller.totalBagPieces.value}',
+                                  color: AppColors.info,
+                                  containerColor: AppColors.infoContainer,
+                                ),
+                                KpiCard(
+                                  icon: Icons.done_all_rounded,
+                                  title: AppStrings.repairsCaught,
+                                  value: '${controller.totalRepairCaught.value}',
+                                  color: AppColors.success,
+                                  containerColor: AppColors.successContainer,
+                                ),
+                                KpiCard(
+                                  icon: Icons.warning_amber_rounded,
+                                  title: AppStrings.ownRepairOffset,
+                                  value: controller.ownRepairPoints.value
+                                      .toStringAsFixed(2),
+                                  valueSuffix:
+                                      '(${controller.ownRepairBags.value} bags)',
+                                  color: AppColors.error,
+                                  containerColor: AppColors.errorContainer,
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: AppDimensions.spacingMd),
                             Expanded(
                               child: LayoutBuilder(
@@ -123,345 +167,6 @@ class QcCheckerReportView extends GetView<QcCheckerReportController> {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primaryDark,
-            AppColors.primary,
-            AppColors.primaryLight,
-          ],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXs),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.onPrimary,
-              ),
-              onPressed: Get.back,
-            ),
-            Text(
-              AppStrings.qcCheckerReportTitle,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.onPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Date-range filter as its own floating card — identical shape/behavior to
-/// `ArtistProductionView`'s own `_FilterCard`.
-class _FilterCard extends StatelessWidget {
-  const _FilterCard({required this.controller});
-
-  final QcCheckerReportController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacingMd),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.03),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final bool isTablet =
-              constraints.maxWidth >= AppDimensions.breakpointPhone;
-
-          final Widget fromField = Obx(
-            () => _DateField(
-              label: AppStrings.fromDate,
-              date: controller.fromDate.value,
-              onTap: () => controller.pickFromDate(context),
-            ),
-          );
-          final Widget toField = Obx(
-            () => _DateField(
-              label: AppStrings.toDate,
-              date: controller.toDate.value,
-              onTap: () => controller.pickToDate(context),
-            ),
-          );
-          final Widget showButton = Obx(
-            () => AppButton(
-              label: AppStrings.show,
-              icon: Icons.search,
-              fullWidth: false,
-              isLoading: controller.isLoading.value,
-              onPressed: controller.show,
-            ),
-          );
-
-          if (isTablet) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(child: fromField),
-                const SizedBox(width: AppDimensions.spacingMd),
-                Expanded(child: toField),
-                const SizedBox(width: AppDimensions.spacingMd),
-                showButton,
-              ],
-            );
-          }
-
-          return Column(
-            children: [
-              fromField,
-              const SizedBox(height: AppDimensions.spacingSm),
-              toField,
-              const SizedBox(height: AppDimensions.spacingSm),
-              Align(alignment: Alignment.centerRight, child: showButton),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.date,
-    required this.onTap,
-  });
-
-  final String label;
-
-  /// Null when To date has been cleared after a From date change — the
-  /// user must tap through and pick a new one before Show will run.
-  final DateTime? date;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.formFieldRadius),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: const Icon(
-            Icons.calendar_today_outlined,
-            size: AppDimensions.iconSm,
-          ),
-        ),
-        child: Text(
-          date != null
-              ? DateTimeHelper.formatDate(date!)
-              : AppStrings.selectDate,
-          style: date == null
-              ? TextStyle(color: Theme.of(context).hintColor)
-              : null,
-        ),
-      ),
-    );
-  }
-}
-
-/// Total Points / Total Bags / Repairs Caught / Own Repair Offset, at a
-/// glance above the two tables — side by side on tablet width, stacked on
-/// phone (same responsive shape as `ArtistProductionView`'s own `_KpiRow`).
-class _SummaryKpiRow extends StatelessWidget {
-  const _SummaryKpiRow({required this.controller});
-
-  final QcCheckerReportController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final List<Widget> cards = [
-        _SummaryKpiCard(
-          icon: Icons.military_tech_outlined,
-          label: AppStrings.totalPoints,
-          value: controller.totalPointsValue.value.toStringAsFixed(2),
-          color: AppColors.textPrimary,
-          containerColor: AppColors.primaryContainer,
-        ),
-        _SummaryKpiCard(
-          icon: Icons.inventory_2_outlined,
-          label: AppStrings.totalBagsUnits,
-          value: '${controller.totalBagPieces.value}',
-          color: AppColors.info,
-          containerColor: AppColors.infoContainer,
-        ),
-        _SummaryKpiCard(
-          icon: Icons.done_all_rounded,
-          label: AppStrings.repairsCaught,
-          value: '${controller.totalRepairCaught.value}',
-          color: AppColors.success,
-          containerColor: AppColors.successContainer,
-        ),
-        _SummaryKpiCard(
-          icon: Icons.warning_amber_rounded,
-          label: AppStrings.ownRepairOffset,
-          value: controller.ownRepairPoints.value.toStringAsFixed(2),
-          valueSuffix: '(${controller.ownRepairBags.value} bags)',
-          color: AppColors.error,
-          containerColor: AppColors.errorContainer,
-        ),
-      ];
-
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final bool isTablet =
-              constraints.maxWidth >= AppDimensions.breakpointPhone;
-
-          if (!isTablet) {
-            return Column(
-              children: [
-                for (final card in cards) ...[
-                  card,
-                  if (card != cards.last)
-                    const SizedBox(height: AppDimensions.spacingSm),
-                ],
-              ],
-            );
-          }
-
-          return IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (int i = 0; i < cards.length; i++) ...[
-                  if (i > 0) const SizedBox(width: AppDimensions.spacingSm),
-                  Expanded(child: cards[i]),
-                ],
-              ],
-            ),
-          );
-        },
-      );
-    });
-  }
-}
-
-/// Same shape as `ArtistProductionView`'s own `_KpiCard` — icon-left square
-/// badge, uppercase label + big bold value stacked to its right, no
-/// subtitle line.
-class _SummaryKpiCard extends StatelessWidget {
-  const _SummaryKpiCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.containerColor,
-    this.valueSuffix,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final String? valueSuffix;
-  final Color color;
-  final Color containerColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingLg,
-        vertical: AppDimensions.spacingMd,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.03),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: AppDimensions.avatarSm,
-            height: AppDimensions.avatarSm,
-            decoration: BoxDecoration(
-              color: containerColor,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            ),
-            child: Icon(icon, color: color, size: AppDimensions.iconMd),
-          ),
-          const SizedBox(width: AppDimensions.spacingMd),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.spacingXxs),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      value,
-                      style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: color,
-                      ),
-                    ),
-                    if (valueSuffix != null) ...[
-                      const SizedBox(width: AppDimensions.spacingXs),
-                      Text(
-                        valueSuffix!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: color.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Small bordered chip for a process code (e.g. "F", "EF") — same idea as
 /// the bag list card's own process `_Pill`, just compact enough for a table
 /// cell instead of a card corner.
@@ -483,26 +188,6 @@ class _ProcessCell extends StatelessWidget {
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: AppColors.primary,
-        fontWeight: FontWeight.w700,
-      ),
-    );
-  }
-}
-
-class _HeaderLabel extends StatelessWidget {
-  const _HeaderLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      textAlign: TextAlign.center,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: AppColors.onPrimary,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -533,150 +218,6 @@ class _HeaderIconLabel extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// Generic gradient-header/zebra-row table — same visual language as
-/// `ArtistProductionView`'s own `_ReportTable`, but cells are full [Widget]s
-/// (not just strings) so a column can hold a [_ProcessBadge] instead of
-/// plain text, and an optional [footer] renders as the table's last row
-/// (e.g. a total-points bar) inside the same rounded/clipped block.
-class _ReportTable extends StatefulWidget {
-  const _ReportTable({
-    required this.columns,
-    required this.rows,
-    this.footer,
-    this.fillHeight = true,
-  });
-
-  final List<Widget> columns;
-  final List<List<Widget>> rows;
-  final Widget? footer;
-
-  /// `true` (Prediction Score Matrix): rows fill whatever height the card
-  /// is given and scroll internally, so a long list never pushes [footer]
-  /// off-screen. `false` (Shift & Process Distribution — typically only a
-  /// handful of rows): the table wraps its own content height instead,
-  /// same as `ArtistProductionView`'s own tables, so the card doesn't get
-  /// stretched to match its sibling and leave dead space below its rows.
-  final bool fillHeight;
-
-  @override
-  State<_ReportTable> createState() => _ReportTableState();
-}
-
-class _ReportTableState extends State<_ReportTable> {
-  // Explicit controller (rather than letting `Scrollbar` auto-detect the
-  // nearest `Scrollable`) so the thumb reliably attaches to *this* table's
-  // own row list — auto-detection is fragile once a table like this sits
-  // inside other scrollables/rebuilding ancestors.
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Widget> columns = widget.columns;
-    final List<List<Widget>> rows = widget.rows;
-    final Widget? footer = widget.footer;
-    final bool fillHeight = widget.fillHeight;
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    final List<Widget> rowWidgets = [
-      for (int i = 0; i < rows.length; i++)
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: i.isEven ? AppColors.surface : AppColors.surfaceVariant,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingMd,
-              vertical: AppDimensions.spacingSm,
-            ),
-            child: Row(
-              children: [
-                for (final cell in rows[i])
-                  Expanded(child: Center(child: cell)),
-              ],
-            ),
-          ),
-        ),
-    ];
-
-    return Column(
-      mainAxisSize: fillHeight ? MainAxisSize.max : MainAxisSize.min,
-      children: [
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primaryDark,
-                AppColors.primary,
-                AppColors.primaryLight,
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingMd,
-            vertical: AppDimensions.spacingSm,
-          ),
-          child: Row(
-            children: [for (final column in columns) Expanded(child: column)],
-          ),
-        ),
-        if (rows.isEmpty)
-          fillHeight
-              ? Expanded(
-                  child: Center(
-                    child: Text(
-                      AppStrings.noDataFound,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textHint,
-                      ),
-                    ),
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(AppDimensions.spacingLg),
-                  child: Text(
-                    AppStrings.noDataFound,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textHint,
-                    ),
-                  ),
-                )
-        else if (!fillHeight)
-          // Wraps its own content height — no forced fill, no internal
-          // scroll — same as `ArtistProductionView`'s own tables.
-          Column(children: rowWidgets)
-        else
-          // `Expanded` + internal scroll (rather than a fixed height cap)
-          // so the rows fill whatever space the card is actually given —
-          // [footer] (e.g. the "Total Points" bar) stays pinned right
-          // below them instead of needing a further page-scroll to reach.
-          Expanded(
-            // `thumbVisibility: true` keeps the thumb drawn (not just a
-            // transient fade-in on drag) — but only when the rows
-            // actually overflow the available height; a short list that
-            // fits with no scrolling paints no thumb at all regardless.
-            child: Scrollbar(
-              controller: _scrollController,
-              thumbVisibility: true,
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: Column(children: rowWidgets),
-              ),
-            ),
-          ),
-        ?footer,
       ],
     );
   }
@@ -824,12 +365,12 @@ class _PredictionScoreMatrixCard extends StatelessWidget {
         padding: EdgeInsets.zero,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          child: _ReportTable(
+          child: ReportTable(
             columns: const [
-              _HeaderLabel(AppStrings.qcProcess),
-              _HeaderLabel(AppStrings.qcPrediction),
-              _HeaderLabel(AppStrings.totalPoints),
-              _HeaderLabel(AppStrings.repairCaught),
+              ReportHeaderLabel(AppStrings.qcProcess),
+              ReportHeaderLabel(AppStrings.qcPrediction),
+              ReportHeaderLabel(AppStrings.totalPoints),
+              ReportHeaderLabel(AppStrings.repairCaught),
             ],
             rows: [
               for (final item in items)
@@ -871,13 +412,13 @@ class _ShiftDistributionCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              child: _ReportTable(
+              child: ReportTable(
                 fillHeight: false,
                 columns: const [
-                  _HeaderLabel(AppStrings.qcProcess),
-                  _HeaderLabel(AppStrings.bagPieces),
-                  _HeaderLabel(AppStrings.points),
-                  _HeaderLabel(AppStrings.repair),
+                  ReportHeaderLabel(AppStrings.qcProcess),
+                  ReportHeaderLabel(AppStrings.bagPieces),
+                  ReportHeaderLabel(AppStrings.points),
+                  ReportHeaderLabel(AppStrings.repair),
                   _HeaderIconLabel(
                     icon: Icons.wb_sunny_outlined,
                     label: AppStrings.dayShiftColumn,

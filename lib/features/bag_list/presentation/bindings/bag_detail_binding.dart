@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../authentication/di/auth_dependencies.dart';
-import '../../../authentication/domain/repositories/auth_repository.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../data/datasources/bag_detail_data_source.dart';
 import '../../data/datasources/bag_detail_remote_data_source_impl.dart';
@@ -35,7 +34,6 @@ class BagDetailBinding extends Bindings {
     );
     Get.lazyPut<BagDetailRepository>(() => BagDetailRepositoryImpl(Get.find<BagDetailDataSource>()));
     Get.lazyPut<GetBagDetailUseCase>(() => GetBagDetailUseCase(Get.find<BagDetailRepository>()));
-    Get.lazyPut<GetCurrentEmployeeUseCase>(() => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()));
 
     // Same image/video gallery API as the Bag List screen's thumbnail —
     // its own registration here since Get.lazyPut instances aren't shared

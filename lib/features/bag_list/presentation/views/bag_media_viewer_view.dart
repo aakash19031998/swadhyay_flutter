@@ -322,11 +322,7 @@ class _VideoPage extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(AppDimensions.spacingMd),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-                    ),
+                    gradient: AppColors.primaryGradient,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(

@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/repository_guard.dart';
 import '../../../../core/storage/local_storage_service.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 import '../../domain/entities/employee_entity.dart';
@@ -43,8 +44,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, ({bool success, String message})>> logout({required String empCd}) async {
-    try {
+  Future<Either<Failure, ({bool success, String message})>> logout({required String empCd}) {
+    return guard(() async {
       final result = await _dataSource.logout(empCd: empCd);
       // Only drop the session once the backend actually confirms the
       // logout — a "False" status means the user stays signed in on this
@@ -53,12 +54,8 @@ class AuthRepositoryImpl implements AuthRepository {
         await _secureStorage.clear();
         await _localStorage.clear();
       }
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    }
+      return result;
+    });
   }
 
   @override
@@ -66,19 +63,15 @@ class AuthRepositoryImpl implements AuthRepository {
     required String empCd,
     required String currentPassword,
     required String newPassword,
-  }) async {
-    try {
+  }) {
+    return guard(() async {
       final result = await _dataSource.changePassword(
         empCd: empCd,
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    }
+      return result;
+    });
   }
 
   @override

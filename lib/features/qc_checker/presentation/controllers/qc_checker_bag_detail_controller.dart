@@ -65,11 +65,7 @@ class QcCheckerBagDetailController extends GetxController {
       empCd: bag.artistCd ?? '',
     );
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (data) => repairChecklist.assignAll(data),
     );
     isLoadingChecklist.value = false;
@@ -113,11 +109,7 @@ class QcCheckerBagDetailController extends GetxController {
     );
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (data) {
         // `Get.back()` must run *before* the snackbar — same ordering note
         // as `QcBagListController._submitAction`: it's a "smart back" that

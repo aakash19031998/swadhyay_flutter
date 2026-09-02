@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/repository_guard.dart';
 import '../../domain/repositories/bag_time_tracking_repository.dart';
 import '../datasources/bag_time_tracking_data_source.dart';
 
@@ -20,8 +20,8 @@ class BagTimeTrackingRepositoryImpl implements BagTimeTrackingRepository {
     required int bNo,
     required int empCd,
     int? pauseReasonId,
-  }) async {
-    try {
+  }) {
+    return guard(() async {
       final result = await _dataSource.track(
         action: action,
         transactionId: transactionId,
@@ -32,23 +32,15 @@ class BagTimeTrackingRepositoryImpl implements BagTimeTrackingRepository {
         empCd: empCd,
         pauseReasonId: pauseReasonId,
       );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    }
+      return result;
+    });
   }
 
   @override
-  Future<Either<Failure, ({bool success, String message})>> trackNoWork({required int empCd}) async {
-    try {
+  Future<Either<Failure, ({bool success, String message})>> trackNoWork({required int empCd}) {
+    return guard(() async {
       final result = await _dataSource.trackNoWork(empCd: empCd);
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    }
+      return result;
+    });
   }
 }

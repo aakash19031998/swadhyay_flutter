@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/bag_model.dart';
@@ -24,8 +25,8 @@ class BagRemoteDataSourceImpl implements BagDataSource {
   @override
   Future<({int bagCount, int pcsCount, String noWorkStatus, String noWorkRunning, List<BagModel> bags})> getBags({
     required String empCd,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.issuedBagListNew,
         data: {
@@ -58,8 +59,6 @@ class BagRemoteDataSourceImpl implements BagDataSource {
         noWorkRunning: noWorkRunning,
         bags: bags,
       );
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load bag list', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load bag list');
   }
 }

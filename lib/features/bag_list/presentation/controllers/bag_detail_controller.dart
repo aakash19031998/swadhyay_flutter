@@ -55,11 +55,7 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
       final String? empCd = (await _getCurrentEmployeeUseCase())?.empCode;
       final result = await _getBagDetailUseCase(bagNo: bag.value.bagNo, empCd: empCd ?? '');
       result.fold(
-        (failure) => AppSnackbar.show(
-          title: AppStrings.alertWarning,
-          message: failure.message,
-          isSuccess: false,
-        ),
+        AppSnackbar.showFailure,
         (detail) {
           bag.value = bag.value.copyWith(
             delDate: detail.delDate,
@@ -107,11 +103,7 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
     AppDialog.dismiss();
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (media) {
         if (media.isEmpty) {
           AppSnackbar.show(

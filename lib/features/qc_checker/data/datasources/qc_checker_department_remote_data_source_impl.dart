@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../qc_pending_dashboard/data/models/dia_qc_checker_model.dart';
@@ -24,8 +25,8 @@ class QcCheckerDepartmentRemoteDataSourceImpl
   @override
   Future<QcCheckerDepartmentListEntity> getDepartments({
     required String empCd,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient
           .post<Map<String, dynamic>>(
             ApiEndpoints.qcCheckerDeptList,
@@ -71,11 +72,6 @@ class QcCheckerDepartmentRemoteDataSourceImpl
         departments: departments,
         diaQcCheckers: diaQcCheckers,
       );
-    } on DioException catch (e) {
-      throw ServerException(
-        message: 'Unable to load departments',
-        statusCode: e.response?.statusCode,
-      );
-    }
+    }, (_) => 'Unable to load departments');
   }
 }

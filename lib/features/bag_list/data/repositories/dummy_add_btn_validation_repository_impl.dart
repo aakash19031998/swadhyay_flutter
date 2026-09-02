@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/repository_guard.dart';
 import '../../domain/repositories/dummy_add_btn_validation_repository.dart';
 import '../datasources/dummy_add_btn_validation_data_source.dart';
 
@@ -17,8 +17,8 @@ class DummyAddBtnValidationRepositoryImpl implements DummyAddBtnValidationReposi
     required int inputQty,
     required int emrPcs,
     required int emrStone,
-  }) async {
-    try {
+  }) {
+    return guard(() async {
       final result = await _dataSource.validate(
         empCd: empCd,
         setId: setId,
@@ -26,11 +26,7 @@ class DummyAddBtnValidationRepositoryImpl implements DummyAddBtnValidationReposi
         emrPcs: emrPcs,
         emrStone: emrStone,
       );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    }
+      return result;
+    });
   }
 }

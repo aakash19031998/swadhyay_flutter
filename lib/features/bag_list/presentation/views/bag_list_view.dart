@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/common_app_bar.dart';
 import '../../../../core/widgets/report_list_scaffold.dart';
+import '../../../../core/widgets/scan_button.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../controllers/bag_list_controller.dart';
 import '../widgets/bag_list_item.dart';
@@ -86,7 +86,7 @@ class BagListView extends GetView<BagListController> {
                 masonryColumnCount: columns,
                 searchController: controller.searchController,
                 searchSuggestionsBuilder: controller.suggestionsFor,
-                searchBarTrailing: _ScanButton(onScanned: controller.onScanned),
+                searchBarTrailing: ScanButton(onScanned: controller.onScanned),
                 itemBuilder: (context, bag) => BagListItem(
                   bag: bag,
                   onDone: controller.onBagDone,
@@ -263,40 +263,3 @@ class _CounterPill extends StatelessWidget {
   }
 }
 
-/// Opens the bag scanner (front camera, requested at runtime) — sits to the
-/// right of the search field, matching the search field's own height. A
-/// scanned QR/barcode value is shown in the search field itself and applied
-/// as the list's filter; the scanner screen closes back to this one.
-class _ScanButton extends StatelessWidget {
-  const _ScanButton({required this.onScanned});
-
-  final ValueChanged<String> onScanned;
-
-  Future<void> _openScanner() async {
-    // Deliberately untyped: Get.toNamed<String>(...) throws at runtime
-    // ("GetPageRoute<dynamic> is not a subtype of Route<String?>") because
-    // app_pages.dart's route table is registered as GetPage<dynamic> — the
-    // generic type argument here fights that, not matches it. Casting the
-    // dynamic result afterward avoids the mismatch entirely.
-    final dynamic result = await Get.toNamed(AppRoutes.bagScanner);
-    final String? scanned = result is String ? result : null;
-    if (scanned != null && scanned.isNotEmpty) onScanned(scanned);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.primary,
-      borderRadius: BorderRadius.circular(AppDimensions.formFieldRadius),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppDimensions.formFieldRadius),
-        onTap: _openScanner,
-        child: const SizedBox(
-          width: AppDimensions.formFieldHeight,
-          height: AppDimensions.formFieldHeight,
-          child: Icon(Icons.qr_code_scanner_rounded, color: AppColors.onPrimary),
-        ),
-      ),
-    );
-  }
-}

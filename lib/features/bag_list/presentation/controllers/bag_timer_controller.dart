@@ -153,11 +153,7 @@ class BagTimerController extends GetxController {
       );
 
       result.fold(
-        (failure) => AppSnackbar.show(
-          title: AppStrings.alertWarning,
-          message: failure.message,
-          isSuccess: false,
-        ),
+        AppSnackbar.showFailure,
         (response) {
           if (response.message.isNotEmpty) {
             AppSnackbar.show(

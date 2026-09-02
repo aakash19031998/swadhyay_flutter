@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/qc_emp_list_entity.dart';
@@ -19,8 +20,8 @@ class QcEmpListRemoteDataSourceImpl implements QcEmpListDataSource {
   final ApiClient _apiClient;
 
   @override
-  Future<QcEmpListEntity> getEmpList({required String deptCd}) async {
-    try {
+  Future<QcEmpListEntity> getEmpList({required String deptCd}) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.deptQcPendingEmpList,
         data: {
@@ -48,8 +49,6 @@ class QcEmpListRemoteDataSourceImpl implements QcEmpListDataSource {
           for (final entry in diaQcJson) DiaQcCheckerModel.fromJson(entry as Map<String, dynamic>),
         ],
       );
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load employees', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load employees');
   }
 }

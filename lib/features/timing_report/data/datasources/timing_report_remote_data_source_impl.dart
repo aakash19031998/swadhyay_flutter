@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/timing_report_model.dart';
@@ -20,8 +21,8 @@ class TimingReportRemoteDataSourceImpl implements TimingReportDataSource {
   final ApiClient _apiClient;
 
   @override
-  Future<List<TimingReportModel>> getReport({required String empCd}) async {
-    try {
+  Future<List<TimingReportModel>> getReport({required String empCd}) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.timingReport,
         data: {'empCd': int.tryParse(empCd) ?? 0},
@@ -36,8 +37,6 @@ class TimingReportRemoteDataSourceImpl implements TimingReportDataSource {
 
       final List<dynamic> data = body['data'] as List<dynamic>? ?? const [];
       return [for (final entry in data) TimingReportModel.fromJson(entry as Map<String, dynamic>)];
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load timing report', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load timing report');
   }
 }

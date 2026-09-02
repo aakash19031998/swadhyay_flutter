@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../authentication/di/auth_dependencies.dart';
-import '../../../authentication/domain/repositories/auth_repository.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../data/datasources/bag_completion_master_data_source.dart';
 import '../../data/datasources/bag_completion_master_remote_data_source_impl.dart';
@@ -33,8 +32,6 @@ class BagCompletionBinding extends Bindings {
     AuthDependencies.ensureRegistered();
 
     final BagEntity bag = Get.arguments as BagEntity;
-
-    Get.lazyPut<GetCurrentEmployeeUseCase>(() => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()));
 
     Get.lazyPut<BagCompletionMasterDataSource>(
       () => BagCompletionMasterRemoteDataSourceImpl(Get.find<ApiClient>()),

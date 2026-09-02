@@ -7,6 +7,7 @@ import 'package:pdfx/pdfx.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_error_widget.dart';
+import '../../../../core/widgets/gradient_top_bar.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
 import '../controllers/brand_pdf_viewer_controller.dart';
 
@@ -23,7 +24,7 @@ class BrandPdfViewerView extends GetView<BrandPdfViewerController> {
       body: SafeArea(
         child: Column(
           children: [
-            _TopBar(title: controller.title),
+            GradientTopBar(title: controller.title, expandTitle: true),
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) return const HkLoaderCard();
@@ -223,44 +224,3 @@ class _PageScrollbarState extends State<_PageScrollbar> {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXs),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onPrimary),
-              onPressed: Get.back,
-            ),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ),
-            const SizedBox(width: AppDimensions.spacingMd),
-          ],
-        ),
-      ),
-    );
-  }
-}
