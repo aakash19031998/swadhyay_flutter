@@ -1,10 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/network/api_client.dart';
-import '../../../../core/storage/local_storage_service.dart';
 import '../../../authentication/di/auth_dependencies.dart';
-import '../../../authentication/domain/repositories/auth_repository.dart';
-import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../../bag_list/data/datasources/bag_media_gallery_data_source.dart';
 import '../../../bag_list/data/datasources/bag_media_gallery_remote_data_source_impl.dart';
 import '../../../bag_list/data/repositories/bag_media_gallery_repository_impl.dart';
@@ -23,8 +20,6 @@ import '../../data/datasources/qc_repair_list_remote_data_source_impl.dart';
 import '../../data/repositories/qc_check_repository_impl.dart';
 import '../../domain/repositories/qc_check_repository.dart';
 import '../../domain/usecases/get_qc_assigned_bags_usecase.dart';
-import '../../domain/usecases/get_qc_repair_checklist_usecase.dart';
-import '../../domain/usecases/submit_qc_action_usecase.dart';
 import '../controllers/qc_bag_list_args.dart';
 import '../controllers/qc_bag_list_controller.dart';
 
@@ -34,17 +29,27 @@ class QcBagListBinding extends Bindings {
     final QcBagListArgs args = Get.arguments as QcBagListArgs;
 
     AuthDependencies.ensureRegistered();
-    Get.lazyPut<GetCurrentEmployeeUseCase>(() => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()));
 
-    // This screen never calls getDepartments()/getChecks(), but
-    // QcCheckRepositoryImpl still needs all five injected to construct —
-    // always the live QCDeptList/DeptQCPendingEmpList/QcPendingBagList/
-    // QCRepairList/BagFinalReceive endpoints, same as QcPendingDashboardBinding.
-    Get.lazyPut<QcDepartmentDataSource>(() => QcDepartmentRemoteDataSourceImpl(Get.find<ApiClient>()));
-    Get.lazyPut<QcEmpListDataSource>(() => QcEmpListRemoteDataSourceImpl(Get.find<ApiClient>()));
-    Get.lazyPut<QcBagListDataSource>(() => QcBagListRemoteDataSourceImpl(Get.find<ApiClient>()));
-    Get.lazyPut<QcRepairListDataSource>(() => QcRepairListRemoteDataSourceImpl(Get.find<ApiClient>()));
-    Get.lazyPut<QcActionSubmitDataSource>(() => QcActionSubmitRemoteDataSourceImpl(Get.find<ApiClient>()));
+    // This screen never calls getDepartments()/getChecks()/
+    // getRepairChecklist()/submitAction(), but QcCheckRepositoryImpl still
+    // needs all five injected to construct — always the live QCDeptList/
+    // DeptQCPendingEmpList/QcPendingBagList/QCRepairList/BagFinalReceive
+    // endpoints, same as QcPendingDashboardBinding.
+    Get.lazyPut<QcDepartmentDataSource>(
+      () => QcDepartmentRemoteDataSourceImpl(Get.find<ApiClient>()),
+    );
+    Get.lazyPut<QcEmpListDataSource>(
+      () => QcEmpListRemoteDataSourceImpl(Get.find<ApiClient>()),
+    );
+    Get.lazyPut<QcBagListDataSource>(
+      () => QcBagListRemoteDataSourceImpl(Get.find<ApiClient>()),
+    );
+    Get.lazyPut<QcRepairListDataSource>(
+      () => QcRepairListRemoteDataSourceImpl(Get.find<ApiClient>()),
+    );
+    Get.lazyPut<QcActionSubmitDataSource>(
+      () => QcActionSubmitRemoteDataSourceImpl(Get.find<ApiClient>()),
+    );
     Get.lazyPut<QcCheckRepository>(
       () => QcCheckRepositoryImpl(
         Get.find<QcDepartmentDataSource>(),
@@ -54,26 +59,27 @@ class QcBagListBinding extends Bindings {
         Get.find<QcActionSubmitDataSource>(),
       ),
     );
-    Get.lazyPut<GetQcAssignedBagsUseCase>(() => GetQcAssignedBagsUseCase(Get.find<QcCheckRepository>()));
-    Get.lazyPut<GetQcRepairChecklistUseCase>(() => GetQcRepairChecklistUseCase(Get.find<QcCheckRepository>()));
-    Get.lazyPut<SubmitQcActionUseCase>(() => SubmitQcActionUseCase(Get.find<QcCheckRepository>()));
+    Get.lazyPut<GetQcAssignedBagsUseCase>(
+      () => GetQcAssignedBagsUseCase(Get.find<QcCheckRepository>()),
+    );
 
     // Always the live ImageAndVideoUrls endpoint — same "no mock, always
     // remote" pattern as the rest of this feature's data sources.
-    Get.lazyPut<BagMediaGalleryDataSource>(() => BagMediaGalleryRemoteDataSourceImpl(Get.find<ApiClient>()));
-    Get.lazyPut<BagMediaGalleryRepository>(
-      () => BagMediaGalleryRepositoryImpl(Get.find<BagMediaGalleryDataSource>()),
+    Get.lazyPut<BagMediaGalleryDataSource>(
+      () => BagMediaGalleryRemoteDataSourceImpl(Get.find<ApiClient>()),
     );
-    Get.lazyPut<GetBagMediaUseCase>(() => GetBagMediaUseCase(Get.find<BagMediaGalleryRepository>()));
+    Get.lazyPut<BagMediaGalleryRepository>(
+      () =>
+          BagMediaGalleryRepositoryImpl(Get.find<BagMediaGalleryDataSource>()),
+    );
+    Get.lazyPut<GetBagMediaUseCase>(
+      () => GetBagMediaUseCase(Get.find<BagMediaGalleryRepository>()),
+    );
 
     Get.lazyPut<QcBagListController>(
       () => QcBagListController(
         Get.find<GetQcAssignedBagsUseCase>(),
-        Get.find<GetQcRepairChecklistUseCase>(),
         Get.find<GetBagMediaUseCase>(),
-        Get.find<SubmitQcActionUseCase>(),
-        Get.find<GetCurrentEmployeeUseCase>(),
-        Get.find<LocalStorageService>(),
         empCode: args.empCode,
         empName: args.empName,
         totalBags: args.totalBags,

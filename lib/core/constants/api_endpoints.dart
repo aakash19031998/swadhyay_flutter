@@ -28,6 +28,7 @@ class ApiEndpoints {
   static const String bagFinalReceive = '/BagFinalReceive';
   static const String timingReport = '/ArtistTimeUtilizationReport';
   static const String artistProduction = '/ArtistProductionRpt';
+  static const String qcCheckingReport = '/QcCheckingReport';
   static const String customerSpec = '/CustomerSpec';
   static const String qcDeptList = '/QCDeptList';
   static const String qcCheckerDeptList = '/QCDepartmentN';

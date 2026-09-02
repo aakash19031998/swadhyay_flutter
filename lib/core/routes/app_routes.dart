@@ -20,6 +20,7 @@ class AppRoutes {
   static const String qcBagList = '/reports/qc-pending-dashboard/bag-list';
   static const String timingReport = '/reports/timing-report';
   static const String artistProduction = '/reports/artist-production';
+  static const String qcCheckerReport = '/reports/qc-checker-report';
   static const String brandSpecification = '/brand-specification';
   static const String brandSpecificationPdfViewer =
       '/brand-specification/pdf-viewer';

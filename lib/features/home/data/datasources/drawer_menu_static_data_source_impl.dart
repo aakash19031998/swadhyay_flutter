@@ -9,10 +9,10 @@ import 'drawer_menu_data_source.dart';
 
 /// V1 hardcoded menu tree: Bag List, Change Password, Brand Specification,
 /// QC Pending Dashboard, QC Checker, Reports (Design Image, Timing Report,
-/// Artist Production), Logout. Brand Specification, QC Pending Dashboard and
-/// QC Checker are top-level items (not nested under Reports) — plain
-/// standalone tiles, the same as Logout, rather than reachable only by
-/// expanding that group.
+/// Artist Production, QC Checker Report), Logout. Brand Specification, QC
+/// Pending Dashboard and QC Checker are top-level items (not nested under
+/// Reports) — plain standalone tiles, the same as Logout, rather than
+/// reachable only by expanding that group.
 class DrawerMenuStaticDataSourceImpl implements DrawerMenuDataSource {
   @override
   Future<List<DrawerMenuItemModel>> getMenu(String empCd) async {
@@ -80,6 +80,13 @@ class DrawerMenuStaticDataSourceImpl implements DrawerMenuDataSource {
             icon: Icons.brush_outlined,
             type: DrawerMenuItemType.link,
             route: AppRoutes.artistProduction,
+          ),
+          DrawerMenuItemModel(
+            id: 'qc_checker_report',
+            label: AppStrings.qcCheckerReportTitle,
+            icon: Icons.query_stats_outlined,
+            type: DrawerMenuItemType.link,
+            route: AppRoutes.qcCheckerReport,
           ),
         ],
       ),

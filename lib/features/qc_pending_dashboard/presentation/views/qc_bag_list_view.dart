@@ -23,7 +23,10 @@ class QcBagListView extends GetView<QcBagListController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CommonAppBar(title: AppStrings.qcBagListTitle, showNotification: false),
+      appBar: const CommonAppBar(
+        title: AppStrings.qcBagListTitle,
+        showNotification: false,
+      ),
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
@@ -38,7 +41,9 @@ class QcBagListView extends GetView<QcBagListController> {
               child: _EmployeeHeaderCard(controller: controller),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingMd),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacingMd,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -60,11 +65,18 @@ class QcBagListView extends GetView<QcBagListController> {
                 // Materialized here, inside the Obx builder, so GetX is
                 // actually tracking `items` as a dependency of this Obx —
                 // see the identical note on QcPendingDashboardView/BagListView.
-                final List<QcAssignedBagEntity> items = List.of(controller.items);
+                final List<QcAssignedBagEntity> items = List.of(
+                  controller.items,
+                );
 
-                if (controller.isLoading.value && items.isEmpty) return const HkLoaderCard();
+                if (controller.isLoading.value && items.isEmpty) {
+                  return const HkLoaderCard();
+                }
                 if (controller.errorMessage.value != null && items.isEmpty) {
-                  return AppErrorWidget(message: controller.errorMessage.value!, onRetry: controller.refreshData);
+                  return AppErrorWidget(
+                    message: controller.errorMessage.value!,
+                    onRetry: controller.refreshData,
+                  );
                 }
                 if (items.isEmpty) {
                   return AppEmptyWidget(
@@ -78,8 +90,6 @@ class QcBagListView extends GetView<QcBagListController> {
                   onRefresh: controller.refreshData,
                   child: _BagGrid(
                     bags: items,
-                    onOk: controller.onBagOk,
-                    onRepair: controller.onBagRepair,
                     onImageTap: controller.openBagMedia,
                   ),
                 );
@@ -118,25 +128,39 @@ class _EmployeeHeaderCard extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               Container(
-                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.primary, width: 2)),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary, width: 2),
+                ),
                 padding: const EdgeInsets.all(2),
                 child: ClipOval(
-                  child: (controller.imageUrl == null || controller.imageUrl!.isEmpty)
+                  child:
+                      (controller.imageUrl == null ||
+                          controller.imageUrl!.isEmpty)
                       ? const CircleAvatar(
                           radius: 26,
                           backgroundColor: AppColors.primaryContainer,
-                          child: Icon(Icons.person_outline, color: AppColors.primary, size: 28),
+                          child: Icon(
+                            Icons.person_outline,
+                            color: AppColors.primary,
+                            size: 28,
+                          ),
                         )
                       : Image.network(
                           controller.imageUrl!,
                           width: 52,
                           height: 52,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const CircleAvatar(
-                            radius: 26,
-                            backgroundColor: AppColors.primaryContainer,
-                            child: Icon(Icons.person_outline, color: AppColors.primary, size: 28),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const CircleAvatar(
+                                radius: 26,
+                                backgroundColor: AppColors.primaryContainer,
+                                child: Icon(
+                                  Icons.person_outline,
+                                  color: AppColors.primary,
+                                  size: 28,
+                                ),
+                              ),
                         ),
                 ),
               ),
@@ -145,8 +169,15 @@ class _EmployeeHeaderCard extends StatelessWidget {
                 right: -1,
                 child: Container(
                   padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
-                  child: const Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: AppColors.success,
+                    size: 16,
+                  ),
                 ),
               ),
             ],
@@ -162,26 +193,32 @@ class _EmployeeHeaderCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   AppStrings.activeQcQueueSubtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: AppDimensions.spacingSm),
-          _HeaderStat(label: AppStrings.qcTotalBags, value: '${controller.totalBags}'),
+          _HeaderStat(
+            label: AppStrings.qcTotalBags,
+            value: '${controller.totalBags}',
+          ),
           const SizedBox(width: AppDimensions.spacingXs),
-          _HeaderStat(label: AppStrings.totalPieces, value: '${controller.totalPieces}'),
+          _HeaderStat(
+            label: AppStrings.totalPieces,
+            value: '${controller.totalPieces}',
+          ),
         ],
       ),
     );
@@ -197,7 +234,10 @@ class _HeaderStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingSm, vertical: AppDimensions.spacingXs),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacingSm,
+        vertical: AppDimensions.spacingXs,
+      ),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
@@ -211,19 +251,19 @@ class _HeaderStat extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontSize: 9,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
-                ),
+              fontSize: 9,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
@@ -242,24 +282,26 @@ class _HeaderStat extends StatelessWidget {
 /// cards' natural height instead (same fix `ReportListScaffold`'s own
 /// masonry mode exists for).
 class _BagGrid extends StatelessWidget {
-  const _BagGrid({required this.bags, required this.onOk, required this.onRepair, required this.onImageTap});
+  const _BagGrid({required this.bags, required this.onImageTap});
 
   final List<QcAssignedBagEntity> bags;
-  final ValueChanged<QcAssignedBagEntity> onOk;
-  final ValueChanged<QcAssignedBagEntity> onRepair;
   final ValueChanged<QcAssignedBagEntity> onImageTap;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final int columnCount = constraints.maxWidth > AppDimensions.breakpointTablet
+        final int columnCount =
+            constraints.maxWidth > AppDimensions.breakpointTablet
             ? 3
             : constraints.maxWidth > AppDimensions.breakpointPhone
-                ? 2
-                : 1;
+            ? 2
+            : 1;
 
-        final List<List<QcAssignedBagEntity>> columns = List.generate(columnCount, (_) => <QcAssignedBagEntity>[]);
+        final List<List<QcAssignedBagEntity>> columns = List.generate(
+          columnCount,
+          (_) => <QcAssignedBagEntity>[],
+        );
         for (int i = 0; i < bags.length; i++) {
           columns[i % columnCount].add(bags[i]);
         }
@@ -281,12 +323,7 @@ class _BagGrid extends StatelessWidget {
                   child: Column(
                     children: [
                       for (final bag in columns[c]) ...[
-                        _BagCard(
-                          bag: bag,
-                          onOk: () => onOk(bag),
-                          onRepair: () => onRepair(bag),
-                          onImageTap: () => onImageTap(bag),
-                        ),
+                        _BagCard(bag: bag, onImageTap: () => onImageTap(bag)),
                         const SizedBox(height: AppDimensions.spacingMd),
                       ],
                     ],
@@ -302,11 +339,9 @@ class _BagGrid extends StatelessWidget {
 }
 
 class _BagCard extends StatelessWidget {
-  const _BagCard({required this.bag, required this.onOk, required this.onRepair, required this.onImageTap});
+  const _BagCard({required this.bag, required this.onImageTap});
 
   final QcAssignedBagEntity bag;
-  final VoidCallback onOk;
-  final VoidCallback onRepair;
   final VoidCallback onImageTap;
 
   @override
@@ -343,7 +378,9 @@ class _BagCard extends StatelessWidget {
                         bag.bagNo,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const SizedBox(height: AppDimensions.spacingXs),
                       Row(
@@ -353,7 +390,8 @@ class _BagCard extends StatelessWidget {
                               bag.style,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
                                     color: AppColors.textSecondary,
                                     fontSize: 16,
                                   ),
@@ -374,7 +412,8 @@ class _BagCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               bag.orderNo,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
                                     color: AppColors.textSecondary,
                                     fontSize: 16,
                                   ),
@@ -394,9 +433,9 @@ class _BagCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.primary,
-                              fontSize: 15,
-                            ),
+                          color: AppColors.primary,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
@@ -404,93 +443,7 @@ class _BagCard extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.divider),
-          _CardActions(onOk: onOk, onRepair: onRepair),
         ],
-      ),
-    );
-  }
-}
-
-/// Two equal-width actions split by a center divider, flush with the
-/// card's own bottom edge — each half keeps the card's own corner radius
-/// on its outer bottom corner (via the parent [_BagCard]'s
-/// `clipBehavior: Clip.antiAlias`, not its own, so the two halves still
-/// meet edge-to-edge in the middle with no gap or rounding).
-class _CardActions extends StatelessWidget {
-  const _CardActions({required this.onOk, required this.onRepair});
-
-  final VoidCallback onOk;
-  final VoidCallback onRepair;
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        children: [
-          Expanded(
-            child: _ActionButton(
-              label: 'OK',
-              icon: Icons.check_circle_outline,
-              color: AppColors.success,
-              background: AppColors.successContainer,
-              onTap: onOk,
-            ),
-          ),
-          const VerticalDivider(width: 1, color: AppColors.divider),
-          Expanded(
-            child: _ActionButton(
-              label: 'Repair',
-              icon: Icons.build_outlined,
-              color: AppColors.error,
-              background: AppColors.errorContainer,
-              onTap: onRepair,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.background,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-  final Color background;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: background,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingSm),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: AppDimensions.iconSm, color: color),
-              const SizedBox(width: AppDimensions.spacingXxs),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -524,7 +477,11 @@ class _BagThumbnail extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: imageUrl == null
-              ? const SizedBox(width: _size, height: _size, child: ColoredBox(color: AppColors.surfaceVariant))
+              ? const SizedBox(
+                  width: _size,
+                  height: _size,
+                  child: ColoredBox(color: AppColors.surfaceVariant),
+                )
               : Image.network(
                   imageUrl!,
                   width: _size,
@@ -541,7 +498,10 @@ class _BagThumbnail extends StatelessWidget {
                           child: SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
                       ),
@@ -560,7 +520,12 @@ class _BagThumbnail extends StatelessWidget {
 }
 
 class _Pill extends StatelessWidget {
-  const _Pill({required this.icon, required this.label, required this.background, required this.foreground});
+  const _Pill({
+    required this.icon,
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
 
   final IconData icon;
   final String label;
@@ -570,8 +535,14 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingXs, vertical: 4),
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(AppDimensions.radiusPill)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacingXs,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -583,10 +554,10 @@ class _Pill extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    fontSize: 12,
-                    color: foreground,
-                    fontWeight: FontWeight.w700,
-                  ),
+                fontSize: 12,
+                color: foreground,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -620,7 +591,10 @@ class _ScanButton extends StatelessWidget {
         child: const SizedBox(
           width: AppDimensions.formFieldHeight,
           height: AppDimensions.formFieldHeight,
-          child: Icon(Icons.qr_code_scanner_rounded, color: AppColors.onPrimary),
+          child: Icon(
+            Icons.qr_code_scanner_rounded,
+            color: AppColors.onPrimary,
+          ),
         ),
       ),
     );

@@ -35,7 +35,8 @@ class AppStrings {
   static const String employeeNumber = 'Employee number';
   static const String employeeNumberHint = 'Enter your employee number';
   static const String employeeNumberRequired = 'Employee number is required';
-  static const String employeeNumberInvalidLength = 'Employee number must be exactly 5 digits';
+  static const String employeeNumberInvalidLength =
+      'Employee number must be exactly 5 digits';
   static const String enterPinNumber = 'Enter pin number';
   static const String pinRequired = 'Please enter a valid 4-digit PIN';
   static const String signIn = 'SIGN IN';
@@ -52,10 +53,14 @@ class AppStrings {
   static const String changePassword = 'Change Password';
   static const String reports = 'Reports';
   static const String designImage = 'Design Image';
-  static const String designImageSearchHint = 'Search Design Code, EMR Style...';
-  static const String designMasterSearchPrompt = 'Enter a style number and tap Search to view design details.';
-  static const String designMasterNotFound = 'No design found for this style number.';
-  static const String designMasterEnterStyleNo = 'Please enter a style number to search';
+  static const String designImageSearchHint =
+      'Search Design Code, EMR Style...';
+  static const String designMasterSearchPrompt =
+      'Enter a style number and tap Search to view design details.';
+  static const String designMasterNotFound =
+      'No design found for this style number.';
+  static const String designMasterEnterStyleNo =
+      'Please enter a style number to search';
   static const String viewGallery = 'View Gallery';
   static const String generalTab = 'General';
   static const String billOfMaterialTab = 'BOM';
@@ -87,7 +92,8 @@ class AppStrings {
   static const String selectDepartment = 'Select Department';
   static const String selectDepartmentPrompt = 'Please select Department';
   static const String qcBagListTitle = 'QC Bag List';
-  static const String repairQtyRequired = 'Please enter a quantity for at least one repair item';
+  static const String repairQtyRequired =
+      'Please enter a quantity for at least one repair item';
   static const String repairIdColumn = 'Repair ID';
   static const String repairColumn = 'Repair';
   static const String qtyColumn = 'Qty';
@@ -117,15 +123,18 @@ class AppStrings {
   static const String done = 'Done';
   static const String completed = 'Completed';
   static const String scanBag = 'Scan Bag';
-  static const String noMediaFound = 'No images or videos found for this design';
+  static const String noMediaFound =
+      'No images or videos found for this design';
   static const String videoUnavailable = 'This video could not be loaded';
   static const String cameraPermissionDeniedTitle = 'Camera Permission Needed';
   static const String cameraPermissionDeniedMessage =
       'Camera access was denied. Please allow camera permission from app settings to scan.';
-  static const String cameraUnavailable = 'No front camera available on this device';
+  static const String cameraUnavailable =
+      'No front camera available on this device';
   static const String openSettings = 'Open Settings';
   static const String pauseReasonTitle = 'Pause Reason';
-  static const String pauseReasonMessage = 'Please let us know why you are pausing this task.';
+  static const String pauseReasonMessage =
+      'Please let us know why you are pausing this task.';
   static const String pauseReasonRequired = 'Reason is required';
 
   // Bag detail.
@@ -176,7 +185,8 @@ class AppStrings {
   static const String piecesStones = 'Pieces/Stones';
   static const String completedWork = 'Completed Work';
   static const String pendingWork = 'Pending Work';
-  static const String addSettingBeforeSubmit = 'Add at least one setting before submitting';
+  static const String addSettingBeforeSubmit =
+      'Add at least one setting before submitting';
   static const String submitConfirmTitle = 'Submit Entry';
   static const String submitConfirmMessage =
       'Are you sure you want to save this work entry? Once submitted, the bag will be marked as completed.';
@@ -201,10 +211,38 @@ class AppStrings {
   static const String actualPcsStone = 'Actual Pcs/Stone';
   static const String workTypeSummary = 'Work Type Summary';
   static const String productionDetail = 'Production Detail';
-  static const String selectDateRangeAndShow = 'Select a date range and tap Show to load the report';
-  static const String invalidDateRange = 'From date must be before or equal to To date';
+  static const String selectDateRangeAndShow =
+      'Select a date range and tap Show to load the report';
+  static const String invalidDateRange =
+      'From date must be before or equal to To date';
   static const String selectDate = 'Select Date';
   static const String toDateRequired = 'Please select a To date';
+
+  // QC Checker report.
+  static const String qcCheckerReportTitle = 'QC Checker Report';
+  static const String qcProcess = 'Process';
+  static const String qcPrediction = 'Prediction';
+  static const String repairCaught = 'Repair Caught';
+  static const String predictionScoreMatrixTitle = 'QC Prediction Score Matrix';
+  static const String predictionScoreMatrixSubtitle =
+      'Individual prediction point records';
+  static const String shiftProcessDistributionTitle =
+      'Shift & Process Distribution';
+  static const String shiftProcessDistributionSubtitle =
+      'Day vs Evening timeline breakdown';
+  static const String bagPieces = 'Bag Pieces';
+  static const String points = 'Points';
+  static const String repair = 'Repair';
+  static const String dayShiftColumn = '7A-8P';
+  static const String eveningShiftColumn = '8P-12A';
+  static const String entriesSuffix = 'Entries';
+  static const String linesSuffix = 'Lines';
+  static const String dayShiftLabel = 'Day Shift';
+  static const String eveningShiftLabel = 'Eve Shift';
+  static const String bagsSuffix = 'bags';
+  static const String totalBagsUnits = 'Total Bags / Units';
+  static const String repairsCaught = 'Repairs Caught';
+  static const String ownRepairOffset = 'Own Repair Offset';
 
   // Timing report.
   static const String usedMinutes = 'Used Minutes';
@@ -221,7 +259,8 @@ class AppStrings {
   static const String confirmNewPassword = 'Confirm New Password';
   static const String passwordUpdated = 'Password updated successfully';
   static const String passwordsDoNotMatch = 'Passwords do not match';
-  static const String changePasswordSubtitle = 'Set up a new 4-digit code to keep your account secure';
+  static const String changePasswordSubtitle =
+      'Set up a new 4-digit code to keep your account secure';
   static const String updatePassword = 'Update Password';
   static const String hide = 'Hide';
   static const String pinStrengthEmpty = 'Enter 4 digits';
@@ -232,11 +271,15 @@ class AppStrings {
   // Brand specification.
   static const String selectBrand = 'Select Brand';
   static const String selectBrandRequired = 'Please select a brand';
-  static const String selectBrandFromList = 'Select a brand from the list to view its specifications';
-  static const String noMatchingSpecifications = 'No matching specifications found';
+  static const String selectBrandFromList =
+      'Select a brand from the list to view its specifications';
+  static const String noMatchingSpecifications =
+      'No matching specifications found';
   static const String searchSpecificationsHint = 'Search in specifications...';
-  static const String pdfUnavailable = 'No specification sheet is available for this row';
-  static const String pdfOpenFailed = 'Unable to download or open this specification sheet';
+  static const String pdfUnavailable =
+      'No specification sheet is available for this row';
+  static const String pdfOpenFailed =
+      'Unable to download or open this specification sheet';
   static const String productId = 'Product Id';
   static const String specHkStyle = 'SpecHKStyle';
   static const String custMaterial = 'CustMaterial';

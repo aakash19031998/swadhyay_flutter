@@ -42,14 +42,39 @@ final Map<String, _MenuMeta> _menuMetaByName = {
   // "QC Pending Dashboard" is a distinct, not-yet-added menu option (see
   // AppStrings.qcPendingDashboard) that will route to that screen once the
   // backend sends it.
-  'qc checking': const _MenuMeta(Icons.qr_code_scanner_outlined, AppRoutes.qcChecker),
-  'qc pending dashboard': const _MenuMeta(Icons.fact_check_outlined, AppRoutes.qcPendingDashboard),
-  'qc checker': const _MenuMeta(Icons.qr_code_scanner_outlined, AppRoutes.qcChecker),
+  'qc checking': const _MenuMeta(
+    Icons.qr_code_scanner_outlined,
+    AppRoutes.qcChecker,
+  ),
+  'qc pending dashboard': const _MenuMeta(
+    Icons.fact_check_outlined,
+    AppRoutes.qcPendingDashboard,
+  ),
+  'qc checker': const _MenuMeta(
+    Icons.qr_code_scanner_outlined,
+    AppRoutes.qcChecker,
+  ),
   'reports': const _MenuMeta(Icons.assessment_outlined, null),
-  'timing report': const _MenuMeta(Icons.timer_outlined, AppRoutes.timingReport),
-  'artist production': const _MenuMeta(Icons.brush_outlined, AppRoutes.artistProduction),
-  'change password': const _MenuMeta(Icons.lock_outline, AppRoutes.changePassword),
-  'brand specification': const _MenuMeta(Icons.storefront_outlined, AppRoutes.brandSpecification),
+  'timing report': const _MenuMeta(
+    Icons.timer_outlined,
+    AppRoutes.timingReport,
+  ),
+  'artist production': const _MenuMeta(
+    Icons.brush_outlined,
+    AppRoutes.artistProduction,
+  ),
+  'qc checker report': const _MenuMeta(
+    Icons.query_stats_outlined,
+    AppRoutes.qcCheckerReport,
+  ),
+  'change password': const _MenuMeta(
+    Icons.lock_outline,
+    AppRoutes.changePassword,
+  ),
+  'brand specification': const _MenuMeta(
+    Icons.storefront_outlined,
+    AppRoutes.brandSpecification,
+  ),
 };
 
 const _MenuMeta _unknownMenuMeta = _MenuMeta(Icons.circle_outlined, null);
@@ -74,7 +99,10 @@ class DrawerMenuItemModel extends DrawerMenuItemEntity {
       route: json['route'] as String?,
       actionKey: json['actionKey'] as String?,
       children: (json['children'] as List<dynamic>? ?? [])
-          .map((child) => DrawerMenuItemModel.fromJson(child as Map<String, dynamic>))
+          .map(
+            (child) =>
+                DrawerMenuItemModel.fromJson(child as Map<String, dynamic>),
+          )
           .toList(growable: false),
     );
   }
@@ -85,8 +113,10 @@ class DrawerMenuItemModel extends DrawerMenuItemEntity {
   factory DrawerMenuItemModel.fromApiJson(Map<String, dynamic> json) {
     final String name = (json['MenuName'] as String?)?.trim() ?? '';
     final bool isGroup = (json['MenuType'] as String?) == 'DropDown';
-    final _MenuMeta meta = _menuMetaByName[name.toLowerCase()] ?? _unknownMenuMeta;
-    final List<dynamic> subMenu = json['SubMenuList'] as List<dynamic>? ?? const [];
+    final _MenuMeta meta =
+        _menuMetaByName[name.toLowerCase()] ?? _unknownMenuMeta;
+    final List<dynamic> subMenu =
+        json['SubMenuList'] as List<dynamic>? ?? const [];
 
     return DrawerMenuItemModel(
       id: 'menu_${json['MenuId']}',
@@ -102,13 +132,18 @@ class DrawerMenuItemModel extends DrawerMenuItemEntity {
   /// "Y"` and orders by `MenuSortBy`, since the backend does not guarantee
   /// either.
   static List<DrawerMenuItemModel> fromApiList(List<dynamic> json) {
-    final List<Map<String, dynamic>> visible = json
-        .cast<Map<String, dynamic>>()
-        .where((item) => (item['MenuValidSts'] as String?)?.toUpperCase() == 'Y')
-        .toList()
-      ..sort(
-        (a, b) => ((a['MenuSortBy'] as num?) ?? 0).compareTo((b['MenuSortBy'] as num?) ?? 0),
-      );
+    final List<Map<String, dynamic>> visible =
+        json
+            .cast<Map<String, dynamic>>()
+            .where(
+              (item) => (item['MenuValidSts'] as String?)?.toUpperCase() == 'Y',
+            )
+            .toList()
+          ..sort(
+            (a, b) => ((a['MenuSortBy'] as num?) ?? 0).compareTo(
+              (b['MenuSortBy'] as num?) ?? 0,
+            ),
+          );
     return visible.map(DrawerMenuItemModel.fromApiJson).toList(growable: false);
   }
 }

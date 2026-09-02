@@ -30,6 +30,8 @@ import '../../features/qc_checker/presentation/bindings/qc_checker_bag_detail_bi
 import '../../features/qc_checker/presentation/bindings/qc_checker_binding.dart';
 import '../../features/qc_checker/presentation/views/qc_checker_bag_detail_view.dart';
 import '../../features/qc_checker/presentation/views/qc_checker_view.dart';
+import '../../features/qc_checker_report/presentation/bindings/qc_checker_report_binding.dart';
+import '../../features/qc_checker_report/presentation/views/qc_checker_report_view.dart';
 import '../../features/qc_pending_dashboard/presentation/bindings/qc_bag_list_binding.dart';
 import '../../features/qc_pending_dashboard/presentation/bindings/qc_pending_dashboard_binding.dart';
 import '../../features/qc_pending_dashboard/presentation/views/qc_bag_list_view.dart';
@@ -131,6 +133,11 @@ class AppPages {
       name: AppRoutes.artistProduction,
       page: () => const ArtistProductionView(),
       binding: ArtistProductionBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.qcCheckerReport,
+      page: () => const QcCheckerReportView(),
+      binding: QcCheckerReportBinding(),
     ),
     GetPage(
       name: AppRoutes.brandSpecification,
