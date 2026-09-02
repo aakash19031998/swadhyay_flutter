@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/repository_guard.dart';
 import '../../../qc_pending_dashboard/domain/entities/qc_assigned_bag_entity.dart';
 import '../../domain/repositories/qc_checker_bag_search_repository.dart';
 import '../datasources/qc_checker_bag_search_data_source.dart';
@@ -14,16 +14,12 @@ class QcCheckerBagSearchRepositoryImpl implements QcCheckerBagSearchRepository {
   @override
   Future<Either<Failure, List<QcAssignedBagEntity>>> searchBag({
     required String bagBarcode,
-  }) async {
-    try {
+  }) {
+    return guard(() async {
       final List<QcAssignedBagEntity> bags = await _dataSource.searchBag(
         bagBarcode: bagBarcode,
       );
-      return Right(bags);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    }
+      return bags;
+    });
   }
 }

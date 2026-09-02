@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../constants/app_dimensions.dart';
+import '../constants/app_strings.dart';
+import '../error/failures.dart';
 import '../theme/app_colors.dart';
 
 /// Solid, high-contrast success/failure snackbar — the GetX default
@@ -37,5 +39,13 @@ class AppSnackbar {
       duration: Duration(seconds: isSuccess ? 2 : 3),
       snackStyle: SnackStyle.FLOATING,
     );
+  }
+
+  /// Shorthand for the "on failure" branch of an `Either<Failure, T>.fold`
+  /// call — the same `title: AppStrings.alertWarning, message:
+  /// failure.message, isSuccess: false` shown across nearly every
+  /// controller's error handling.
+  static void showFailure(Failure failure) {
+    show(title: AppStrings.alertWarning, message: failure.message, isSuccess: false);
   }
 }

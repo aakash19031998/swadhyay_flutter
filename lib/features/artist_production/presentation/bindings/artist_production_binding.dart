@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../authentication/di/auth_dependencies.dart';
-import '../../../authentication/domain/repositories/auth_repository.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../data/datasources/artist_production_data_source.dart';
 import '../../data/datasources/artist_production_remote_data_source_impl.dart';
@@ -15,8 +14,6 @@ class ArtistProductionBinding extends Bindings {
   @override
   void dependencies() {
     AuthDependencies.ensureRegistered();
-
-    Get.lazyPut<GetCurrentEmployeeUseCase>(() => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()));
 
     Get.lazyPut<ArtistProductionDataSource>(
       () => ArtistProductionRemoteDataSourceImpl(Get.find<ApiClient>()),

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import 'dummy_add_btn_validation_data_source.dart';
@@ -28,8 +29,8 @@ class DummyAddBtnValidationRemoteDataSourceImpl implements DummyAddBtnValidation
     required int inputQty,
     required int emrPcs,
     required int emrStone,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.dummyAddBtnValidation,
         data: {
@@ -47,8 +48,6 @@ class DummyAddBtnValidationRemoteDataSourceImpl implements DummyAddBtnValidation
       final String message = body['message'] as String? ?? '';
 
       return (success: success, message: message);
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to validate work entry', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to validate work entry');
   }
 }

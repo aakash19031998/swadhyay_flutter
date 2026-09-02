@@ -10,6 +10,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_error_widget.dart';
 import '../../../../core/widgets/app_modern_dropdown.dart';
+import '../../../../core/widgets/bordered_surface_card.dart';
+import '../../../../core/widgets/gradient_top_bar.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
 import '../../domain/entities/timing_report_entity.dart';
 import '../controllers/timing_report_controller.dart';
@@ -31,7 +33,7 @@ class TimingReportView extends GetView<TimingReportController> {
       body: SafeArea(
         child: Column(
           children: [
-            const _TopBar(),
+            const GradientTopBar(title: AppStrings.timingReport),
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) return const HkLoaderCard();
@@ -93,41 +95,6 @@ class TimingReportView extends GetView<TimingReportController> {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingXs),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onPrimary),
-              onPressed: Get.back,
-            ),
-            Text(
-              AppStrings.timingReport,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.onPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Small rounded-square icon badge used as the leading element of every
 /// section header on this screen — consistent with the icon-badge language
 /// used for cards elsewhere in the app (Bag Summary, Manufacturing
@@ -162,20 +129,7 @@ class _MonthFilterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacingMd),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.03),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
+    return BorderedSurfaceCard(
       child: Row(
         children: [
           const _SectionIcon(icon: Icons.calendar_month_rounded, color: AppColors.primary),

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/pause_reason_model.dart';
@@ -19,8 +20,8 @@ class PauseReasonRemoteDataSourceImpl implements PauseReasonDataSource {
   final ApiClient _apiClient;
 
   @override
-  Future<List<PauseReasonModel>> getReasons() async {
-    try {
+  Future<List<PauseReasonModel>> getReasons() {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.get<Map<String, dynamic>>(
         ApiEndpoints.pauseReasonMaster,
       );
@@ -35,8 +36,6 @@ class PauseReasonRemoteDataSourceImpl implements PauseReasonDataSource {
       return [
         for (final entry in reasonsJson) PauseReasonModel.fromJson(entry as Map<String, dynamic>),
       ];
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load pause reasons', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load pause reasons');
   }
 }

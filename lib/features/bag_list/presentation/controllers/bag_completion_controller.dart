@@ -114,11 +114,7 @@ class BagCompletionController extends GetxController {
       final result = await _getBagCompletionMaster(trnId: bag.id, empCd: empCode ?? '');
 
       result.fold(
-        (failure) => AppSnackbar.show(
-          title: AppStrings.alertWarning,
-          message: failure.message,
-          isSuccess: false,
-        ),
+        AppSnackbar.showFailure,
         (master) {
           _bagSchr = master.bagSchr;
           _bagPcs = master.bagPcs;
@@ -153,11 +149,7 @@ class BagCompletionController extends GetxController {
     final result = await _getSubWorkTypes(schr: _bagSchr, workType: workTypeValue, empCd: empCode ?? '');
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (options) {
         _subWorkTypes = options;
         workOptions.value = [for (final option in options) option.work];
@@ -197,11 +189,7 @@ class BagCompletionController extends GetxController {
     );
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (validation) {
         if (!validation.success) {
           AppSnackbar.show(
@@ -263,11 +251,7 @@ class BagCompletionController extends GetxController {
     final result = await _submitBagDone(trnId: bag.id, proId: proId, empCd: empCode ?? '');
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (response) {
         if (!response.success) {
           // Stays on this screen — a `false` status is a rejection (e.g.

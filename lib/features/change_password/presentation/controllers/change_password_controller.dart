@@ -126,11 +126,7 @@ class ChangePasswordController extends GetxController {
     isLoading.value = false;
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (response) {
         AppSnackbar.show(
           title: response.success ? AppStrings.changePassword : AppStrings.alertWarning,

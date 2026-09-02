@@ -12,6 +12,7 @@ import '../../../../core/widgets/common_app_bar.dart';
 import '../../../../core/widgets/flex_table.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
 import '../../../../core/widgets/section_card.dart';
+import '../../../../core/widgets/segmented_tab_bar.dart';
 import '../../../bag_list/presentation/controllers/bag_media_viewer_args.dart';
 import '../../domain/entities/design_bom_item_entity.dart';
 import '../../domain/entities/design_lab_detail_entity.dart';
@@ -162,11 +163,7 @@ class _SearchButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         child: Ink(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-            ),
+            gradient: AppColors.primaryGradient,
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
             boxShadow: [
               BoxShadow(
@@ -238,7 +235,23 @@ class _DesignMasterDetail extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               child: Column(
                 children: [
-                  _SegmentedTabBar(tabController: tabController),
+                  SegmentedTabBar(
+                    tabController: tabController,
+                    tabs: [
+                      for (final tab in _designImageTabs)
+                        Tab(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(tab.icon, size: AppDimensions.iconSm),
+                              const SizedBox(width: AppDimensions.spacingXxs),
+                              Flexible(child: Text(tab.label, overflow: TextOverflow.ellipsis)),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                   // Swaps the visible tab content directly off the tab
                   // index — same as Bag Detail's Diamond Details/Bag RM
                   // Summary tabs — so the section's height always matches
@@ -273,57 +286,12 @@ class _DesignMasterDetail extends StatelessWidget {
 /// RM Summary tab bar — a filled pill indicator sliding between equal-width
 /// segments — except each segment shows its icon to the left of its label
 /// (Bag Detail's two tabs are text-only) instead of stacked above it.
-class _SegmentedTabBar extends StatelessWidget {
-  const _SegmentedTabBar({required this.tabController});
-
-  final TabController tabController;
-
-  static const List<_TabData> _tabs = [
-    _TabData(Icons.description_outlined, AppStrings.generalTab),
-    _TabData(Icons.grid_view_rounded, AppStrings.billOfMaterialTab),
-    _TabData(Icons.science_outlined, AppStrings.labDetailsTab),
-    _TabData(Icons.history_rounded, AppStrings.historyTab),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppColors.surfaceVariant,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacingXs),
-        child: SizedBox(
-          height: AppDimensions.bagDetailSegmentedTabBarHeight,
-          child: TabBar(
-            controller: tabController,
-            indicator: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            labelColor: AppColors.onPrimary,
-            unselectedLabelColor: AppColors.textSecondary,
-            labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
-            tabs: [
-              for (final tab in _tabs)
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(tab.icon, size: AppDimensions.iconSm),
-                      const SizedBox(width: AppDimensions.spacingXxs),
-                      Flexible(child: Text(tab.label, overflow: TextOverflow.ellipsis)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+const List<_TabData> _designImageTabs = [
+  _TabData(Icons.description_outlined, AppStrings.generalTab),
+  _TabData(Icons.grid_view_rounded, AppStrings.billOfMaterialTab),
+  _TabData(Icons.science_outlined, AppStrings.labDetailsTab),
+  _TabData(Icons.history_rounded, AppStrings.historyTab),
+];
 
 class _TabData {
   const _TabData(this.icon, this.label);
@@ -452,11 +420,7 @@ class _DesignImageCard extends StatelessWidget {
                 vertical: AppDimensions.spacingXs,
               ),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-                ),
+                gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
                 boxShadow: [
                   BoxShadow(

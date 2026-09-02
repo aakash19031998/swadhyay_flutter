@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/base/list_state_controller.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/helpers/suggestion_helper.dart' as suggestion_helper;
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_snackbar.dart';
@@ -110,19 +111,10 @@ class BagListController extends ListStateController<BagEntity> {
   /// cached list, so a bag that's no longer in the list (completed,
   /// removed, etc.) can never still show up as a suggestion.
   List<String> suggestionsFor(String text) {
-    final String needle = text.trim().toLowerCase();
-    if (needle.isEmpty) return const [];
-
-    final List<String> matches = [];
-    for (final bag in _allBags) {
-      if (bag.bagNo.toLowerCase().contains(needle) && !matches.contains(bag.bagNo)) {
-        matches.add(bag.bagNo);
-      }
-      if (bag.designNo.toLowerCase().contains(needle) && !matches.contains(bag.designNo)) {
-        matches.add(bag.designNo);
-      }
-    }
-    return matches.take(8).toList(growable: false);
+    return suggestion_helper.suggestionsFor(text, _allBags, [
+      (BagEntity bag) => bag.bagNo,
+      (BagEntity bag) => bag.designNo,
+    ]);
   }
 
   void onBagDone(BagEntity bag) {
@@ -143,11 +135,7 @@ class BagListController extends ListStateController<BagEntity> {
     AppDialog.dismiss();
 
     result.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (media) {
         if (media.isEmpty) {
           AppSnackbar.show(
@@ -179,7 +167,7 @@ class BagListController extends ListStateController<BagEntity> {
     AppDialog.dismiss();
 
     result.fold(
-      (failure) => AppSnackbar.show(title: AppStrings.alertWarning, message: failure.message, isSuccess: false),
+      AppSnackbar.showFailure,
       (response) {
         if (response.success) noWorkRunning.value = true;
         if (response.message.isNotEmpty) {

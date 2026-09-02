@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/qc_repair_qty_entity.dart';
@@ -30,8 +31,8 @@ class QcActionSubmitRemoteDataSourceImpl implements QcActionSubmitDataSource {
     required String process,
     required String diaQcCd,
     required List<QcRepairQtyEntity> repairList,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.bagFinalReceive,
         data: {
@@ -54,8 +55,6 @@ class QcActionSubmitRemoteDataSourceImpl implements QcActionSubmitDataSource {
       final bool status = rawStatus is bool ? rawStatus : (rawStatus as String? ?? '').toLowerCase() == 'true';
       final String message = body['message'] as String? ?? '';
       return QcSubmitResultEntity(success: status, message: message);
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to submit', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to submit');
   }
 }

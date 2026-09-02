@@ -41,13 +41,7 @@ class ProfileCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: padding,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
       child: Stack(
         clipBehavior: Clip.none,
         children: [

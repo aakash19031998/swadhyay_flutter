@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../qc_pending_dashboard/data/models/qc_assigned_bag_model.dart';
@@ -22,8 +23,8 @@ class QcCheckerBagSearchRemoteDataSourceImpl
   @override
   Future<List<QcAssignedBagModel>> searchBag({
     required String bagBarcode,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient
           .post<Map<String, dynamic>>(
             ApiEndpoints.qcPendingBagSingle,
@@ -50,11 +51,6 @@ class QcCheckerBagSearchRemoteDataSourceImpl
         for (final entry in data)
           QcAssignedBagModel.fromJson(entry as Map<String, dynamic>),
       ];
-    } on DioException catch (e) {
-      throw ServerException(
-        message: 'Unable to load bag',
-        statusCode: e.response?.statusCode,
-      );
-    }
+    }, (_) => 'Unable to load bag');
   }
 }

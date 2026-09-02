@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/network/api_client.dart';
@@ -21,8 +22,8 @@ class ArtistProductionRemoteDataSourceImpl implements ArtistProductionDataSource
     required DateTime fromDate,
     required DateTime toDate,
     required String empCd,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.artistProduction,
         data: {
@@ -42,8 +43,6 @@ class ArtistProductionRemoteDataSourceImpl implements ArtistProductionDataSource
 
       final Map<String, dynamic> data = body['data'] as Map<String, dynamic>? ?? const {};
       return ArtistProductionReportModel.fromJson(data);
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load artist production', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load artist production');
   }
 }

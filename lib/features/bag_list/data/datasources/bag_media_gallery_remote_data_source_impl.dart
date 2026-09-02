@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/bag_media_entity.dart';
@@ -32,8 +33,8 @@ class BagMediaGalleryRemoteDataSourceImpl implements BagMediaGalleryDataSource {
   final ApiClient _apiClient;
 
   @override
-  Future<List<BagMediaModel>> getMedia({required String empCd, required String styleCd}) async {
-    try {
+  Future<List<BagMediaModel>> getMedia({required String empCd, required String styleCd}) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.imageAndVideoUrls,
         data: {
@@ -59,9 +60,7 @@ class BagMediaGalleryRemoteDataSourceImpl implements BagMediaGalleryDataSource {
         for (int i = 0; i < candidates.length; i++)
           if (exists[i]) candidates[i],
       ];
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load media', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load media');
   }
 
   /// `ImageAndVideoUrls` uses capitalized `Url`/`Type` keys (`"Image"` /

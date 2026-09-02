@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/repository_guard.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/repositories/bag_repository.dart';
 import '../datasources/bag_data_source.dart';
@@ -15,20 +15,16 @@ class BagRepositoryImpl implements BagRepository {
   Future<Either<Failure, ({int bagCount, int pcsCount, String noWorkStatus, String noWorkRunning, List<BagEntity> bags})>>
       getBags({
     required String empCd,
-  }) async {
-    try {
+  }) {
+    return guard(() async {
       final result = await _dataSource.getBags(empCd: empCd);
-      return Right((
+      return (
         bagCount: result.bagCount,
         pcsCount: result.pcsCount,
         noWorkStatus: result.noWorkStatus,
         noWorkRunning: result.noWorkRunning,
         bags: result.bags.cast<BagEntity>(),
-      ));
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    }
+      );
+    });
   }
 }

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../authentication/di/auth_dependencies.dart';
-import '../../../authentication/domain/repositories/auth_repository.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../data/datasources/bag_data_source.dart';
 import '../../data/datasources/bag_media_gallery_data_source.dart';
@@ -34,7 +33,6 @@ class BagListBinding extends Bindings {
     );
     Get.lazyPut<BagRepository>(() => BagRepositoryImpl(Get.find<BagDataSource>()));
     Get.lazyPut<GetBagsUseCase>(() => GetBagsUseCase(Get.find<BagRepository>()));
-    Get.lazyPut<GetCurrentEmployeeUseCase>(() => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()));
 
     Get.lazyPut<BagMediaGalleryDataSource>(
       () => AppConfig.useMockBagMediaGallery

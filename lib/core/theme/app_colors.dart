@@ -13,6 +13,16 @@ class AppColors {
   static const Color primaryContainer = Color(0xFFE4E6F5);
   static const Color onPrimary = Color(0xFFFFFFFF);
 
+  /// The `primaryDark → primary → primaryLight` (top-left to bottom-right)
+  /// gradient used by every gradient app bar/banner across the app —
+  /// centralized here instead of each screen inlining its own identical
+  /// `LinearGradient` literal.
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryDark, primary, primaryLight],
+  );
+
   // Neutrals / surfaces.
   static const Color surface = Color(0xFFFFFFFF);
   static const Color background = Color(0xFFF4F5F9);

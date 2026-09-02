@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/qc_repair_checklist_item_model.dart';
@@ -19,8 +20,8 @@ class QcRepairListRemoteDataSourceImpl implements QcRepairListDataSource {
   final ApiClient _apiClient;
 
   @override
-  Future<List<QcRepairChecklistItemModel>> getRepairList({required String schr, required String empCd}) async {
-    try {
+  Future<List<QcRepairChecklistItemModel>> getRepairList({required String schr, required String empCd}) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.qcRepairList,
         data: {
@@ -43,8 +44,6 @@ class QcRepairListRemoteDataSourceImpl implements QcRepairListDataSource {
       return [
         for (final entry in repairJson) QcRepairChecklistItemModel.fromJson(entry as Map<String, dynamic>),
       ];
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load repair list', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load repair list');
   }
 }

@@ -55,7 +55,7 @@ class BrandSpecificationController extends GetxController {
     isLoadingBrands.value = true;
     final result = await _getBrandsUseCase();
     result.fold(
-      (failure) => AppSnackbar.show(title: AppStrings.alertWarning, message: failure.message, isSuccess: false),
+      AppSnackbar.showFailure,
       (list) => brands.assignAll(list),
     );
     isLoadingBrands.value = false;
@@ -128,7 +128,7 @@ class BrandSpecificationController extends GetxController {
     );
 
     result.fold(
-      (failure) => AppSnackbar.show(title: AppStrings.alertWarning, message: failure.message, isSuccess: false),
+      AppSnackbar.showFailure,
       (fileUrl) => Get.toNamed<void>(
         AppRoutes.brandSpecificationPdfViewer,
         arguments: BrandPdfViewerArgs(url: fileUrl, title: item.productId),

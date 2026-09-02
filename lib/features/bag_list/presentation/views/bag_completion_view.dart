@@ -63,13 +63,7 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
       child: SafeArea(
         bottom: false,
         child: Padding(

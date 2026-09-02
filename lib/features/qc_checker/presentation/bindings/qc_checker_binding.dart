@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/local_storage_service.dart';
 import '../../../authentication/di/auth_dependencies.dart';
-import '../../../authentication/domain/repositories/auth_repository.dart';
 import '../../../authentication/domain/usecases/get_current_employee_usecase.dart';
 import '../../../bag_list/data/datasources/bag_media_gallery_data_source.dart';
 import '../../../bag_list/data/datasources/bag_media_gallery_remote_data_source_impl.dart';
@@ -32,9 +31,6 @@ class QcCheckerBinding extends Bindings {
   @override
   void dependencies() {
     AuthDependencies.ensureRegistered();
-    Get.lazyPut<GetCurrentEmployeeUseCase>(
-      () => GetCurrentEmployeeUseCase(Get.find<AuthRepository>()),
-    );
 
     Get.lazyPut<QcCheckerDepartmentDataSource>(
       () => QcCheckerDepartmentRemoteDataSourceImpl(Get.find<ApiClient>()),

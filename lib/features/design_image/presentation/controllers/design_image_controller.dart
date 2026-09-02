@@ -37,11 +37,7 @@ class DesignImageController extends GetxController with GetSingleTickerProviderS
 
     final outcome = await _getDesignMasterUseCase(styleNo: styleNo.trim());
     outcome.fold(
-      (failure) => AppSnackbar.show(
-        title: AppStrings.alertWarning,
-        message: failure.message,
-        isSuccess: false,
-      ),
+      AppSnackbar.showFailure,
       (design) => result.value = design,
     );
     isLoading.value = false;

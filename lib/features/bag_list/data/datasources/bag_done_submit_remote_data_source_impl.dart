@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import 'bag_done_submit_data_source.dart';
@@ -25,8 +26,8 @@ class BagDoneSubmitRemoteDataSourceImpl implements BagDoneSubmitDataSource {
     required String trnId,
     required String proId,
     required String empCd,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.bagDoneWithFirstReceive,
         data: {
@@ -42,8 +43,6 @@ class BagDoneSubmitRemoteDataSourceImpl implements BagDoneSubmitDataSource {
       final String message = body['message'] as String? ?? '';
 
       return (success: success, message: message);
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to submit work entry', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to submit work entry');
   }
 }

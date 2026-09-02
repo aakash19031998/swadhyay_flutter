@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/app_version.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/error/data_source_guard.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/bag_completion_master_model.dart';
@@ -23,8 +24,8 @@ class BagCompletionMasterRemoteDataSourceImpl implements BagCompletionMasterData
   Future<BagCompletionMasterModel> getBagCompletionMaster({
     required String trnId,
     required String empCd,
-  }) async {
-    try {
+  }) {
+    return wrapDioErrors(() async {
       final Response<Map<String, dynamic>> response = await _apiClient.post<Map<String, dynamic>>(
         ApiEndpoints.bagDoneDetail,
         data: {
@@ -42,8 +43,6 @@ class BagCompletionMasterRemoteDataSourceImpl implements BagCompletionMasterData
 
       final Map<String, dynamic> data = body['data'] as Map<String, dynamic>? ?? const {};
       return BagCompletionMasterModel.fromApiJson(data);
-    } on DioException catch (e) {
-      throw ServerException(message: 'Unable to load bag completion details', statusCode: e.response?.statusCode);
-    }
+    }, (_) => 'Unable to load bag completion details');
   }
 }
