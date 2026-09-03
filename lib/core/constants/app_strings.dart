@@ -88,6 +88,8 @@ class AppStrings {
   static const String labourCd = 'LabourCd';
   static const String labourNm = 'LabourNm';
   static const String qcPendingDashboard = 'QC Pending Dashboard';
+  static const String firstReceivePending = 'First Receive Pending';
+  static const String finalReceivePending = 'Final Receive Pending';
   static const String qcChecker = 'QC Checker';
   static const String selectDepartment = 'Select Department';
   static const String selectDepartmentPrompt = 'Please select Department';
