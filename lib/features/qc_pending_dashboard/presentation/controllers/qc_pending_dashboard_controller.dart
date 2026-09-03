@@ -58,7 +58,8 @@ class QcPendingDashboardController extends ListStateController<QcCheckEntity> {
   /// instead of its own picker. Persisted via [_localStorageService] so
   /// `QcBagListController`/`QcActionDialog` — a separate screen/controller —
   /// can read it without depending on this controller directly.
-  final Rxn<DiaQcCheckerEntity> selectedDiaQcChecker = Rxn<DiaQcCheckerEntity>();
+  final Rxn<DiaQcCheckerEntity> selectedDiaQcChecker =
+      Rxn<DiaQcCheckerEntity>();
 
   /// Full (unfiltered-by-search) snapshot for the currently selected
   /// department. `query` is applied to this purely in-memory — the same
@@ -97,13 +98,10 @@ class QcPendingDashboardController extends ListStateController<QcCheckEntity> {
     isLoadingDepartments.value = true;
     _empCd ??= (await _getCurrentEmployeeUseCase())?.empCode;
     final result = await _getDepartmentsUseCase(empCd: _empCd ?? '');
-    result.fold(
-      AppSnackbar.showFailure,
-      (data) {
-        departments.assignAll(data.departments);
-        _autoUpdate = data.autoUpdate;
-      },
-    );
+    result.fold(AppSnackbar.showFailure, (data) {
+      departments.assignAll(data.departments);
+      _autoUpdate = data.autoUpdate;
+    });
     isLoadingDepartments.value = false;
   }
 
@@ -133,6 +131,23 @@ class QcPendingDashboardController extends ListStateController<QcCheckEntity> {
     load();
   }
 
+  /// Deselects the current department and clears its grid — called when
+  /// the "First Receive Pending"/"Final Receive Pending" stage tab is
+  /// switched, so a list loaded for one stage is never left showing under
+  /// the other. Mirrors [selectDepartment]'s own clearing, minus picking a
+  /// new department to load.
+  void resetSelection() {
+    if (selectedDepartment.value == null) return;
+    selectedDepartment.value = null;
+    searchController.clear();
+    query.value = '';
+    items.clear();
+    _allChecks = const [];
+    diaQcCheckers.clear();
+    selectedDiaQcChecker.value = null;
+    _localStorageService.clearSelectedDiaQcChecker();
+  }
+
   /// Sets the centrally-selected Diamond QC Checker for the current
   /// department — persisted so the QC OK/Repair popup (a different
   /// screen/controller) can read it, and stays selected across every
@@ -140,13 +155,18 @@ class QcPendingDashboardController extends ListStateController<QcCheckEntity> {
   /// is picked here.
   void selectDiaQcChecker(DiaQcCheckerEntity value) {
     selectedDiaQcChecker.value = value;
-    _localStorageService.saveSelectedDiaQcChecker({'qcCode': value.qcCode, 'qcName': value.qcName});
+    _localStorageService.saveSelectedDiaQcChecker({
+      'qcCode': value.qcCode,
+      'qcName': value.qcName,
+    });
   }
 
   List<QcCheckEntity> _filter(String value) {
     final String needle = value.trim().toLowerCase();
     if (needle.isEmpty) return _allChecks;
-    return _allChecks.where((c) => c.empCode.toLowerCase().contains(needle)).toList(growable: false);
+    return _allChecks
+        .where((c) => c.empCode.toLowerCase().contains(needle))
+        .toList(growable: false);
   }
 
   /// Re-filters the already-loaded [_allChecks] snapshot in place — no
@@ -166,7 +186,8 @@ class QcPendingDashboardController extends ListStateController<QcCheckEntity> {
 
     final List<String> matches = [];
     for (final check in _allChecks) {
-      if (check.empCode.toLowerCase().contains(needle) && !matches.contains(check.empCode)) {
+      if (check.empCode.toLowerCase().contains(needle) &&
+          !matches.contains(check.empCode)) {
         matches.add(check.empCode);
       }
     }
@@ -184,16 +205,13 @@ class QcPendingDashboardController extends ListStateController<QcCheckEntity> {
     }
 
     final result = await _getQcChecksUseCase(deptId: department.id);
-    return result.fold(
-      (failure) => Left(failure),
-      (data) {
-        _allChecks = data.checks;
-        diaQcCheckers.assignAll(data.diaQcList);
-        // Filters by the *current* query.value, not the searchQuery this
-        // call started with — see BagListController.fetch for why.
-        return Right(_filter(query.value));
-      },
-    );
+    return result.fold((failure) => Left(failure), (data) {
+      _allChecks = data.checks;
+      diaQcCheckers.assignAll(data.diaQcList);
+      // Filters by the *current* query.value, not the searchQuery this
+      // call started with — see BagListController.fetch for why.
+      return Right(_filter(query.value));
+    });
   }
 
   /// Opens the "QC Bag List" screen for this card's employee.
