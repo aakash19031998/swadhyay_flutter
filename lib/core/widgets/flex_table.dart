@@ -28,6 +28,8 @@ class FlexTable extends StatelessWidget {
     required this.isEmpty,
     super.key,
     this.rowTrailing,
+    this.onRowTap,
+    this.isRowDisabled,
   });
 
   final List<FlexColumn> columns;
@@ -41,6 +43,16 @@ class FlexTable extends StatelessWidget {
   /// completely unaffected.
   final Widget Function(int rowIndex)? rowTrailing;
 
+  /// Optional per-row tap handler (e.g. moving that row elsewhere). Left
+  /// null (no `InkWell`, no tap feedback at all) by every other [FlexTable]
+  /// call site, which stays completely unaffected.
+  final void Function(int rowIndex)? onRowTap;
+
+  /// Optional per-row disabled check — a disabled row is dimmed and its
+  /// [onRowTap] (if any) does not fire. Left null (no row ever disabled) by
+  /// every other [FlexTable] call site, which stays completely unaffected.
+  final bool Function(int rowIndex)? isRowDisabled;
+
   static const double _trailingWidth = 36;
 
   @override
@@ -51,7 +63,9 @@ class FlexTable extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.18),
+            ),
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
           child: Column(
@@ -67,19 +81,22 @@ class FlexTable extends StatelessWidget {
                   child: Row(
                     children: [
                       for (int c = 0; c < columns.length; c++) ...[
-                        if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
+                        if (c > 0)
+                          const SizedBox(width: AppDimensions.spacingSm),
                         Expanded(
                           flex: columns[c].flex,
                           child: FlexCell(
                             text: columns[c].label.toUpperCase(),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
                                   color: AppColors.primaryDark,
                                   fontWeight: FontWeight.w800,
                                 ),
                           ),
                         ),
                       ],
-                      if (rowTrailing != null) const SizedBox(width: _trailingWidth),
+                      if (rowTrailing != null)
+                        const SizedBox(width: _trailingWidth),
                     ],
                   ),
                 ),
@@ -89,39 +106,57 @@ class FlexTable extends StatelessWidget {
                   padding: const EdgeInsets.all(AppDimensions.spacingLg),
                   child: Text(
                     AppStrings.noDataAvailable,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
                   ),
                 )
               else
-                for (int r = 0; r < rows.length; r++)
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: r.isEven ? AppColors.surface : AppColors.background,
-                      border: const Border(top: BorderSide(color: AppColors.divider)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacingSm,
-                        vertical: AppDimensions.spacingSm,
-                      ),
-                      child: Row(
-                        children: [
-                          for (int c = 0; c < columns.length; c++) ...[
-                            if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
-                            Expanded(
-                              flex: columns[c].flex,
-                              child: FlexCell(text: rows[r][c]),
-                            ),
-                          ],
-                          if (rowTrailing != null) ...[
-                            const SizedBox(width: AppDimensions.spacingSm),
-                            SizedBox(width: _trailingWidth, child: Center(child: rowTrailing!(r))),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
+                for (int r = 0; r < rows.length; r++) _buildDataRow(r),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataRow(int r) {
+    final bool disabled = isRowDisabled?.call(r) ?? false;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: disabled
+            ? AppColors.divider.withValues(alpha: 0.25)
+            : (r.isEven ? AppColors.surface : AppColors.background),
+        border: const Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: InkWell(
+        onTap: disabled || onRowTap == null ? null : () => onRowTap!(r),
+        child: Opacity(
+          opacity: disabled ? 0.28 : 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacingSm,
+              vertical: AppDimensions.spacingSm,
+            ),
+            child: Row(
+              children: [
+                for (int c = 0; c < columns.length; c++) ...[
+                  if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
+                  Expanded(
+                    flex: columns[c].flex,
+                    child: FlexCell(text: rows[r][c]),
+                  ),
+                ],
+                if (rowTrailing != null) ...[
+                  const SizedBox(width: AppDimensions.spacingSm),
+                  SizedBox(
+                    width: _trailingWidth,
+                    child: Center(child: rowTrailing!(r)),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

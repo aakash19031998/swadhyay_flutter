@@ -12,7 +12,7 @@ import '../../domain/usecases/get_bag_media_usecase.dart';
 import 'bag_media_viewer_args.dart';
 import 'bag_timer_controller.dart';
 
-/// Drives the bag detail screen: which of the two summary tabs is active,
+/// Drives the bag detail screen: which of the summary tabs is active,
 /// the Start/Pause/Resume/Done actions for that bag's productivity clock,
 /// and — on open — fetching `BagDetailsNew`'s Bag Summary/Manufacturing
 /// Instructions data and merging it onto the [BagEntity] the list screen
@@ -20,7 +20,8 @@ import 'bag_timer_controller.dart';
 /// whatever the list screen knew and is refined in place once that fetch
 /// resolves, so the screen is fully usable immediately and just fills in
 /// the rest shortly after.
-class BagDetailController extends GetxController with GetSingleTickerProviderStateMixin {
+class BagDetailController extends GetxController
+    with GetSingleTickerProviderStateMixin {
   BagDetailController(
     BagEntity initialBag,
     this._getBagDetailUseCase,
@@ -39,7 +40,10 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
   /// that data has actually been bound onto [bag].
   final RxBool isLoading = true.obs;
 
-  late final TabController tabController = TabController(length: 2, vsync: this);
+  late final TabController tabController = TabController(
+    length: 3,
+    vsync: this,
+  );
 
   late final BagTimerController timer = BagTimerController.of(bag.value);
 
@@ -53,37 +57,37 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
     isLoading.value = true;
     try {
       final String? empCd = (await _getCurrentEmployeeUseCase())?.empCode;
-      final result = await _getBagDetailUseCase(bagNo: bag.value.bagNo, empCd: empCd ?? '');
-      result.fold(
-        AppSnackbar.showFailure,
-        (detail) {
-          bag.value = bag.value.copyWith(
-            delDate: detail.delDate,
-            bagQty: detail.bagQty,
-            styleNo: detail.styleNo,
-            locationCode: detail.orderNo,
-            customer: detail.customer,
-            part: detail.part,
-            size: detail.size,
-            designCategory: detail.designCategory,
-            metal: detail.metal,
-            designGrossWt: detail.designGrossWt,
-            designNetWt: detail.designNetWt,
-            designInstr: detail.designInstr,
-            custInstr: detail.custInstr,
-            stampInstr: detail.stampInstr,
-            rhodInstr: detail.rhodInstr,
-            diamInstr: detail.diamInstr,
-            byy: detail.byy,
-            bchr: detail.bchr,
-            bno: detail.bno,
-            bagCmpCd: detail.bagCmpCd,
-            diamondDetails: detail.diamondDetails,
-            rmSummary: detail.rmSummary,
-            sizeInstr: detail.sizeInstr,
-          );
-        },
+      final result = await _getBagDetailUseCase(
+        bagNo: bag.value.bagNo,
+        empCd: empCd ?? '',
       );
+      result.fold(AppSnackbar.showFailure, (detail) {
+        bag.value = bag.value.copyWith(
+          delDate: detail.delDate,
+          bagQty: detail.bagQty,
+          styleNo: detail.styleNo,
+          locationCode: detail.orderNo,
+          customer: detail.customer,
+          part: detail.part,
+          size: detail.size,
+          designCategory: detail.designCategory,
+          metal: detail.metal,
+          designGrossWt: detail.designGrossWt,
+          designNetWt: detail.designNetWt,
+          designInstr: detail.designInstr,
+          custInstr: detail.custInstr,
+          stampInstr: detail.stampInstr,
+          rhodInstr: detail.rhodInstr,
+          diamInstr: detail.diamInstr,
+          byy: detail.byy,
+          bchr: detail.bchr,
+          bno: detail.bno,
+          bagCmpCd: detail.bagCmpCd,
+          diamondDetails: detail.diamondDetails,
+          rmSummary: detail.rmSummary,
+          sizeInstr: detail.sizeInstr,
+        );
+      });
     } finally {
       isLoading.value = false;
     }
@@ -99,23 +103,26 @@ class BagDetailController extends GetxController with GetSingleTickerProviderSta
     final String? empCd = (await _getCurrentEmployeeUseCase())?.empCode;
 
     AppDialog.loading();
-    final result = await _getBagMediaUseCase(empCd: empCd ?? '', styleCd: bag.value.designNo);
+    final result = await _getBagMediaUseCase(
+      empCd: empCd ?? '',
+      styleCd: bag.value.designNo,
+    );
     AppDialog.dismiss();
 
-    result.fold(
-      AppSnackbar.showFailure,
-      (media) {
-        if (media.isEmpty) {
-          AppSnackbar.show(
-            title: AppStrings.alertWarning,
-            message: AppStrings.noMediaFound,
-            isSuccess: false,
-          );
-          return;
-        }
-        Get.toNamed(AppRoutes.bagMediaViewer, arguments: BagMediaViewerArgs(media: media));
-      },
-    );
+    result.fold(AppSnackbar.showFailure, (media) {
+      if (media.isEmpty) {
+        AppSnackbar.show(
+          title: AppStrings.alertWarning,
+          message: AppStrings.noMediaFound,
+          isSuccess: false,
+        );
+        return;
+      }
+      Get.toNamed(
+        AppRoutes.bagMediaViewer,
+        arguments: BagMediaViewerArgs(media: media),
+      );
+    });
   }
 
   void onDone() {

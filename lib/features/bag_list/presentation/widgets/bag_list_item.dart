@@ -8,16 +8,24 @@ import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/view_eye_badge.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../controllers/bag_timer_controller.dart';
 import 'bag_action_button.dart';
 
-/// One Bag List grid card: image with a floating quality badge, a fixed
-/// 2x2 info grid (Bag ID / Order No. on top, Department / Qty below), a
-/// points summary, and the productivity clock/Start-Pause-Resume-Done
-/// actions driven by this bag's [BagTimerController].
+/// One Bag List grid card: a bold hero Bag No. (the card's primary
+/// identifier), full width, at the very top; then the image with its
+/// floating quality badge; a 2x2 info grid below it (Style No./Department,
+/// Bag Qty/Design Point); a points summary; and the productivity
+/// clock/Start-Pause-Resume-Done actions driven by this bag's
+/// [BagTimerController].
 class BagListItem extends StatelessWidget {
-  const BagListItem({required this.bag, required this.onViewMedia, super.key, this.onDone});
+  const BagListItem({
+    required this.bag,
+    required this.onViewMedia,
+    super.key,
+    this.onDone,
+  });
 
   final BagEntity bag;
   final ValueChanged<BagEntity>? onDone;
@@ -38,15 +46,40 @@ class BagListItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _BagIdentityHeader(bag: bag),
+          const SizedBox(height: AppDimensions.spacingMd),
           _BagImageHeader(bag: bag, onViewMedia: onViewMedia),
           const SizedBox(height: AppDimensions.spacingMd),
-          _BagInfoGrid(bag: bag),
-          const SizedBox(height: AppDimensions.spacingMd),
-          _PointsSummary(bag: bag),
+          _BagInfoRow(bag: bag),
           const SizedBox(height: AppDimensions.spacingMd),
           _StatusRow(timer: _timer, bag: bag, onDone: onDone),
         ],
       ),
+    );
+  }
+}
+
+/// The card's hero identity row — Bag No. alone, full width, at the very
+/// top of the card, using the same "icon badge + caption/value" tile
+/// style as everything else on the card (see [_InfoTile]) with a trailing
+/// eye icon; tapping it opens Bag Detail.
+class _BagIdentityHeader extends StatelessWidget {
+  const _BagIdentityHeader({required this.bag});
+
+  final BagEntity bag;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoTile(
+      icon: Icons.badge_outlined,
+      caption: AppStrings.bagNoShort,
+      value: bag.bagNo,
+      color: AppColors.primary,
+      valueStyle: Theme.of(
+        context,
+      ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+      trailing: const ViewEyeBadge(),
+      onTap: () => Get.toNamed(AppRoutes.bagDetail, arguments: bag),
     );
   }
 }
@@ -61,6 +94,11 @@ class _BagImageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isPremium = bag.filling.toUpperCase() == 'PREMIUM';
 
+    // The bordered box is full-width, same footprint as before (so the
+    // quality badge still floats on its corner exactly like previously) —
+    // but the photo itself stays a small centered square inside it, with
+    // white space either side, so a roughly-square product photo is never
+    // stretched/cropped into an unnaturally wide letterbox.
     return Stack(
       children: [
         GestureDetector(
@@ -74,23 +112,41 @@ class _BagImageHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               child: SizedBox(
                 width: double.infinity,
-                height: AppDimensions.bagCardImageHeight,
-                child: bag.imageUrl == null
-                    ? const ColoredBox(
-                        color: AppColors.surfaceVariant,
-                        child: Icon(Icons.diamond_outlined, color: AppColors.textHint),
-                      )
-                    : CachedNetworkImage(
-                        imageUrl: bag.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        errorWidget: (context, url, error) => const ColoredBox(
-                          color: AppColors.surfaceVariant,
-                          child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
-                        ),
-                      ),
+                height: AppDimensions.bagCardImageSize,
+                child: ColoredBox(
+                  color: AppColors.surface,
+                  child: Center(
+                    child: SizedBox(
+                      width: AppDimensions.bagCardImageSize,
+                      height: AppDimensions.bagCardImageSize,
+                      child: bag.imageUrl == null
+                          ? const ColoredBox(
+                              color: AppColors.surfaceVariant,
+                              child: Icon(
+                                Icons.diamond_outlined,
+                                color: AppColors.textHint,
+                              ),
+                            )
+                          : CachedNetworkImage(
+                              imageUrl: bag.imageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const ColoredBox(
+                                    color: AppColors.surfaceVariant,
+                                    child: Icon(
+                                      Icons.image_not_supported_outlined,
+                                      color: AppColors.textHint,
+                                    ),
+                                  ),
+                            ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -99,6 +155,11 @@ class _BagImageHeader extends StatelessWidget {
           top: AppDimensions.spacingSm,
           right: AppDimensions.spacingSm,
           child: _QualityBadge(label: bag.filling, isPremium: isPremium),
+        ),
+        const Positioned(
+          bottom: AppDimensions.spacingSm,
+          right: AppDimensions.spacingSm,
+          child: ViewEyeBadge(),
         ),
       ],
     );
@@ -137,21 +198,21 @@ class _QualityBadge extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.onPrimary,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-            ),
+          color: AppColors.onPrimary,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
 }
 
-/// Bag ID / Order No. / Department / Qty as four equal-width info tiles —
-/// each a colored icon badge beside a caption+value pair — instead of a
-/// free-flowing row of pill chips, so the four key identifiers always sit
-/// fixed, aligned, and legible regardless of card width.
-class _BagInfoGrid extends StatelessWidget {
-  const _BagInfoGrid({required this.bag});
+/// Style No. / Department / Bag Qty / Design Point as a 2x2 grid of info
+/// tiles — each a colored icon badge beside a caption+value pair, sitting
+/// below the image. Bag No. alone is promoted to its own full-width hero
+/// row above (see [_BagIdentityHeader]).
+class _BagInfoRow extends StatelessWidget {
+  const _BagInfoRow({required this.bag});
 
   final BagEntity bag;
 
@@ -160,35 +221,33 @@ class _BagInfoGrid extends StatelessWidget {
     return Column(
       children: [
         _InfoTileRow(
-          left: GestureDetector(
-            onTap: () => Get.toNamed(AppRoutes.bagDetail, arguments: bag),
-            child: _InfoTile(
-              icon: Icons.badge_outlined,
-              caption: AppStrings.bagNoShort,
-              value: bag.bagNo,
-              color: AppColors.primary,
-            ),
-          ),
-          right: _InfoTile(
+          left: _InfoTile(
             icon: Icons.style_outlined,
             caption: AppStrings.styleNo,
             value: bag.designNo,
             color: AppColors.textSecondary,
           ),
-        ),
-        const SizedBox(height: AppDimensions.spacingXs),
-        _InfoTileRow(
-          left: _InfoTile(
+          right: _InfoTile(
             icon: Icons.layers_outlined,
             caption: AppStrings.department,
             value: bag.department,
             color: AppColors.info,
           ),
-          right: _InfoTile(
+        ),
+        const SizedBox(height: AppDimensions.spacingXs),
+        _InfoTileRow(
+          left: _InfoTile(
             icon: Icons.inventory_2_outlined,
             caption: AppStrings.bagQty,
             value: '${bag.bagQty}',
             color: AppColors.success,
+          ),
+          right: _InfoTile(
+            caption: AppStrings.designPoints,
+            value:
+                '${bag.designPoints.toStringAsFixed(2)} × ${bag.bagQty} = '
+                '${bag.totalPoints.toStringAsFixed(2)} Points',
+            color: AppColors.primary,
           ),
         ),
       ],
@@ -223,19 +282,30 @@ class _InfoTileRow extends StatelessWidget {
   }
 }
 
-/// One "icon badge + caption/value" tile used by [_BagInfoGrid].
+/// One "icon badge + caption/value" tile used by [_BagInfoRow] and
+/// [_BagIdentityHeader]. [trailing] and [onTap] are only set by the Bag
+/// No. tile (its eye icon + tap-to-view-detail); [valueStyle] is only set
+/// by the Bag No. tile too (bigger text). [icon] is null only for the
+/// Design Point tile — omitting its badge frees up width so its (longer)
+/// value text doesn't need to shrink as much to fit on one line.
 class _InfoTile extends StatelessWidget {
   const _InfoTile({
-    required this.icon,
     required this.caption,
     required this.value,
     required this.color,
+    this.icon,
+    this.trailing,
+    this.onTap,
+    this.valueStyle,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final String caption;
   final String value;
   final Color color;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final TextStyle? valueStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -245,7 +315,7 @@ class _InfoTile extends StatelessWidget {
     // requested layout. Both text lines are wrapped in FittedBox so a long
     // value (e.g. a location code) scales down to fit the remaining width
     // instead of being cut off with an ellipsis.
-    return Container(
+    final Widget tile = Container(
       padding: const EdgeInsets.all(AppDimensions.spacingXs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
@@ -254,13 +324,19 @@ class _InfoTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: AppDimensions.iconMd,
-            height: AppDimensions.iconMd,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(icon, size: AppDimensions.iconSm, color: AppColors.onPrimary),
-          ),
-          const SizedBox(width: AppDimensions.spacingXs),
+          if (icon != null) ...[
+            Container(
+              width: AppDimensions.iconMd,
+              height: AppDimensions.iconMd,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: Icon(
+                icon,
+                size: AppDimensions.iconSm,
+                color: AppColors.onPrimary,
+              ),
+            ),
+            const SizedBox(width: AppDimensions.spacingXs),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +348,9 @@ class _InfoTile extends StatelessWidget {
                   child: Text(
                     caption,
                     maxLines: 1,
-                    style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
+                    style: textTheme.labelSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
                 FittedBox(
@@ -281,52 +359,30 @@ class _InfoTile extends StatelessWidget {
                   child: Text(
                     value,
                     maxLines: 1,
-                    style: textTheme.titleSmall?.copyWith(color: color, fontWeight: FontWeight.w800),
+                    style: (valueStyle ?? textTheme.titleSmall)?.copyWith(
+                      color: color,
+                      fontWeight: valueStyle == null
+                          ? FontWeight.w800
+                          : valueStyle!.fontWeight,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          if (trailing != null) ...[
+            const SizedBox(width: AppDimensions.spacingXs),
+            trailing!,
+          ],
         ],
       ),
     );
-  }
-}
 
-class _PointsSummary extends StatelessWidget {
-  const _PointsSummary({required this.bag});
-
-  final BagEntity bag;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingMd,
-        vertical: AppDimensions.spacingSm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              '${AppStrings.designPoints}: ${bag.designPoints.toStringAsFixed(2)} × ${bag.bagQty}',
-              style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-            ),
-          ),
-          Text(
-            '${bag.totalPoints.toStringAsFixed(2)} ${AppStrings.totalPoints}',
-            style: textTheme.titleMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
+    if (onTap == null) return tile;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      child: tile,
     );
   }
 }
@@ -356,9 +412,9 @@ class _ProductivityClock extends StatelessWidget {
           Text(
             DateTimeHelper.formatStopwatch(timer.elapsed.value),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: isRunning ? AppColors.success : AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: isRunning ? AppColors.success : AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       );
@@ -411,17 +467,15 @@ class _StatusRow extends StatelessWidget {
             onTap: () => onDone?.call(bag),
           );
         case BagWorkStatus.paused:
-          left = BagActionButton(
+          // Only Resume shows while paused — Done is deliberately withheld
+          // here (unlike the running case) since submitting a bag's
+          // completed work while its own timer isn't actively running
+          // isn't a state this flow allows.
+          right = BagActionButton(
             label: AppStrings.resume,
             icon: Icons.play_arrow_rounded,
             color: AppColors.info,
             onTap: busy ? null : () => timer.resume(bag),
-          );
-          right = BagActionButton(
-            label: AppStrings.done,
-            icon: Icons.check_rounded,
-            color: AppColors.success,
-            onTap: () => onDone?.call(bag),
           );
         case BagWorkStatus.done:
           right = BagActionButton(
@@ -434,9 +488,16 @@ class _StatusRow extends StatelessWidget {
 
       return Row(
         children: [
-          Expanded(child: Align(alignment: Alignment.centerLeft, child: left ?? const SizedBox())),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: left ?? const SizedBox(),
+            ),
+          ),
           _ProductivityClock(timer: timer),
-          Expanded(child: Align(alignment: Alignment.centerRight, child: right)),
+          Expanded(
+            child: Align(alignment: Alignment.centerRight, child: right),
+          ),
         ],
       );
     });

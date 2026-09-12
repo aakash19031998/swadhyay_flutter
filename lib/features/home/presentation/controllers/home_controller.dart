@@ -47,6 +47,19 @@ class HomeController extends GetxController {
     actionKey: 'logout',
   );
 
+  /// Dashboard is a client-only feature with no backend screen of its own
+  /// yet (placeholder data — see `DashboardDataSource`'s doc comment), so
+  /// `MenuListNew` has no way to know about it. Prepended locally, same
+  /// idea as [_logoutMenuItem], until it's wired to a real endpoint and can
+  /// be added server-side instead.
+  static const DrawerMenuItemEntity _dashboardMenuItem = DrawerMenuItemEntity(
+    id: 'dashboard',
+    label: AppStrings.dashboard,
+    icon: Icons.space_dashboard_outlined,
+    type: DrawerMenuItemType.link,
+    route: AppRoutes.dashboard,
+  );
+
   @override
   void onInit() {
     super.onInit();
@@ -85,7 +98,8 @@ class HomeController extends GetxController {
     final result = await _getDrawerMenuUseCase(employee.value?.empCode ?? '');
     result.fold(
       AppSnackbar.showFailure,
-      (items) => menuItems.assignAll([...items, _logoutMenuItem]),
+      (items) =>
+          menuItems.assignAll([_dashboardMenuItem, ...items, _logoutMenuItem]),
     );
     isMenuLoading.value = false;
     _isFetchingMenu = false;
@@ -119,18 +133,15 @@ class HomeController extends GetxController {
     final result = await _logoutUseCase(empCd: employee.value?.empCode ?? '');
     isLoggingOut.value = false;
 
-    result.fold(
-      AppSnackbar.showFailure,
-      (response) {
-        AppSnackbar.show(
-          title: response.success ? AppStrings.success : AppStrings.alertWarning,
-          message: response.message,
-          isSuccess: response.success,
-        );
-        // A "False" status means the user stays signed in on this same
-        // screen, not a hard failure — only navigate away on success.
-        if (response.success) Get.offAllNamed(AppRoutes.login);
-      },
-    );
+    result.fold(AppSnackbar.showFailure, (response) {
+      AppSnackbar.show(
+        title: response.success ? AppStrings.success : AppStrings.alertWarning,
+        message: response.message,
+        isSuccess: response.success,
+      );
+      // A "False" status means the user stays signed in on this same
+      // screen, not a hard failure — only navigate away on success.
+      if (response.success) Get.offAllNamed(AppRoutes.login);
+    });
   }
 }

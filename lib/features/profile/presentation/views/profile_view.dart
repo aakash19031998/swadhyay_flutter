@@ -8,6 +8,8 @@ import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/helpers/date_time_helper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/common_app_bar.dart';
+import '../../../../core/widgets/view_eye_badge.dart';
+import '../../../attendance/presentation/widgets/monthly_attendance_dialog.dart';
 import '../../../authentication/domain/entities/employee_entity.dart';
 import '../controllers/profile_controller.dart';
 
@@ -24,12 +26,17 @@ class ProfileView extends GetView<ProfileController> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CommonAppBar(title: AppStrings.profile, showNotification: false),
+      appBar: const CommonAppBar(
+        title: AppStrings.profile,
+        showNotification: false,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppDimensions.maxContentWidth),
+              constraints: const BoxConstraints(
+                maxWidth: AppDimensions.maxContentWidth,
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(AppDimensions.spacingMd),
                 child: Column(
@@ -111,7 +118,9 @@ class _ProfileHeroCard extends StatelessWidget {
                           ),
                         )
                       : ClipRRect(
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusXl,
+                          ),
                           child: CachedNetworkImage(
                             imageUrl: employee.avatarUrl!,
                             width: AppDimensions.profileHeroAvatarSize,
@@ -140,7 +149,9 @@ class _ProfileHeroCard extends StatelessWidget {
           Text(
             employee.name,
             textAlign: TextAlign.center,
-            style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+            style: textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),
@@ -176,7 +187,13 @@ class _DetailsGrid extends StatelessWidget {
         icon: Icons.access_time_rounded,
         color: AppColors.primary,
         label: AppStrings.inTimeLabel,
-        value: employee.punchInAt == null ? '' : DateTimeHelper.formatDateTime(employee.punchInAt!),
+        value: employee.punchInAt == null
+            ? ''
+            : DateTimeHelper.formatDateTime(employee.punchInAt!),
+        onTap: () => MonthlyAttendanceDialog.show(
+          empCd: employee.empCode,
+          empName: employee.name,
+        ),
       ),
       _InfoTile(
         icon: Icons.corporate_fare_outlined,
@@ -206,14 +223,16 @@ class _DetailsGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
+        final bool isTablet =
+            constraints.maxWidth >= AppDimensions.breakpointPhone;
 
         if (!isTablet) {
           return Column(
             children: [
               for (final tile in tiles) ...[
                 tile,
-                if (tile != tiles.last) const SizedBox(height: AppDimensions.spacingMd),
+                if (tile != tiles.last)
+                  const SizedBox(height: AppDimensions.spacingMd),
               ],
             ],
           );
@@ -242,7 +261,8 @@ class _DetailsGrid extends StatelessWidget {
           children: [
             for (int i = 0; i < rows.length; i++) ...[
               rows[i],
-              if (i != rows.length - 1) const SizedBox(height: AppDimensions.spacingMd),
+              if (i != rows.length - 1)
+                const SizedBox(height: AppDimensions.spacingMd),
             ],
           ],
         );
@@ -257,6 +277,7 @@ class _InfoTile extends StatelessWidget {
     required this.color,
     required this.label,
     required this.value,
+    this.onTap,
   });
 
   final IconData icon;
@@ -264,11 +285,16 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String value;
 
+  /// Only the "In Time" tile passes this (opens the Monthly Attendance
+  /// Detailed Record popup) — every other tile stays a plain, non-tappable
+  /// display exactly as before.
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return Container(
+    final Widget content = Container(
       padding: const EdgeInsets.all(AppDimensions.spacingMd),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
@@ -286,7 +312,10 @@ class _InfoTile extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(AppDimensions.spacingSm),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.16), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.16),
+              shape: BoxShape.circle,
+            ),
             child: Icon(icon, color: color, size: AppDimensions.iconMd),
           ),
           const SizedBox(width: AppDimensions.spacingMd),
@@ -294,19 +323,37 @@ class _InfoTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary)),
+                Text(
+                  label,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: AppDimensions.spacingXxs),
                 Text(
                   value.isEmpty ? '—' : value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: AppDimensions.spacingMd),
+            const ViewEyeBadge(),
+          ],
         ],
       ),
+    );
+
+    if (onTap == null) return content;
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      onTap: onTap,
+      child: content,
     );
   }
 }

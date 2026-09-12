@@ -87,6 +87,25 @@ class AppStrings {
   static const String stonePosition = 'Stone Position';
   static const String labourCd = 'LabourCd';
   static const String labourNm = 'LabourNm';
+  static const String dashboard = 'Dashboard';
+  static const String searchDepartment = 'Search department...';
+  static const String searchTable = 'Search...';
+  static const String activeArtisans = 'ACTIVE ARTISANS';
+  static const String todaysProduction = "TODAY'S PRODUCTION STATUS";
+  static const String onTrack = 'On Track';
+  static const String shiftTarget = 'Shift Target';
+  static const String unresolvedBacklog = 'Unresolved Backlog';
+  static const String qualityInspection = 'QUALITY INSPECTION';
+  static const String piecesWaitingInQcLine = 'units waiting in QC line';
+  static const String targetAndAchievement = 'TARGET AND ACHIEVEMENT';
+  static const String weeklyTarget = 'Weekly Target';
+  static const String outputToDate = 'Output to Date';
+  static const String remaining = 'Remaining';
+  static const String metalLoss = 'METAL LOSS';
+  static const String todaysGrossLoss = "Today's Loss";
+  static const String mtdLoss = 'MTD (Monthly) Loss';
+  static const String activeStatus = 'ACTIVE';
+  static const String dayToDayOutput = 'DAY-TO-DAY OUTPUT';
   static const String qcPendingDashboard = 'QC Pending Dashboard';
   static const String firstReceivePending = 'First Receive Pending';
   static const String finalReceivePending = 'Final Receive Pending';
@@ -152,6 +171,7 @@ class AppStrings {
   static const String sizeInstr = 'Size Instr.';
   static const String diamondDetails = 'Diamond Details';
   static const String bagRmSummary = 'BagRmSummary';
+  static const String lossSummary = 'Loss Summary';
   static const String delDate = 'Del Date';
   static const String size = 'Size';
   static const String customer = 'Customer';
@@ -187,6 +207,7 @@ class AppStrings {
   static const String piecesStones = 'Pieces/Stones';
   static const String completedWork = 'Completed Work';
   static const String pendingWork = 'Pending Work';
+  static const String cartWork = 'Cart Work';
   static const String addSettingBeforeSubmit =
       'Add at least one setting before submitting';
   static const String submitConfirmTitle = 'Submit Entry';
@@ -202,6 +223,39 @@ class AppStrings {
   static const String totalHrsTillDateLabel = 'Total Hrs Till Date';
   static const String otHrsLabel = 'OT Hrs';
   static const String presentDaysLabel = 'Present Days';
+
+  // Attendance (Monthly Attendance Detailed Record popup).
+  static const String monthlyAttendanceTitle =
+      'Monthly Attendance Detailed Record';
+  static const String workingDays = 'Working Days';
+  static const String presentDaysStat = 'Present Days';
+  static const String lateMarks = 'Late Marks';
+  static const String approvedLeaves = 'Approved Leaves';
+  static const String pendingUnapproved = 'Pending/Unapproved';
+  static const String loggedHrsOt = 'Logged Hrs / OT';
+  static const String attendanceTabAll = 'All';
+  static const String attendanceTabPresent = 'Present';
+  static const String attendanceTabLeaves = 'Leaves & Absences';
+  static const String attendanceTabWeekends = 'Weekends & Holidays';
+  static const String dateAndDayColumn = 'Date & Day';
+  static const String statusColumn = 'Status';
+  static const String inTimeColumn = 'In Time';
+  static const String outTimeColumn = 'Out Time';
+  static const String totalHrsColumn = 'Total Hrs';
+  static const String otHrsColumn = 'OT Hrs';
+  static const String leaveTypeReasonColumn = 'Leave Type / Reason';
+  static const String approvalStatusColumn = 'Approval Status';
+  static const String statusPresent = 'Present';
+  static const String statusLeave = 'Leave';
+  static const String statusWeeklyOff = 'Weekly Off';
+  static const String statusHoliday = 'Holiday';
+  static const String lateBadge = 'Late';
+  static const String inProgress = 'In Progress';
+  static const String ongoingSuffix = '(Ongoing)';
+  static const String approvalApproved = 'Approved';
+  static const String approvalRejected = 'Non-Approved / Rejected';
+  static const String approvalPending = 'Pending';
+  static const String daySuffix = 'Days';
 
   // Artist production report.
   static const String artistProductionReportTitle = 'Artist Production Report';
