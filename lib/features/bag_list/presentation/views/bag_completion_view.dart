@@ -35,13 +35,9 @@ class BagCompletionView extends GetView<BagCompletionController> {
                   padding: const EdgeInsets.all(AppDimensions.spacingMd),
                   child: Column(
                     children: [
-                      _MetaPillsRow(controller: controller),
-                      const SizedBox(height: AppDimensions.spacingMd),
                       _WorkFormCard(controller: controller),
                       const SizedBox(height: AppDimensions.spacingMd),
-                      _PendingWorkCard(controller: controller),
-                      const SizedBox(height: AppDimensions.spacingMd),
-                      _CompletedWorkCard(controller: controller),
+                      _PendingAndCompletedWorkRow(controller: controller),
                     ],
                   ),
                 );
@@ -55,6 +51,9 @@ class BagCompletionView extends GetView<BagCompletionController> {
   }
 }
 
+/// Back button plus Bag No. / Design No. / Order No. — moved here from
+/// their own card row in the scrollable body so they're visible without
+/// scrolling, same as the rest of the app's top bars.
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.controller});
 
@@ -74,15 +73,37 @@ class _TopBar extends StatelessWidget {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onPrimary),
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: AppColors.onPrimary,
+                ),
                 onPressed: controller.cancel,
               ),
-              Text(
-                AppStrings.firstReceived,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w700,
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _TopBarInfoItem(
+                        label: AppStrings.bagNoShort,
+                        value: controller.bag.bagNo,
+                      ),
                     ),
+                    const SizedBox(width: AppDimensions.spacingSm),
+                    Expanded(
+                      child: _TopBarInfoItem(
+                        label: AppStrings.designNoLabel,
+                        value: controller.bag.designNo,
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.spacingSm),
+                    Expanded(
+                      child: _TopBarInfoItem(
+                        label: AppStrings.orderNo,
+                        value: controller.bag.locationCode,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -92,73 +113,13 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-/// Bag No. / Design No. / OrderNo as individual accent-striped cards
-/// instead of a flat info strip — laid out side by side on tablet width,
-/// stacked on phone width.
-class _MetaPillsRow extends StatelessWidget {
-  const _MetaPillsRow({required this.controller});
+/// One compact label/value pair inside [_TopBar] — [label] dimmed against
+/// the gradient, [value] full-strength [AppColors.onPrimary], both single
+/// line with ellipsis so a long value can't push the row onto a second
+/// line or overflow the toolbar.
+class _TopBarInfoItem extends StatelessWidget {
+  const _TopBarInfoItem({required this.label, required this.value});
 
-  final BagCompletionController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
-
-        final List<Widget> pills = [
-          _MetaPill(
-            icon: Icons.qr_code_2_rounded,
-            color: AppColors.primary,
-            label: AppStrings.bagNoShort,
-            value: controller.bag.bagNo,
-          ),
-          _MetaPill(
-            icon: Icons.design_services_outlined,
-            color: AppColors.info,
-            label: AppStrings.designNoLabel,
-            value: controller.bag.designNo,
-          ),
-          _MetaPill(
-            icon: Icons.receipt_long_outlined,
-            color: AppColors.success,
-            label: AppStrings.orderNo,
-            value: controller.bag.locationCode,
-          ),
-        ];
-
-        if (!isTablet) {
-          return Column(
-            children: [
-              for (final pill in pills) ...[
-                pill,
-                if (pill != pills.last) const SizedBox(height: AppDimensions.spacingSm),
-              ],
-            ],
-          );
-        }
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (int i = 0; i < pills.length; i++) ...[
-                if (i > 0) const SizedBox(width: AppDimensions.spacingSm),
-                Expanded(child: pills[i]),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.icon, required this.color, required this.label, required this.value});
-
-  final IconData icon;
-  final Color color;
   final String label;
   final String value;
 
@@ -166,67 +127,29 @@ class _MetaPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacingMd),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color.withValues(alpha: 0.12), color.withValues(alpha: 0.03)],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.labelSmall?.copyWith(
+            color: AppColors.onPrimary.withValues(alpha: 0.72),
+            letterSpacing: 0.4,
+          ),
         ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        border: Border.all(color: color.withValues(alpha: 0.24)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.titleSmall?.copyWith(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w800,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: AppDimensions.avatarSm,
-            height: AppDimensions.avatarSm,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [color, Color.lerp(color, Colors.black, 0.22)!],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 6, offset: const Offset(0, 2))],
-            ),
-            child: Icon(icon, color: AppColors.onPrimary, size: AppDimensions.iconMd),
-          ),
-          const SizedBox(width: AppDimensions.spacingMd),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.spacingXxs),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: color),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -242,6 +165,15 @@ class _WorkFormCard extends StatelessWidget {
       title: AppStrings.addNewWorkEntry,
       icon: Icons.edit_note_outlined,
       accentColor: AppColors.primary,
+      headerPadding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacingMd,
+        AppDimensions.spacingSm,
+        AppDimensions.spacingMd,
+        AppDimensions.spacingXs,
+      ),
+      titleFontSize: 17,
+      iconSize: 17,
+      padding: const EdgeInsets.all(AppDimensions.spacingSm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -253,7 +185,8 @@ class _WorkFormCard extends StatelessWidget {
           // the moment those values change with nothing subscribed.
           LayoutBuilder(
             builder: (context, constraints) {
-              final bool isWide = constraints.maxWidth >= AppDimensions.breakpointPhone;
+              final bool isWide =
+                  constraints.maxWidth >= AppDimensions.breakpointPhone;
 
               return Obx(() {
                 final bool enabled = controller.addDummyWork.value;
@@ -265,7 +198,8 @@ class _WorkFormCard extends StatelessWidget {
                 // ...]` (once `SubWorkType` resolves) would never trigger a
                 // rebuild and the dropdown would stay stuck on whatever it
                 // had (often empty) the moment Work Type was picked.
-                final List<String> workTypeOpts = controller.workTypeOptions.toList();
+                final List<String> workTypeOpts = controller.workTypeOptions
+                    .toList();
                 final List<String> workOpts = controller.workOptions.toList();
 
                 final Widget workTypeField = AppModernDropdown<String>(
@@ -284,38 +218,11 @@ class _WorkFormCard extends StatelessWidget {
                   value: controller.work.value,
                   onChanged: enabled ? controller.onWorkChanged : null,
                 );
-
-                if (!isWide) {
-                  return Column(
-                    children: [
-                      workTypeField,
-                      const SizedBox(height: AppDimensions.spacingMd),
-                      workField,
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: workTypeField),
-                    const SizedBox(width: AppDimensions.spacingMd),
-                    Expanded(child: workField),
-                  ],
-                );
-              });
-            },
-          ),
-          const SizedBox(height: AppDimensions.spacingMd),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final bool isWide = constraints.maxWidth >= AppDimensions.breakpointPhone;
-
-              return Obx(() {
                 final Widget pieceField = AppTextField(
                   label: AppStrings.pieceStone,
                   controller: controller.pieceController,
                   keyboardType: TextInputType.number,
-                  enabled: controller.addDummyWork.value,
+                  enabled: enabled,
                   onChanged: controller.onPieceChanged,
                 );
                 final Widget addButton = AppButton(
@@ -328,6 +235,10 @@ class _WorkFormCard extends StatelessWidget {
                 if (!isWide) {
                   return Column(
                     children: [
+                      workTypeField,
+                      const SizedBox(height: AppDimensions.spacingMd),
+                      workField,
+                      const SizedBox(height: AppDimensions.spacingMd),
                       pieceField,
                       const SizedBox(height: AppDimensions.spacingMd),
                       addButton,
@@ -338,9 +249,13 @@ class _WorkFormCard extends StatelessWidget {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    Expanded(flex: 2, child: workTypeField),
+                    const SizedBox(width: AppDimensions.spacingMd),
+                    Expanded(flex: 2, child: workField),
+                    const SizedBox(width: AppDimensions.spacingMd),
                     Expanded(child: pieceField),
                     const SizedBox(width: AppDimensions.spacingMd),
-                    SizedBox(width: 140, child: addButton),
+                    SizedBox(width: 110, child: addButton),
                   ],
                 );
               });
@@ -352,9 +267,63 @@ class _WorkFormCard extends StatelessWidget {
   }
 }
 
-/// The "Pending Work" card — bound to `BagDoneDetail`'s `PndPred` array,
-/// with the Add/Delete mechanism operating on the same
-/// `controller.recordedSettings` list. Table styled with the same
+/// Pending Work (left) and Cart Work (right), side by side on tablet width
+/// — stacked on phone width, same responsive convention as [_WorkFormCard]
+/// above — with Completed Work moved below, full width, same as its
+/// original single-card appearance.
+class _PendingAndCompletedWorkRow extends StatelessWidget {
+  const _PendingAndCompletedWorkRow({required this.controller});
+
+  final BagCompletionController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isTablet =
+            constraints.maxWidth >= AppDimensions.breakpointPhone;
+        final Widget pending = _PendingWorkCard(controller: controller);
+        final Widget cart = _CartWorkCard(controller: controller);
+        final Widget completed = _CompletedWorkCard(controller: controller);
+
+        final Widget topRow = !isTablet
+            ? Column(
+                children: [
+                  pending,
+                  const SizedBox(height: AppDimensions.spacingMd),
+                  cart,
+                ],
+              )
+            : IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: pending),
+                    const SizedBox(width: AppDimensions.spacingMd),
+                    Expanded(child: cart),
+                  ],
+                ),
+              );
+
+        return Column(
+          children: [
+            topRow,
+            const SizedBox(height: AppDimensions.spacingMd),
+            completed,
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// The "Pending Work" card — bound to `BagDoneDetail`'s `PndPred` array
+/// (`controller.recordedSettings`). Rows are tappable: selecting one adds
+/// it into Cart Work (see [_CartWorkCard]) without removing it from here —
+/// instead the row is shown disabled (dimmed, no longer tappable) for as
+/// long as it's present in the cart, and re-enables itself automatically
+/// once it's deleted back out of Cart Work. No delete button of its own
+/// any more — Cart Work's is the only one. Table styled with the same
 /// [FlexTable] used by the Bag Detail screen's Diamond Details/Bag RM
 /// Summary tables, so every data table in the app reads the same way.
 class _PendingWorkCard extends StatelessWidget {
@@ -369,8 +338,78 @@ class _PendingWorkCard extends StatelessWidget {
       icon: Icons.pending_actions_rounded,
       accentColor: AppColors.warning,
       padding: EdgeInsets.zero,
+      headerPadding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacingMd,
+        AppDimensions.spacingSm,
+        AppDimensions.spacingMd,
+        AppDimensions.spacingXs,
+      ),
+      titleFontSize: 17,
+      iconSize: 17,
       child: Obx(() {
         final List<SettingEntry> entries = controller.recordedSettings;
+        // Read here too, inside this same Obx, so a row's disabled state
+        // — driven off Cart Work's own Set IDs — reacts to every Cart
+        // Work change (add, merge, or delete), not just Pending Work's own.
+        final Set<int?> cartSetIds = controller.cartWork
+            .map((entry) => entry.setId)
+            .toSet();
+
+        return FlexTable(
+          isEmpty: entries.isEmpty,
+          columns: const [
+            FlexColumn(label: AppStrings.transactionId, flex: 1),
+            FlexColumn(label: AppStrings.setId, flex: 1),
+            FlexColumn(label: AppStrings.setting, flex: 1),
+            FlexColumn(label: AppStrings.pieces, flex: 1),
+          ],
+          rows: [
+            for (final entry in entries)
+              [
+                (entry.trnId?.isNotEmpty ?? false) ? entry.trnId! : '—',
+                entry.setId?.toString() ?? '—',
+                entry.setting,
+                '${entry.pieces}',
+              ],
+          ],
+          onRowTap: controller.selectPendingEntry,
+          isRowDisabled: (rowIndex) =>
+              cartSetIds.contains(entries[rowIndex].setId),
+        );
+      }),
+    );
+  }
+}
+
+/// The "Cart Work" card — everything actually staged for submission: added
+/// directly here by the Add Dummy Work Entry form (`controller.addEntry`)
+/// or moved in from Pending Work by tapping a row there
+/// (`controller.selectPendingEntry`). Same columns/styling as Pending
+/// Work; the delete button that used to live on Pending Work now lives
+/// here instead, since Cart Work is the only table rows get removed from
+/// outright.
+class _CartWorkCard extends StatelessWidget {
+  const _CartWorkCard({required this.controller});
+
+  final BagCompletionController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      title: AppStrings.cartWork,
+      icon: Icons.shopping_cart_outlined,
+      accentColor: AppColors.info,
+      padding: EdgeInsets.zero,
+      titleFontSize: 17,
+      iconSize: 17,
+      headerPadding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacingMd,
+        AppDimensions.spacingSm,
+        AppDimensions.spacingMd,
+        AppDimensions.spacingXs,
+      ),
+      child: Obx(() {
+        final List<SettingEntry> entries = controller.cartWork;
 
         return FlexTable(
           isEmpty: entries.isEmpty,
@@ -391,7 +430,7 @@ class _PendingWorkCard extends StatelessWidget {
           ],
           rowTrailing: (rowIndex) => _DangerIconButton(
             icon: Icons.delete_outline_rounded,
-            onTap: () => controller.removeEntry(rowIndex),
+            onTap: () => controller.removeCartEntry(rowIndex),
           ),
         );
       }),
@@ -443,6 +482,14 @@ class _CompletedWorkCard extends StatelessWidget {
       icon: Icons.task_alt_rounded,
       accentColor: AppColors.success,
       padding: EdgeInsets.zero,
+      titleFontSize: 17,
+      iconSize: 17,
+      headerPadding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacingMd,
+        AppDimensions.spacingSm,
+        AppDimensions.spacingMd,
+        AppDimensions.spacingXs,
+      ),
       child: Obx(() {
         final List<CompPredEntity> entries = controller.completedWork;
 
@@ -472,7 +519,11 @@ class _BottomActions extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.surface,
         boxShadow: [
-          BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, -4)),
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 12,
+            offset: Offset(0, -4),
+          ),
         ],
       ),
       child: Padding(

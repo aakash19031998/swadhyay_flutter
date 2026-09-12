@@ -26,7 +26,9 @@ class BagListView extends GetView<BagListController> {
           // counters' Obx below — see that comment. Hidden once a session
           // is running (`noWorkRunning`), not just disabled.
           Obx(
-            () => (controller.noWorkVisible.value && !controller.noWorkRunning.value)
+            () =>
+                (controller.noWorkVisible.value &&
+                    !controller.noWorkRunning.value)
                 ? _NoWorkButton(onTap: controller.onNoWorkTap)
                 : const SizedBox.shrink(),
           ),
@@ -35,24 +37,32 @@ class BagListView extends GetView<BagListController> {
           // `no_work_running == "S"`, or this session's own tap just
           // started one) — read here for the same reason as the Obx above.
           Obx(
-            () => controller.noWorkRunning.value ? const _NoWorkRunningIndicator() : const SizedBox.shrink(),
+            () => controller.noWorkRunning.value
+                ? const _NoWorkRunningIndicator()
+                : const SizedBox.shrink(),
           ),
           // `bagCount`/`pcsCount` are read here, inside the Obx builder, so
           // GetX is actually tracking them as dependencies for this Obx —
           // reading them one level down, inside _BagListCounters' own
           // build(), would not register as a dependency and the pills
           // would never update after the initial (zero) build.
-          Obx(() => _BagListCounters(bagCount: controller.bagCount.value, pcsCount: controller.pcsCount.value)),
+          Obx(
+            () => _BagListCounters(
+              bagCount: controller.bagCount.value,
+              pcsCount: controller.pcsCount.value,
+            ),
+          ),
         ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final int columns = constraints.maxWidth > AppDimensions.breakpointTablet
+            final int columns =
+                constraints.maxWidth > AppDimensions.breakpointTablet
                 ? 3
                 : constraints.maxWidth > AppDimensions.breakpointPhone
-                    ? 2
-                    : 1;
+                ? 2
+                : 1;
 
             return Obx(() {
               // Materialized here, inside the Obx builder, so GetX is
@@ -66,14 +76,18 @@ class BagListView extends GetView<BagListController> {
               // in-memory, no network call — see BagListController), so
               // this Obx would otherwise never rebuild after a search or a
               // clear.
-              final List<BagEntity> items = List<BagEntity>.of(controller.items);
+              final List<BagEntity> items = List<BagEntity>.of(
+                controller.items,
+              );
 
               // Shows the exact text that was searched (including a
               // scanned barcode's raw value) so a mismatch between what
               // was scanned and the stored bag/design number is visible
               // right in the empty state, not just in the debug console.
               final String query = controller.query.value;
-              final String? emptyMessage = query.isEmpty ? null : 'No bag found for "$query"';
+              final String? emptyMessage = query.isEmpty
+                  ? null
+                  : 'No bag found for "$query"';
 
               return ReportListScaffold(
                 isLoading: controller.isLoading.value,
@@ -83,6 +97,16 @@ class BagListView extends GetView<BagListController> {
                 onRefresh: controller.refreshData,
                 onSearchChanged: controller.onQueryChanged,
                 searchHint: 'Search by bag no. or design no.',
+                // Tightens the gap above the grid — the masonry list's own
+                // top padding (spacingMd) already provides some separation,
+                // so the search field doesn't need its full default bottom
+                // padding on top of that.
+                searchPadding: const EdgeInsets.fromLTRB(
+                  AppDimensions.spacingMd,
+                  AppDimensions.spacingMd,
+                  AppDimensions.spacingMd,
+                  AppDimensions.spacingXs,
+                ),
                 masonryColumnCount: columns,
                 searchController: controller.searchController,
                 searchSuggestionsBuilder: controller.suggestionsFor,
@@ -120,10 +144,11 @@ class _NoWorkRunningIndicator extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.onPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: (Theme.of(context).textTheme.labelSmall?.fontSize ?? 11) + 2,
-              ),
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize:
+                (Theme.of(context).textTheme.labelSmall?.fontSize ?? 11) + 2,
+          ),
         ),
       ),
     );
@@ -155,14 +180,18 @@ class _NoWorkButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.work_off_outlined, size: AppDimensions.iconSm, color: AppColors.onPrimary),
+                Icon(
+                  Icons.work_off_outlined,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.onPrimary,
+                ),
                 const SizedBox(width: AppDimensions.spacingXxs),
                 Text(
                   AppStrings.noWork,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.onPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColors.onPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -188,7 +217,11 @@ class _BagListCounters extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _CounterPill(
-            leading: Icon(Icons.shopping_bag_outlined, size: AppDimensions.iconSm, color: AppColors.info),
+            leading: Icon(
+              Icons.shopping_bag_outlined,
+              size: AppDimensions.iconSm,
+              color: AppColors.info,
+            ),
             value: bagCount,
             label: AppStrings.totalBags,
             color: AppColors.info,
@@ -199,7 +232,10 @@ class _BagListCounters extends StatelessWidget {
             // No jewelry-ring glyph exists in Flutter's built-in Material
             // Icons font, so a "finger ring with diamond" is rendered as
             // its emoji instead of an Icon(IconData).
-            leading: Text('💍', style: TextStyle(fontSize: AppDimensions.iconSm)),
+            leading: Text(
+              '💍',
+              style: TextStyle(fontSize: AppDimensions.iconSm),
+            ),
             value: pcsCount,
             label: AppStrings.totalPcs,
             color: AppColors.warning,
@@ -245,21 +281,20 @@ class _CounterPill extends StatelessWidget {
           Text(
             '$value',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(width: AppDimensions.spacingXxs),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 }
-

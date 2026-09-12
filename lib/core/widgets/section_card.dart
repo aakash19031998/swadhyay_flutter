@@ -15,6 +15,9 @@ class SectionCard extends StatelessWidget {
     this.title,
     this.icon,
     this.padding,
+    this.headerPadding,
+    this.titleFontSize,
+    this.iconSize,
     this.accentColor,
     this.expandChild = false,
   });
@@ -23,6 +26,20 @@ class SectionCard extends StatelessWidget {
   final String? title;
   final IconData? icon;
   final EdgeInsetsGeometry? padding;
+
+  /// Overrides the title row's own padding — defaults to
+  /// `EdgeInsets.fromLTRB(spacingMd, spacingMd, spacingMd, spacingSm)` on
+  /// every other caller. Only affects the header row above the divider,
+  /// not [padding] (the body's own padding).
+  final EdgeInsetsGeometry? headerPadding;
+
+  /// Overrides the title text's font size — defaults to
+  /// `textTheme.titleSmall`'s own size on every other caller.
+  final double? titleFontSize;
+
+  /// Overrides the title row's icon-badge glyph size — defaults to
+  /// [AppDimensions.iconSm] on every other caller.
+  final double? iconSize;
 
   /// Overrides the title row's icon-badge/text color (defaults to
   /// [AppColors.primary]) — lets a screen color-code several section cards
@@ -41,7 +58,10 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (title == null) {
-      return AppCard(padding: padding ?? const EdgeInsets.all(AppDimensions.spacingMd), child: child);
+      return AppCard(
+        padding: padding ?? const EdgeInsets.all(AppDimensions.spacingMd),
+        child: child,
+      );
     }
 
     final Color accent = accentColor ?? AppColors.primary;
@@ -52,12 +72,14 @@ class SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.spacingMd,
-              AppDimensions.spacingMd,
-              AppDimensions.spacingMd,
-              AppDimensions.spacingSm,
-            ),
+            padding:
+                headerPadding ??
+                const EdgeInsets.fromLTRB(
+                  AppDimensions.spacingMd,
+                  AppDimensions.spacingMd,
+                  AppDimensions.spacingMd,
+                  AppDimensions.spacingSm,
+                ),
             child: Row(
               children: [
                 Container(
@@ -66,15 +88,20 @@ class SectionCard extends StatelessWidget {
                     color: accent.withValues(alpha: 0.14),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: AppDimensions.iconSm, color: accent),
+                  child: Icon(
+                    icon,
+                    size: iconSize ?? AppDimensions.iconSm,
+                    color: accent,
+                  ),
                 ),
                 const SizedBox(width: AppDimensions.spacingSm),
                 Text(
                   title!,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: accent,
+                    fontWeight: FontWeight.w700,
+                    fontSize: titleFontSize,
+                  ),
                 ),
               ],
             ),
@@ -83,7 +110,8 @@ class SectionCard extends StatelessWidget {
           if (expandChild)
             Expanded(
               child: Padding(
-                padding: padding ?? const EdgeInsets.all(AppDimensions.spacingMd),
+                padding:
+                    padding ?? const EdgeInsets.all(AppDimensions.spacingMd),
                 child: child,
               ),
             )

@@ -17,7 +17,12 @@ import 'bag_list_controller.dart';
 import 'bag_timer_controller.dart';
 
 class SettingEntry {
-  const SettingEntry({this.trnId, this.setId, required this.setting, required this.pieces});
+  const SettingEntry({
+    this.trnId,
+    this.setId,
+    required this.setting,
+    required this.pieces,
+  });
 
   final String? trnId;
   final int? setId;
@@ -88,6 +93,12 @@ class BagCompletionController extends GetxController {
 
   final RxList<SettingEntry> recordedSettings = <SettingEntry>[].obs;
 
+  /// Cart Work — what actually gets submitted. Populated either by
+  /// [addEntry] (the Add Dummy Work Entry form) or by [selectPendingEntry]
+  /// (tapping a Pending Work row moves it here). See [_addOrMergeIntoCart]
+  /// for how a duplicate Set ID is handled in both cases.
+  final RxList<SettingEntry> cartWork = <SettingEntry>[].obs;
+
   /// `CompPred` from `BagDoneDetail` — drives the "Completed Work" table.
   final RxList<CompPredEntity> completedWork = <CompPredEntity>[].obs;
 
@@ -111,23 +122,30 @@ class BagCompletionController extends GetxController {
     isLoading.value = true;
     try {
       final String? empCode = (await _getCurrentEmployee())?.empCode;
-      final result = await _getBagCompletionMaster(trnId: bag.id, empCd: empCode ?? '');
-
-      result.fold(
-        AppSnackbar.showFailure,
-        (master) {
-          _bagSchr = master.bagSchr;
-          _bagPcs = master.bagPcs;
-          _bagDia = master.bagDia;
-          addDummyWork.value = master.addDummyWork;
-          workTypeOptions.value = master.addDummyWork ? master.workType : <String>[];
-          recordedSettings.value = [
-            for (final pred in master.pndPred)
-              SettingEntry(trnId: pred.trnId, setId: pred.setId, setting: pred.pred, pieces: pred.pcs),
-          ];
-          completedWork.value = master.compPred;
-        },
+      final result = await _getBagCompletionMaster(
+        trnId: bag.id,
+        empCd: empCode ?? '',
       );
+
+      result.fold(AppSnackbar.showFailure, (master) {
+        _bagSchr = master.bagSchr;
+        _bagPcs = master.bagPcs;
+        _bagDia = master.bagDia;
+        addDummyWork.value = master.addDummyWork;
+        workTypeOptions.value = master.addDummyWork
+            ? master.workType
+            : <String>[];
+        recordedSettings.value = [
+          for (final pred in master.pndPred)
+            SettingEntry(
+              trnId: pred.trnId,
+              setId: pred.setId,
+              setting: pred.pred,
+              pieces: pred.pcs,
+            ),
+        ];
+        completedWork.value = master.compPred;
+      });
     } finally {
       isLoading.value = false;
     }
@@ -146,15 +164,16 @@ class BagCompletionController extends GetxController {
 
   Future<void> _loadSubWorkTypes(String workTypeValue) async {
     final String? empCode = (await _getCurrentEmployee())?.empCode;
-    final result = await _getSubWorkTypes(schr: _bagSchr, workType: workTypeValue, empCd: empCode ?? '');
-
-    result.fold(
-      AppSnackbar.showFailure,
-      (options) {
-        _subWorkTypes = options;
-        workOptions.value = [for (final option in options) option.work];
-      },
+    final result = await _getSubWorkTypes(
+      schr: _bagSchr,
+      workType: workTypeValue,
+      empCd: empCode ?? '',
     );
+
+    result.fold(AppSnackbar.showFailure, (options) {
+      _subWorkTypes = options;
+      workOptions.value = [for (final option in options) option.work];
+    });
   }
 
   void onWorkChanged(String? value) => work.value = value;
@@ -162,7 +181,7 @@ class BagCompletionController extends GetxController {
   void onPieceChanged(String value) => piece.value = value;
 
   /// Validates the current Work/Piece selection via `DummyAddBtnValidation`
-  /// before adding it to the Pending Work table — a `false` status is a
+  /// before adding it to the Cart Work table — a `false` status is a
   /// normal rejection (e.g. "Please Enter Proper Input Qty."), surfaced via
   /// the same failure snackbar as everywhere else, and the row is not
   /// added.
@@ -188,53 +207,66 @@ class BagCompletionController extends GetxController {
       emrStone: _bagDia,
     );
 
-    result.fold(
-      AppSnackbar.showFailure,
-      (validation) {
-        if (!validation.success) {
-          AppSnackbar.show(
-            title: AppStrings.alertWarning,
-            message: validation.message,
-            isSuccess: false,
-          );
-          return;
-        }
+    result.fold(AppSnackbar.showFailure, (validation) {
+      if (!validation.success) {
+        AppSnackbar.show(
+          title: AppStrings.alertWarning,
+          message: validation.message,
+          isSuccess: false,
+        );
+        return;
+      }
 
-        // Same Set ID recorded again overrides that row's setting/pieces
-        // with the new selection entirely, rather than incrementing —
-        // e.g. an existing "Brc Chillai" / 1 row for Set ID 4124 becomes
-        // "Chillai" / 2 if Set ID 4124 is added again with those values.
-        // Only a Set ID not yet recorded gets a new row.
-        final int existingIndex = recordedSettings.indexWhere((entry) => entry.setId == selectedWorkId);
-        if (existingIndex == -1) {
-          recordedSettings.add(
-            SettingEntry(trnId: bag.id, setId: selectedWorkId, setting: selectedWork, pieces: addedPieces),
-          );
-        } else {
-          final SettingEntry existing = recordedSettings[existingIndex];
-          recordedSettings[existingIndex] = SettingEntry(
-            trnId: existing.trnId,
-            setId: selectedWorkId,
-            setting: selectedWork,
-            pieces: addedPieces,
-          );
-        }
+      _addOrMergeIntoCart(
+        SettingEntry(
+          trnId: bag.id,
+          setId: selectedWorkId,
+          setting: selectedWork,
+          pieces: addedPieces,
+        ),
+      );
 
-        // Clears the whole form — Work Type included — back to its
-        // pre-selection state, ready for the next entry.
-        workType.value = null;
-        work.value = null;
-        piece.value = '';
-        pieceController.clear();
-        workOptions.clear();
-      },
-    );
+      // Clears the whole form — Work Type included — back to its
+      // pre-selection state, ready for the next entry.
+      workType.value = null;
+      work.value = null;
+      piece.value = '';
+      pieceController.clear();
+      workOptions.clear();
+    });
   }
 
-  void removeEntry(int index) => recordedSettings.removeAt(index);
+  /// Adds [entry] to [cartWork] — an existing row for the same Set ID has
+  /// its setting/pieces overridden entirely by [entry] rather than gaining
+  /// a second row (the same rule Pending Work's own Add used to apply to
+  /// itself, before Cart Work existed), e.g. an existing "Brc Chillai" / 1
+  /// row for Set ID 4124 becomes "Chillai" / 2 if Set ID 4124 comes in
+  /// again with those values. Only a Set ID not already in the cart gets a
+  /// new row. Shared by [addEntry] (the form) and [selectPendingEntry]
+  /// (tapping a Pending Work row).
+  void _addOrMergeIntoCart(SettingEntry entry) {
+    final int existingIndex = cartWork.indexWhere(
+      (existing) => existing.setId == entry.setId,
+    );
+    if (existingIndex == -1) {
+      cartWork.add(entry);
+    } else {
+      cartWork[existingIndex] = entry;
+    }
+  }
+
+  /// Tapping a Pending Work row adds/merges it into Cart Work — same rule
+  /// as [addEntry] — but the row stays in Pending Work rather than being
+  /// removed from it: the view (see `_PendingWorkCard`) reads it as
+  /// disabled there for as long as its Set ID is present in [cartWork],
+  /// re-enabling automatically once [removeCartEntry] takes it back out.
+  void selectPendingEntry(int index) =>
+      _addOrMergeIntoCart(recordedSettings[index]);
+
+  void removeCartEntry(int index) => cartWork.removeAt(index);
 
   Future<void> submit() async {
-    if (recordedSettings.isEmpty) {
+    if (cartWork.isEmpty) {
       AppSnackbar.show(
         title: AppStrings.alertWarning,
         message: AppStrings.addSettingBeforeSubmit,
@@ -246,45 +278,48 @@ class BagCompletionController extends GetxController {
     final bool confirmed = await SubmitConfirmationDialog.show();
     if (!confirmed) return;
 
-    final String proId = recordedSettings.map((entry) => '${entry.setId}~${entry.pieces}').join(',');
+    final String proId = cartWork
+        .map((entry) => '${entry.setId}~${entry.pieces}')
+        .join(',');
     final String? empCode = (await _getCurrentEmployee())?.empCode;
-    final result = await _submitBagDone(trnId: bag.id, proId: proId, empCd: empCode ?? '');
-
-    result.fold(
-      AppSnackbar.showFailure,
-      (response) {
-        if (!response.success) {
-          // Stays on this screen — a `false` status is a rejection (e.g.
-          // an invalid proId), not something a retry-elsewhere fixes.
-          AppSnackbar.show(
-            title: AppStrings.alertWarning,
-            message: response.message,
-            isSuccess: false,
-          );
-          return;
-        }
-
-        AppSnackbar.show(
-          title: AppStrings.success,
-          message: response.message,
-          isSuccess: true,
-        );
-
-        // Only now — once the work entry is actually submitted, not merely
-        // on navigating to this screen — does the bag's Done button on the
-        // Bag List/Bag Detail screens flip to "Completed".
-        BagTimerController.of(bag).done();
-
-        // Back to the Bag List screen either way — whether Done was opened
-        // directly from Bag List or via Bag Detail, this always lands on
-        // Bag List (removing Bag Detail from the stack too, in the latter
-        // case), refreshed.
-        Get.until((route) => route.settings.name == AppRoutes.bagList);
-        if (Get.isRegistered<BagListController>()) {
-          Get.find<BagListController>().refreshData();
-        }
-      },
+    final result = await _submitBagDone(
+      trnId: bag.id,
+      proId: proId,
+      empCd: empCode ?? '',
     );
+
+    result.fold(AppSnackbar.showFailure, (response) {
+      if (!response.success) {
+        // Stays on this screen — a `false` status is a rejection (e.g.
+        // an invalid proId), not something a retry-elsewhere fixes.
+        AppSnackbar.show(
+          title: AppStrings.alertWarning,
+          message: response.message,
+          isSuccess: false,
+        );
+        return;
+      }
+
+      AppSnackbar.show(
+        title: AppStrings.success,
+        message: response.message,
+        isSuccess: true,
+      );
+
+      // Only now — once the work entry is actually submitted, not merely
+      // on navigating to this screen — does the bag's Done button on the
+      // Bag List/Bag Detail screens flip to "Completed".
+      BagTimerController.of(bag).done();
+
+      // Back to the Bag List screen either way — whether Done was opened
+      // directly from Bag List or via Bag Detail, this always lands on
+      // Bag List (removing Bag Detail from the stack too, in the latter
+      // case), refreshed.
+      Get.until((route) => route.settings.name == AppRoutes.bagList);
+      if (Get.isRegistered<BagListController>()) {
+        Get.find<BagListController>().refreshData();
+      }
+    });
   }
 
   void cancel() => Get.back();

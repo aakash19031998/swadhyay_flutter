@@ -10,6 +10,7 @@ import '../../../../core/widgets/flex_table.dart';
 import '../../../../core/widgets/hk_loader_card.dart';
 import '../../../../core/widgets/section_card.dart';
 import '../../../../core/widgets/segmented_tab_bar.dart';
+import '../../../../core/widgets/view_eye_badge.dart';
 import '../../domain/entities/bag_entity.dart';
 import '../../domain/entities/bag_rm_summary_entity.dart';
 import '../../domain/entities/diamond_detail_entity.dart';
@@ -20,9 +21,10 @@ import '../widgets/bag_action_button.dart';
 /// Bag detail screen: a live productivity clock in the top bar, then Bag
 /// Summary + the jewelry preview side by side (tablet) / stacked (phone),
 /// and — full width, below that pair — Manufacturing Instructions and the
-/// Diamond Details / Bag RM Summary tabs. Diamond Details / Bag RM Summary
-/// render as a flex-column table that always fills the available width
-/// exactly — no horizontal scrolling, on any phone or tablet size.
+/// Diamond Details / Bag RM Summary / Loss Summary tabs. Diamond Details
+/// and Bag RM Summary render as a flex-column table that always fills the
+/// available width exactly — no horizontal scrolling, on any phone or
+/// tablet size; Loss Summary is a placeholder until its data is defined.
 class BagDetailView extends GetView<BagDetailController> {
   const BagDetailView({super.key});
 
@@ -52,7 +54,10 @@ class BagDetailView extends GetView<BagDetailController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _HeaderRow(bag: bag, onViewMedia: controller.openMediaGallery),
+                            _HeaderRow(
+                              bag: bag,
+                              onViewMedia: controller.openMediaGallery,
+                            ),
                             const SizedBox(height: AppDimensions.spacingMd),
                             SectionCard(
                               title: AppStrings.manufacturingInstructions,
@@ -63,7 +68,9 @@ class BagDetailView extends GetView<BagDetailController> {
                             SectionCard(
                               padding: EdgeInsets.zero,
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusMd,
+                                ),
                                 child: Column(
                                   children: [
                                     SegmentedTabBar(
@@ -71,6 +78,7 @@ class BagDetailView extends GetView<BagDetailController> {
                                       tabs: const [
                                         Tab(text: AppStrings.diamondDetails),
                                         Tab(text: AppStrings.bagRmSummary),
+                                        Tab(text: AppStrings.lossSummary),
                                       ],
                                     ),
                                     // Swaps the visible table directly off the tab index —
@@ -81,9 +89,23 @@ class BagDetailView extends GetView<BagDetailController> {
                                     AnimatedBuilder(
                                       animation: controller.tabController,
                                       builder: (context, _) {
-                                        return controller.tabController.index == 0
-                                            ? _DiamondDetailsTable(details: bag.diamondDetails)
-                                            : _RmSummaryTable(items: bag.rmSummary);
+                                        switch (controller
+                                            .tabController
+                                            .index) {
+                                          case 0:
+                                            return _DiamondDetailsTable(
+                                              details: bag.diamondDetails,
+                                            );
+                                          case 1:
+                                            return _RmSummaryTable(
+                                              items: bag.rmSummary,
+                                            );
+                                          default:
+                                            // No backend field for this yet —
+                                            // placeholder until Loss Summary's
+                                            // data shape is defined.
+                                            return const _LossSummaryPlaceholder();
+                                        }
                                       },
                                     ),
                                   ],
@@ -145,23 +167,32 @@ class _HeaderRowState extends State<_HeaderRow> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isTablet = constraints.maxWidth >= AppDimensions.breakpointPhone;
+        final bool isTablet =
+            constraints.maxWidth >= AppDimensions.breakpointPhone;
         final Widget summary = KeyedSubtree(
           key: _summaryKey,
           child: _BagSummaryCard(bag: widget.bag, columns: isTablet ? 4 : 1),
         );
-        final Widget preview = _JewelryPreview(imageUrl: widget.bag.imageUrl, onTap: widget.onViewMedia);
+        final Widget preview = _JewelryPreview(
+          imageUrl: widget.bag.imageUrl,
+          onTap: widget.onViewMedia,
+        );
 
         if (!isTablet) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [summary, const SizedBox(height: AppDimensions.spacingMd), preview],
+            children: [
+              summary,
+              const SizedBox(height: AppDimensions.spacingMd),
+              preview,
+            ],
           );
         }
 
         // Fall back to the old fixed size for the one frame before the
         // real height has been measured.
-        final double squareSide = _summaryHeight ?? AppDimensions.bagDetailSidebarWidth;
+        final double squareSide =
+            _summaryHeight ?? AppDimensions.bagDetailSidebarWidth;
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,9 +242,9 @@ class _TopBar extends StatelessWidget {
                   Text(
                     bag.bagNo,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.onPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: AppColors.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -243,7 +274,8 @@ class _LiveTimerPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final bool isRunning = controller.timer.status.value == BagWorkStatus.running;
+      final bool isRunning =
+          controller.timer.status.value == BagWorkStatus.running;
       final Duration elapsed = controller.timer.elapsed.value;
 
       return Container(
@@ -271,9 +303,9 @@ class _LiveTimerPill extends StatelessWidget {
             Text(
               DateTimeHelper.formatStopwatch(elapsed),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: AppColors.success,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),
@@ -329,23 +361,15 @@ class _TopBarActions extends StatelessWidget {
             ],
           );
         case BagWorkStatus.paused:
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              BagActionButton(
-                label: AppStrings.resume,
-                icon: Icons.play_arrow_rounded,
-                color: AppColors.info,
-                onTap: busy ? null : () => controller.timer.resume(bag),
-              ),
-              const SizedBox(width: AppDimensions.spacingSm),
-              BagActionButton(
-                label: AppStrings.done,
-                icon: Icons.check_rounded,
-                color: AppColors.success,
-                onTap: controller.onDone,
-              ),
-            ],
+          // Only Resume shows while paused — Done is deliberately withheld
+          // here (unlike the running case) since submitting a bag's
+          // completed work while its own timer isn't actively running
+          // isn't a state this flow allows.
+          return BagActionButton(
+            label: AppStrings.resume,
+            icon: Icons.play_arrow_rounded,
+            color: AppColors.info,
+            onTap: busy ? null : () => controller.timer.resume(bag),
           );
         case BagWorkStatus.done:
           return const BagActionButton(
@@ -374,7 +398,9 @@ class _TopBarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color background = filled ? AppColors.surface : AppColors.onPrimary.withValues(alpha: 0.16);
+    final Color background = filled
+        ? AppColors.surface
+        : AppColors.onPrimary.withValues(alpha: 0.16);
     final Color foreground = filled ? AppColors.primary : AppColors.onPrimary;
 
     return Material(
@@ -396,9 +422,9 @@ class _TopBarButton extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: foreground,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -441,14 +467,40 @@ class _BagSummaryCard extends StatelessWidget {
       _SummaryFieldData(
         icon: Icons.event_outlined,
         label: AppStrings.delDate,
-        value: bag.delDate == null ? '' : DateTimeHelper.formatDateDashed(bag.delDate!),
+        value: bag.delDate == null
+            ? ''
+            : DateTimeHelper.formatDateDashed(bag.delDate!),
       ),
-      _SummaryFieldData(icon: Icons.inventory_2_outlined, label: AppStrings.bagQty, value: '${bag.bagQty}'),
-      _SummaryFieldData(icon: Icons.style_outlined, label: AppStrings.styleNo, value: bag.styleNo ?? ''),
-      _SummaryFieldData(icon: Icons.receipt_long_outlined, label: AppStrings.orderNo, value: bag.locationCode),
-      _SummaryFieldData(icon: Icons.person_outline, label: AppStrings.customer, value: bag.customer ?? ''),
-      _SummaryFieldData(icon: Icons.tag, label: AppStrings.part, value: bag.part ?? ''),
-      _SummaryFieldData(icon: Icons.straighten_outlined, label: AppStrings.size, value: bag.size ?? ''),
+      _SummaryFieldData(
+        icon: Icons.inventory_2_outlined,
+        label: AppStrings.bagQty,
+        value: '${bag.bagQty}',
+      ),
+      _SummaryFieldData(
+        icon: Icons.style_outlined,
+        label: AppStrings.styleNo,
+        value: bag.styleNo ?? '',
+      ),
+      _SummaryFieldData(
+        icon: Icons.receipt_long_outlined,
+        label: AppStrings.orderNo,
+        value: bag.locationCode,
+      ),
+      _SummaryFieldData(
+        icon: Icons.person_outline,
+        label: AppStrings.customer,
+        value: bag.customer ?? '',
+      ),
+      _SummaryFieldData(
+        icon: Icons.tag,
+        label: AppStrings.part,
+        value: bag.part ?? '',
+      ),
+      _SummaryFieldData(
+        icon: Icons.straighten_outlined,
+        label: AppStrings.size,
+        value: bag.size ?? '',
+      ),
       _SummaryFieldData(
         icon: Icons.category_outlined,
         label: AppStrings.designCategory,
@@ -474,7 +526,9 @@ class _BagSummaryCard extends StatelessWidget {
           children: [
             for (int c = 0; c < columns; c++) ...[
               if (c > 0) const SizedBox(width: AppDimensions.spacingSm),
-              Expanded(child: i + c < items.length ? items[i + c] : const SizedBox()),
+              Expanded(
+                child: i + c < items.length ? items[i + c] : const SizedBox(),
+              ),
             ],
           ],
         ),
@@ -497,7 +551,11 @@ class _BagSummaryCard extends StatelessWidget {
 }
 
 class _SummaryFieldData {
-  const _SummaryFieldData({required this.icon, required this.label, required this.value});
+  const _SummaryFieldData({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   final IconData icon;
   final String label;
@@ -524,7 +582,7 @@ class _SummaryDetailItem extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacingSm),
+      padding: const EdgeInsets.all(AppDimensions.spacingXs),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -551,15 +609,18 @@ class _SummaryDetailItem extends StatelessWidget {
                 Text(
                   label.toUpperCase(),
                   style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                      ),
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
                 ),
-                const SizedBox(height: AppDimensions.spacingXxs),
+                const SizedBox(height: 2),
                 Text(
                   value.isEmpty ? '—' : value,
-                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -609,7 +670,9 @@ class _ManufacturingSpecs extends StatelessWidget {
                 icon: Icons.scale_outlined,
                 color: AppColors.info,
                 label: AppStrings.designGrossWt,
-                value: bag.designGrossWt == null ? null : '${bag.designGrossWt!.toStringAsFixed(2)} grm',
+                value: bag.designGrossWt == null
+                    ? null
+                    : '${bag.designGrossWt!.toStringAsFixed(2)} grm',
               ),
             ),
             const SizedBox(width: AppDimensions.spacingSm),
@@ -618,7 +681,9 @@ class _ManufacturingSpecs extends StatelessWidget {
                 icon: Icons.monitor_weight_outlined,
                 color: AppColors.success,
                 label: AppStrings.designNetWt,
-                value: bag.designNetWt == null ? null : '${bag.designNetWt!.toStringAsFixed(2)} grm',
+                value: bag.designNetWt == null
+                    ? null
+                    : '${bag.designNetWt!.toStringAsFixed(2)} grm',
               ),
             ),
           ],
@@ -628,7 +693,8 @@ class _ManufacturingSpecs extends StatelessWidget {
           children: [
             for (final tile in instructionTiles) ...[
               tile,
-              if (tile != instructionTiles.last) const SizedBox(height: AppDimensions.spacingSm),
+              if (tile != instructionTiles.last)
+                const SizedBox(height: AppDimensions.spacingSm),
             ],
           ],
         ),
@@ -638,7 +704,12 @@ class _ManufacturingSpecs extends StatelessWidget {
 }
 
 class _SpecBox extends StatelessWidget {
-  const _SpecBox({required this.icon, required this.color, required this.label, required this.value});
+  const _SpecBox({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
 
   final IconData icon;
   final Color color;
@@ -662,7 +733,11 @@ class _SpecBox extends StatelessWidget {
             width: AppDimensions.iconMd,
             height: AppDimensions.iconMd,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(icon, size: AppDimensions.iconSm, color: AppColors.onPrimary),
+            child: Icon(
+              icon,
+              size: AppDimensions.iconSm,
+              color: AppColors.onPrimary,
+            ),
           ),
           const SizedBox(width: AppDimensions.spacingXs),
           Expanded(
@@ -674,14 +749,20 @@ class _SpecBox extends StatelessWidget {
                   label.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(color: AppColors.textSecondary, letterSpacing: 0.4),
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.4,
+                  ),
                 ),
                 const SizedBox(height: AppDimensions.spacingXxs),
                 Text(
                   value ?? '—',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall?.copyWith(color: color, fontWeight: FontWeight.w800),
+                  style: textTheme.titleSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
@@ -715,14 +796,21 @@ class _InstructionTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(label, style: textTheme.labelMedium?.copyWith(color: AppColors.textSecondary)),
+          Text(
+            label,
+            style: textTheme.labelMedium?.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
           const SizedBox(width: AppDimensions.spacingXs),
           Expanded(
             child: Text(
               value ?? '—',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -750,14 +838,7 @@ class _DiamondDetailsTable extends StatelessWidget {
       ],
       rows: [
         for (final d in details)
-          [
-            '${d.srNo}',
-            d.itemCode,
-            d.size,
-            '${d.pcs}',
-            d.weight,
-            d.setting,
-          ],
+          ['${d.srNo}', d.itemCode, d.size, '${d.pcs}', d.weight, d.setting],
       ],
     );
   }
@@ -780,8 +861,31 @@ class _RmSummaryTable extends StatelessWidget {
         FlexColumn(label: AppStrings.wt, flex: 1),
       ],
       rows: [
-        for (final r in items) [r.materialType, r.itemCode, r.size, r.issuedQty, r.wt],
+        for (final r in items)
+          [r.materialType, r.itemCode, r.size, r.issuedQty, r.wt],
       ],
+    );
+  }
+}
+
+/// Placeholder for the Loss Summary tab — no backend field for this exists
+/// yet (unlike Diamond Details/Bag RM Summary, which are already part of
+/// `BagDetailsNew`'s response), so this just holds the tab's place with the
+/// same empty-state look [FlexTable] itself uses until that data shape is
+/// defined.
+class _LossSummaryPlaceholder extends StatelessWidget {
+  const _LossSummaryPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimensions.spacingLg),
+      child: Text(
+        AppStrings.noDataAvailable,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
+      ),
     );
   }
 }
@@ -817,7 +921,11 @@ class _JewelryPreview extends StatelessWidget {
                       ? const ColoredBox(
                           color: AppColors.surfaceVariant,
                           child: Center(
-                            child: Icon(Icons.diamond_outlined, color: AppColors.textHint, size: AppDimensions.iconXl),
+                            child: Icon(
+                              Icons.diamond_outlined,
+                              color: AppColors.textHint,
+                              size: AppDimensions.iconXl,
+                            ),
                           ),
                         )
                       : CachedNetworkImage(
@@ -826,21 +934,21 @@ class _JewelryPreview extends StatelessWidget {
                           placeholder: (context, url) => const Center(
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          errorWidget: (context, url, error) => const ColoredBox(
-                            color: AppColors.surfaceVariant,
-                            child: Icon(Icons.image_not_supported_outlined, color: AppColors.textHint),
-                          ),
+                          errorWidget: (context, url, error) =>
+                              const ColoredBox(
+                                color: AppColors.surfaceVariant,
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: AppColors.textHint,
+                                ),
+                              ),
                         ),
                 ),
               ),
-              Positioned(
-                right: AppDimensions.spacingXs,
-                bottom: AppDimensions.spacingXs,
-                child: Container(
-                  padding: const EdgeInsets.all(AppDimensions.spacingXxs),
-                  decoration: const BoxDecoration(color: AppColors.overlayScrim, shape: BoxShape.circle),
-                  child: const Icon(Icons.photo_library_outlined, color: AppColors.surface, size: AppDimensions.iconSm),
-                ),
+              const Positioned(
+                right: AppDimensions.spacingSm,
+                bottom: AppDimensions.spacingSm,
+                child: ViewEyeBadge(),
               ),
             ],
           ),

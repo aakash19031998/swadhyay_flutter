@@ -45,11 +45,11 @@ class AppDimensions {
   static const double avatarLg = 88;
 
   // Bag list. bagThumbnailSize is the media-viewer filmstrip thumbnail;
-  // bagCardImageHeight sizes the grid card's photo — the card's overall
-  // height is intrinsic/content-driven (see ReportListScaffold's masonry
-  // mode), not a fixed constant.
+  // bagCardImageSize is the grid card's own small square photo — square
+  // (not stretched to the card's full, variable width) so a roughly-square
+  // product photo is never cropped into an unnaturally wide letterbox.
   static const double bagThumbnailSize = 76;
-  static const double bagCardImageHeight = 170;
+  static const double bagCardImageSize = 170;
 
   // QC Checking. Card is deliberately small/compact — see
   // QcCheckCard — so it gets its own avatar/badge sizes rather than reusing
