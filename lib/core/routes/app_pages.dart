@@ -26,6 +26,8 @@ import '../../features/dashboard/presentation/views/dashboard_kpi_detail_view.da
 import '../../features/dashboard/presentation/views/dashboard_view.dart';
 import '../../features/design_image/presentation/bindings/design_image_binding.dart';
 import '../../features/design_image/presentation/views/design_image_view.dart';
+import '../../features/earn_till_date/presentation/bindings/earn_till_date_binding.dart';
+import '../../features/earn_till_date/presentation/views/earn_till_date_view.dart';
 import '../../features/home/presentation/bindings/home_binding.dart';
 import '../../features/home/presentation/views/home_view.dart';
 import '../../features/profile/presentation/bindings/profile_binding.dart';
@@ -162,6 +164,11 @@ class AppPages {
       name: AppRoutes.brandSpecificationPdfViewer,
       page: () => const BrandPdfViewerView(),
       binding: BrandPdfViewerBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.earnTillDate,
+      page: () => const EarnTillDateView(),
+      binding: EarnTillDateBinding(),
     ),
   ];
 }

@@ -26,4 +26,5 @@ class AppRoutes {
   static const String brandSpecification = '/brand-specification';
   static const String brandSpecificationPdfViewer =
       '/brand-specification/pdf-viewer';
+  static const String earnTillDate = '/earn-till-date';
 }
