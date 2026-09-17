@@ -60,6 +60,21 @@ class HomeController extends GetxController {
     route: AppRoutes.dashboard,
   );
 
+  /// Earn Till Date is also a client-only feature with no backend screen
+  /// of its own yet (placeholder data — see
+  /// `EarnTillDateDataSource`'s doc comment), so `MenuListNew` has no
+  /// way to know about it either. Appended locally, same idea as
+  /// [_dashboardMenuItem]/[_logoutMenuItem], until it's wired to a real
+  /// endpoint and can be added server-side instead.
+  static const DrawerMenuItemEntity _earnTillDateMenuItem =
+      DrawerMenuItemEntity(
+        id: 'earn_till_date',
+        label: AppStrings.earnTillDate,
+        icon: Icons.card_giftcard_outlined,
+        type: DrawerMenuItemType.link,
+        route: AppRoutes.earnTillDate,
+      );
+
   @override
   void onInit() {
     super.onInit();
@@ -98,8 +113,12 @@ class HomeController extends GetxController {
     final result = await _getDrawerMenuUseCase(employee.value?.empCode ?? '');
     result.fold(
       AppSnackbar.showFailure,
-      (items) =>
-          menuItems.assignAll([_dashboardMenuItem, ...items, _logoutMenuItem]),
+      (items) => menuItems.assignAll([
+        _dashboardMenuItem,
+        _earnTillDateMenuItem,
+        ...items,
+        _logoutMenuItem,
+      ]),
     );
     isMenuLoading.value = false;
     _isFetchingMenu = false;

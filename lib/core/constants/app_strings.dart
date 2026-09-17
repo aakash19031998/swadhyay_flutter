@@ -224,6 +224,40 @@ class AppStrings {
   static const String otHrsLabel = 'OT Hrs';
   static const String presentDaysLabel = 'Present Days';
 
+  // Earn till date.
+  static const String earnTillDateTableTitle =
+      'Incentive Details (Ticked Fields)';
+  static const String metricsSuffix = 'Metrics';
+  static const String call = 'Call';
+  static const String email = 'Email';
+  static const String contactNumber = 'Contact Number';
+  static const String alternativeContactNumber = 'Alternative Contact Number';
+  static const String company = 'Company';
+  static const String personalDossier = 'Personal Dossier';
+  static const String verified = 'Verified';
+  static const String experience = 'Experience';
+  static const String recruited = 'Recruited';
+  static const String contractJoined = 'Contract Joined';
+  static const String joined = 'Joined';
+  static const String ageDob = 'Age / DOB';
+  static const String genderStatus = 'Gender / Status';
+  static const String religionCaste = 'Religion / Caste';
+  static const String mobile = 'Mobile';
+  static const String altMobile = 'Alt. Mobile';
+  static const String localAddress = 'Local Address';
+  static const String nativeAddress = 'Native Address';
+  static const String fixedSalary = 'Fixed Salary';
+  static const String incentiveTotalPoints = 'Total Points';
+  static const String commitmentSalary = 'Commitment Salary';
+  static const String hrSalary = 'Hr Salary';
+  static const String earnTillDate = 'Earn Till Date';
+  static const String srNoColumn = 'Sr No';
+  static const String metricFieldNameColumn = 'Metric / Field Name';
+  static const String recordedValueColumn = 'Recorded Value';
+  static const String verifiedAgainstPaperRecord =
+      'Verified against physical incentive paper record';
+  static const String lastUpdatedLabel = 'Last updated';
+
   // Attendance (Monthly Attendance Detailed Record popup).
   static const String monthlyAttendanceTitle =
       'Monthly Attendance Detailed Record';

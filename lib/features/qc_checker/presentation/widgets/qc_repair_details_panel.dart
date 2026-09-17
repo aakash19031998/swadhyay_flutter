@@ -231,12 +231,42 @@ class _QcRepairDetailsPanelState extends State<QcRepairDetailsPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Shown once, above both cards, since the Diamond QC Checker
-        // isn't specific to either one — it applies to whatever action
-        // the Repair Details card's own dynamic submit button ends up
-        // taking on this bag (it's the only action left now the Bag Info
-        // card's OK button is gone — see `_BagInfoCard`).
-        _DiamondQcCheckerBanner(checkerName: widget.checkerName),
+        // Diamond QC Checker banner + the "All Passed" toggle/Pass Pieces
+        // qty entry, all three sharing this one top row equally — the
+        // banner isn't specific to either card below (it applies to
+        // whatever action the Repair Details card's own dynamic submit
+        // button ends up taking on this bag), so it doesn't need the full
+        // row width to itself.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _DiamondQcCheckerBanner(checkerName: widget.checkerName),
+              ),
+              const SizedBox(width: AppDimensions.spacingMd),
+              Expanded(
+                child: _AllPassedToggleCard(
+                  totalPieces: _totalPieces,
+                  value: _allPassed,
+                  // A manually entered pass qty > 0 locks the toggle until
+                  // it's reset back to 0 — see
+                  // `_QcRepairDetailsPanelState._onPassQtyStep`.
+                  enabled: _allPassed || !_touched || _passQty == 0,
+                  onChanged: _onAllPassedChanged,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.spacingMd),
+              Expanded(
+                child: _PassQtyCard(
+                  controller: _passQtyController,
+                  enabled: !_allPassed,
+                  onStep: _onPassQtyStep,
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: AppDimensions.spacingMd),
         Expanded(
           child: Row(
@@ -250,8 +280,6 @@ class _QcRepairDetailsPanelState extends State<QcRepairDetailsPanel> {
                   checklist: widget.checklist,
                   isLoading: widget.isLoadingChecklist,
                   totalPieces: _totalPieces,
-                  passQtyController: _passQtyController,
-                  allPassed: _allPassed,
                   touched: _touched,
                   passQty: _passQty,
                   repairQty: _repairQty,
@@ -259,8 +287,6 @@ class _QcRepairDetailsPanelState extends State<QcRepairDetailsPanel> {
                   pieceQtyControllers: _pieceQtyControllers,
                   isLastPiece: _isLastPiece,
                   currentPieceHasQty: _currentPieceHasQty,
-                  onAllPassedChanged: _onAllPassedChanged,
-                  onPassQtyStep: _onPassQtyStep,
                   onSelectPiece: _onSelectPiece,
                   onStepCurrentPiece: _stepCurrentPiece,
                   onPreviousPiece: _onPreviousPiece,
@@ -646,21 +672,21 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-/// The "All Passed" toggle + Pass Pieces qty entry, followed by whichever
-/// of three states currently applies: nothing entered yet
+/// Whichever of three states currently applies: nothing entered yet
 /// ([_AwaitingQcInputCard]), the whole lot passed ([_WholeLotClearedCard]),
 /// or one-piece-at-a-time repair inspection ([_RepairPiecesSection] — the
 /// same [_RepairTable] qty-per-defect-type table as before, just scoped to
-/// whichever repair piece is currently selected). [totalPieces]/[passQty]/
-/// [repairQty] and the per-piece qty tables are all owned and derived by
-/// [_QcRepairDetailsPanelState] — this card is purely presentational.
+/// whichever repair piece is currently selected). The "All Passed"
+/// toggle/Pass Pieces qty entry live in the top row alongside the Diamond
+/// QC Checker banner instead (see [_QcRepairDetailsPanelState.build]).
+/// [totalPieces]/[passQty]/[repairQty] and the per-piece qty tables are all
+/// owned and derived by [_QcRepairDetailsPanelState] — this card is purely
+/// presentational.
 class _RepairDetailsCard extends StatelessWidget {
   const _RepairDetailsCard({
     required this.checklist,
     required this.isLoading,
     required this.totalPieces,
-    required this.passQtyController,
-    required this.allPassed,
     required this.touched,
     required this.passQty,
     required this.repairQty,
@@ -668,8 +694,6 @@ class _RepairDetailsCard extends StatelessWidget {
     required this.pieceQtyControllers,
     required this.isLastPiece,
     required this.currentPieceHasQty,
-    required this.onAllPassedChanged,
-    required this.onPassQtyStep,
     required this.onSelectPiece,
     required this.onStepCurrentPiece,
     required this.onPreviousPiece,
@@ -683,8 +707,6 @@ class _RepairDetailsCard extends StatelessWidget {
   final List<QcRepairChecklistItemEntity> checklist;
   final bool isLoading;
   final int totalPieces;
-  final TextEditingController passQtyController;
-  final bool allPassed;
   final bool touched;
   final int passQty;
   final int repairQty;
@@ -692,8 +714,6 @@ class _RepairDetailsCard extends StatelessWidget {
   final List<Map<String, TextEditingController>> pieceQtyControllers;
   final bool isLastPiece;
   final bool currentPieceHasQty;
-  final ValueChanged<bool> onAllPassedChanged;
-  final ValueChanged<int> onPassQtyStep;
   final ValueChanged<int> onSelectPiece;
   final void Function(String itemId, int delta) onStepCurrentPiece;
   final VoidCallback onPreviousPiece;
@@ -733,41 +753,6 @@ class _RepairDetailsCard extends StatelessWidget {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // `IntrinsicHeight` is required here: a bare `Row`
-                        // with `CrossAxisAlignment.stretch` inside this
-                        // `SingleChildScrollView`'s unbounded-height Column
-                        // throws "BoxConstraints forces an infinite height"
-                        // — the Row has nothing finite to stretch its
-                        // children to without it.
-                        IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: _AllPassedToggleCard(
-                                  totalPieces: totalPieces,
-                                  value: allPassed,
-                                  // A manually entered pass qty > 0 locks
-                                  // the toggle until it's reset back to 0
-                                  // — see `_QcRepairDetailsPanelState.
-                                  // _onPassQtyChanged`.
-                                  enabled:
-                                      allPassed || !touched || passQty == 0,
-                                  onChanged: onAllPassedChanged,
-                                ),
-                              ),
-                              const SizedBox(width: AppDimensions.spacingMd),
-                              Expanded(
-                                child: _PassQtyCard(
-                                  controller: passQtyController,
-                                  enabled: !allPassed,
-                                  onStep: onPassQtyStep,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingMd),
                         if (!touched)
                           _AwaitingQcInputCard(totalPieces: totalPieces)
                         else if (_isCleared)
@@ -955,7 +940,7 @@ class _AllPassedToggleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color iconColor = value ? AppColors.success : AppColors.textHint;
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacingSm),
+      padding: const EdgeInsets.all(AppDimensions.spacingXs),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
@@ -1029,7 +1014,7 @@ class _PassQtyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacingSm),
+      padding: const EdgeInsets.all(AppDimensions.spacingXs),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),

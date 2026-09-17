@@ -36,7 +36,9 @@ class _MenuMeta {
 /// crashes the app.
 final Map<String, _MenuMeta> _menuMetaByName = {
   'bag list': const _MenuMeta(Icons.shopping_bag_outlined, AppRoutes.bagList),
-  'design image': const _MenuMeta(Icons.image_outlined, AppRoutes.designImage),
+  // Renamed from "Design Image" — MenuListNew now sends this entry as
+  // "Design Master", still opening the same screen (AppRoutes.designImage).
+  'design master': const _MenuMeta(Icons.image_outlined, AppRoutes.designImage),
   // "Qc Checking" is the current live MenuListNew entry's name — it now
   // opens the new QC Checker screen, not the renamed QC Pending Dashboard.
   // "QC Pending Dashboard" is a distinct, not-yet-added menu option (see
