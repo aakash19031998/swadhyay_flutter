@@ -14,7 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Locks the app to landscape (either orientation) even with the device's
   // auto-rotate on — portrait is never an allowed orientation, not just the
-  // one the app happens to launch in.
+  // one the app happens to launch in. 1`0
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
