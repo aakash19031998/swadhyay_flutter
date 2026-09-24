@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../constants/app_dimensions.dart';
 import 'app_colors.dart';
@@ -58,6 +59,17 @@ class AppTheme {
           color: AppColors.onPrimary,
         ),
         iconTheme: const IconThemeData(color: AppColors.onPrimary),
+        // Without this, AppBar picks statusBarColor/icon brightness off its
+        // own background automatically — fine on its own, but it leaves the
+        // status bar unset (whatever the previous screen left behind) on
+        // every screen that has no AppBar. Pinning it here to the same
+        // primary color keeps it identical across both kinds of screen; see
+        // the matching AnnotatedRegion in main.dart for the AppBar-less case.
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: colorScheme.primary,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
       cardTheme: CardThemeData(
         color: isDark ? AppColors.primaryDark : AppColors.surface,

@@ -8,7 +8,20 @@ import 'core/di/initial_binding.dart';
 import 'core/routes/app_pages.dart';
 import 'core/routes/app_routes.dart';
 import 'core/storage/local_storage_service.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+
+/// Matches [AppTheme]'s `appBarTheme.systemOverlayStyle` — kept as one
+/// literal so both agree on exactly the same status bar color. AppBarTheme
+/// alone only covers screens that have an AppBar; every screen without one
+/// (custom headers, gradient scaffolds, etc.) falls through to whatever the
+/// previously-visited screen last set, which is why this is applied as a
+/// blanket [AnnotatedRegion] below, wrapping every route.
+const SystemUiOverlayStyle _statusBarStyle = SystemUiOverlayStyle(
+  statusBarColor: AppColors.primary,
+  statusBarIconBrightness: Brightness.light,
+  statusBarBrightness: Brightness.dark,
+);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,10 +56,13 @@ class SwadhyayApp extends StatelessWidget {
       // GestureDetector only catches taps on already-painted content, not
       // blank space, which is exactly where a user taps to dismiss.
       builder: (context, child) {
-        return GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          behavior: HitTestBehavior.opaque,
-          child: child,
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: _statusBarStyle,
+          child: GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            behavior: HitTestBehavior.opaque,
+            child: child,
+          ),
         );
       },
     );
